@@ -382,7 +382,7 @@ class App():
 		self.vsm = "Version kw: "
 		for k, i in self.vkw.items():
 			self.vsm += f"\n    {str(k)}: {str(i)}"
-		self.__doc__ = f"""New EXTantion notePAD [{self.vpr}]
+		self.__doc__ = f"""New EXTantion notePAD [{self.version}]
 
 Features:
    - Header-bar
@@ -411,6 +411,7 @@ FIXME:
 		self.clr_sb = self.source.clr_sb
 		self.clr_dsb = "darkslateblue"
 		self.clr_lsb = self.source.clr_lsb
+		self.fform = self.fform
 		self.imgs = {}
 		self.img_win = self.source.img_win(self.clr_gw)
 		self.img_win_alt, self.imgname_win_alt = self.source.img_win(self.clr_gw, takename=1)
@@ -508,7 +509,7 @@ FIXME:
 		# Help-Bar: mainSizegrip, tkhelpButton, mainLabel
 		self.hBar = ttk.Frame(self.mWin)
 		self.mSG = ttk.Sizegrip(self.hBar)
-		self.mLbl = ttk.Label(self.hBar, text=f"Hello in ExtPad {self.vpr}")
+		self.mLbl = ttk.Label(self.hBar, text=f"Hello in ExtPad {self.version}")
 			# Pack this
 		self.mSG.pack(fill="both", side="right")
 		self.mLbl.pack(fill="both", expand=True)
@@ -629,7 +630,7 @@ FIXME:
 		else: return
 	def nSel(self, event):
 		if   len(self.mNB.tabs()) == 0:
-			self.mLbl["text"] = f"Hello in ExtPad {self.vpr}"
+			self.mLbl["text"] = f"Hello in ExtPad {self.version}"
 			self.mLblCheck = -1
 		elif self.source.dbg.get() == True:
 			self.mLbl["text"] = f'Selected "{str(self.mNB.select())}" tab: {self.mNB.tab(self.mNB.select())}'
@@ -640,7 +641,7 @@ FIXME:
 		if path == None:
 			path = tkfd.askopenfilename(
 				title="Open file",
-				filetypes=[("All formats", "*.*"), ("Text file", "*.txt"), ("Python file", "*.py")]
+				filetypes=self.fform
 			)
 			self.forceTk()
 			if not path: return
@@ -673,7 +674,7 @@ FIXME:
 			path = tkfd.asksaveasfilename(
 				title="Save as",
 				defaultextension=".txt", 
-				filetypes=[("All formats", "*.*"), ("Text file", "*.txt"), ("Python file", "*.py")]
+				filetypes=self.fform
 			)
 			self.forceTk()
 			if not path: return
@@ -706,7 +707,7 @@ FIXME:
 		path = tkfd.asksaveasfilename(
 			title="New file",
 			defaultextension=".txt", 
-			filetypes=[("All formats", "*.*"), ("Text file", "*.txt"), ("Python file", "*.py")]
+			filetypes=self.fform
 		)
 		self.forceTk()
 		if not path: return
@@ -817,6 +818,8 @@ FIXME:
 					self.mLbl["text"] = f"[File] Line: {insLine}/{endLine}  Col: {insCol}/{endCol}  Path: {path}"
 				elif ntype == "note":
 					self.mLbl["text"] = f"[Note] Line: {insLine}/{endLine}  Col: {insCol}/{endCol}"
+				else:
+					self.mLbl["text"] = f"[Err] undifined type"
 			elif self.mLblCheck > 0:
 				self.mLblCheck -= 1
 			if ntype == "file":
@@ -828,41 +831,12 @@ FIXME:
 
 	def nExec(self, path=None):
 		if path == None:
-			path = tkfd.askopenfilename(
-				title="Exec file",
-				filetypes=[("All formats", "*.*"), ("Text file", "*.txt"), ("Python file", "*.py")]
-			)
+			path = tkfd.askopenfilename(title="Exec file", filetypes=self.fform)
 			if not path: return
 		modtext = ""
-		try:
-			modfile = open(path)
+		with open(path) as modfile:
 			modtext = modfile.read()
-			modfile.close()
-		except: print("Can't read mod")
-		def api_requte(what_var):
-			#a = "what_var" // Str-obj
-			#b = exec(a) // Code-obj
-			what_list = str(what_var).split(" ")
-			def what_check(intvar, strvar):
-				try:
-					outvar = what_list[intvar] == strvar
-					return outvar
-				except:
-					return False
-			if what_check(0, "version"):
-				if what_check(1, "-dict"):
-					return self.vkw
-				if what_check(1, "-list"):
-					return self.vkw.items()
-				if what_check(1, "-name"):
-					return self.vpr
-				else: 
-					return self.version
-		extpad = self
-		del(self)
 		exec(modtext)
-		self = extpad
-		del(extpad)
 
 	# mainloop the mWin
 	def init(self):
