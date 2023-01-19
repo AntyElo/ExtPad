@@ -351,8 +351,9 @@ static unsigned char close_bits[] = {
 			}, "CNotebook.Tab": {
 				"layout": [
 					("CNotebook.tab", {"sticky": "nswe", "children": [
-						("CNotebook.padding", {"side": "top", "sticky": "nswe", "children": [
-							("CNotebook.focus", {"side": "top", "sticky": "nswe", "children": [
+						("CNotebook.focus", {"side": "top", "sticky": "nswe", "children": [
+							("CNotebook.padding", {"side": "top", "sticky": "nswe", "children": [
+									("CNotebook.icon", {"side": "left", "sticky": ''}),
 									("CNotebook.label", {"side": "left", "sticky": ''}),
 									("CNotebook.close", {"side": "left", "sticky": ''}),
 							]})
@@ -362,12 +363,36 @@ static unsigned char close_bits[] = {
 			}
 		})
 		style.element_create(
-			"close", "image", "img_close",
+			"icon", "image", "img_close",
+			("active", "pressed", "!disabled", "img_closepressed"),
+			("active", "!disabled", "img_closeactive"), 
+			border=8, sticky=""
+		)
+		style.element_create(
+			"close", "image", "",
 			("active", "pressed", "!disabled", "img_closepressed"),
 			("active", "!disabled", "img_closeactive"), 
 			border=8, sticky=""
 		)
 
+class CNotebook1(ttk.Notebook): # With "CustomNotebook" and TNotebook
+	__initialized = False
+	def __init__(self, *args, **kwargs):
+		self.style = ttk.Style()
+		self.clr_bg = "#b7b7b7"
+		self.clr_tw = "#ffffff"
+		if not self.__initialized:
+			self.__initialize_custom_style()
+			self.__inititialized = True
+
+		kwargs["style"] = "CNotebook"
+		self.style.theme_use("deft")
+		ttk.Notebook.__init__(self, *args, **kwargs)
+
+		self._active = None
+
+		self.bind("<ButtonPress-1>", self.on_close_press, True)
+		self.bind("<ButtonRelease-1>", self.on_close_release)
 
 class App():
 	# Sourse
@@ -411,7 +436,7 @@ FIXME:
 		self.clr_sb = self.source.clr_sb
 		self.clr_dsb = "darkslateblue"
 		self.clr_lsb = self.source.clr_lsb
-		self.fform = self.fform
+		self.fform = [("All formats", "*.*"), ("Text file", "*.txt"), ("Python file", "*.py")]
 		self.imgs = {}
 		self.img_win = self.source.img_win(self.clr_gw)
 		self.img_win_alt, self.imgname_win_alt = self.source.img_win(self.clr_gw, takename=1)
