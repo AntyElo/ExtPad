@@ -342,6 +342,12 @@ static unsigned char close_bits[] = {
     0x00, 0x00, 0x00, 0x00, 0x0c, 0x30, 0x1c, 0x38, 0x38, 0x1c, 0x70, 0x0e,
     0xe0, 0x07, 0xc0, 0x03, 0xc0, 0x03, 0xe0, 0x07, 0x70, 0x0e, 0x38, 0x1c,
     0x1c, 0x38, 0x0c, 0x30, 0x00, 0x00, 0x00, 0x00 };''', foreground="darkslateblue")
+		self.img_file = tk.Image("bitmap", "img_file", data="""#define fwin_width 16
+#define fwin_height 16
+static unsigned char win_bits[] = {
+    0x00, 0x00, 0xfe, 0x7f, 0xfe, 0x7f, 0x02, 0x40, 0xea, 0x4e, 0x02, 0x40,
+    0x7a, 0x4f, 0x02, 0x40, 0xba, 0x4d, 0x02, 0x40, 0x7a, 0x4f, 0x02, 0x40,
+    0xda, 0x4d, 0x02, 0x40, 0xfe, 0x7f, 0x00, 0x00 };""", foreground="slateblue")
 
 		style.theme_settings(style.theme_use(), {
 			   "CNotebook": {
@@ -363,19 +369,17 @@ static unsigned char close_bits[] = {
 			}
 		})
 		style.element_create(
-			"icon", "image", "img_close",
-			("active", "pressed", "!disabled", "img_closepressed"),
-			("active", "!disabled", "img_closeactive"), 
-			border=8, sticky=""
+			"icon", "image", "img_file",
+			border=8, sticky="nswe"
 		)
 		style.element_create(
-			"close", "image", "",
+			"close", "image", "img_close",
 			("active", "pressed", "!disabled", "img_closepressed"),
 			("active", "!disabled", "img_closeactive"), 
 			border=8, sticky=""
 		)
 
-class CNotebook1(ttk.Notebook): # With "CustomNotebook" and TNotebook
+class InfoFrame(ttk.Notebook): # With "CustomNotebook" and TNotebook
 	__initialized = False
 	def __init__(self, *args, **kwargs):
 		self.style = ttk.Style()
