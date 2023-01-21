@@ -37,7 +37,10 @@ class Source():
 		self.clr_tw = tk.Entry(self.srcWin).cget("bg")
 		self.clr_gw = "ghostwhite"
 		self.clr_sb = "steelblue"
+		self.clr_dsb = "darkslateblue"
 		self.clr_lsb = "lightsteelblue"
+		self.hints = \
+"""WM: <C/S>SD = <Client/Server>-Side Decorartion"""
 		self.img_win_alt = self.Fimg("win_alt", """#define win_width 16
 #define win_height 16
 static unsigned char win_bits[] = {
@@ -73,8 +76,7 @@ static unsigned char close_bits[] = {
 static unsigned char open16_bits[] = {
    0x00, 0x00, 0x00, 0x00, 0xf8, 0x0f, 0x04, 0x1c, 0x04, 0x3c, 0xf4, 0x3c,
    0x04, 0x20, 0xf4, 0x27, 0x04, 0x20, 0xf4, 0x27, 0x04, 0x20, 0xf4, 0x27,
-   0x04, 0x20, 0xf8, 0x1f, 0x00, 0x00, 0x00, 0x00 };
-""").fimg
+   0x04, 0x20, 0xf8, 0x1f, 0x00, 0x00, 0x00, 0x00 };""").fimg
 		self.img_save = self.Fimg("save", """#define save16_width 16
 #define save16_height 16
 static unsigned char save16_bits[] = {
@@ -324,30 +326,27 @@ class CNotebook(ttk.Notebook): # With "CustomNotebook" and TNotebook
 
 	def __initialize_custom_style(self):
 		style = self.style
-		self.img_close = tk.Image("bitmap", "img_close", data = '''#define close_width 16
+		self.img_close_raw = \
+"""#define close_width 16
 #define close_height 16
 static unsigned char close_bits[] = {
-    0x00, 0x00, 0x00, 0x00, 0x0c, 0x30, 0x1c, 0x38, 0x38, 0x1c, 0x70, 0x0e,
-    0xe0, 0x07, 0xc0, 0x03, 0xc0, 0x03, 0xe0, 0x07, 0x70, 0x0e, 0x38, 0x1c,
-    0x1c, 0x38, 0x0c, 0x30, 0x00, 0x00, 0x00, 0x00 };''', foreground = "steelblue")
-		self.img_closeact = tk.Image("bitmap", "img_closeactive", data='''#define close_width 16
-#define close_height 16
-static unsigned char close_bits[] = {
-    0x00, 0x00, 0x00, 0x00, 0x0c, 0x30, 0x1c, 0x38, 0x38, 0x1c, 0x70, 0x0e,
-    0xe0, 0x07, 0xc0, 0x03, 0xc0, 0x03, 0xe0, 0x07, 0x70, 0x0e, 0x38, 0x1c,
-    0x1c, 0x38, 0x0c, 0x30, 0x00, 0x00, 0x00, 0x00 };''', foreground="lightsteelblue")
-		self.img_closepr = tk.Image("bitmap", "img_closepressed", data='''#define close_width 16
-#define close_height 16
-static unsigned char close_bits[] = {
-    0x00, 0x00, 0x00, 0x00, 0x0c, 0x30, 0x1c, 0x38, 0x38, 0x1c, 0x70, 0x0e,
-    0xe0, 0x07, 0xc0, 0x03, 0xc0, 0x03, 0xe0, 0x07, 0x70, 0x0e, 0x38, 0x1c,
-    0x1c, 0x38, 0x0c, 0x30, 0x00, 0x00, 0x00, 0x00 };''', foreground="darkslateblue")
-		self.img_file = tk.Image("bitmap", "img_file", data="""#define fwin_width 16
-#define fwin_height 16
-static unsigned char win_bits[] = {
-    0x00, 0x00, 0xfe, 0x7f, 0xfe, 0x7f, 0x02, 0x40, 0xea, 0x4e, 0x02, 0x40,
-    0x7a, 0x4f, 0x02, 0x40, 0xba, 0x4d, 0x02, 0x40, 0x7a, 0x4f, 0x02, 0x40,
-    0xda, 0x4d, 0x02, 0x40, 0xfe, 0x7f, 0x00, 0x00 };""", foreground="slateblue")
+   0x00, 0x00, 0xfc, 0x3f, 0x02, 0x40, 0x1a, 0x58, 0x1a, 0x58, 0x62, 0x46,
+   0x62, 0x46, 0x82, 0x41, 0x82, 0x41, 0x62, 0x46, 0x62, 0x46, 0x1a, 0x58,
+   0x1a, 0x58, 0x02, 0x40, 0xfc, 0x3f, 0x00, 0x00 };"""
+		self.img_file_raw = \
+"""#define open16_width 16
+#define open16_height 16
+static unsigned char open16_bits[] = {
+   0x00, 0x00, 0x00, 0x00, 0xf8, 0x0f, 0x04, 0x1c, 0x04, 0x3c, 0xf4, 0x3c,
+   0x04, 0x20, 0xf4, 0x27, 0x04, 0x20, 0xf4, 0x27, 0x04, 0x20, 0xf4, 0x27,
+   0x04, 0x20, 0xf8, 0x1f, 0x00, 0x00, 0x00, 0x00 };"""
+		self.img_close = tk.Image("bitmap", "img_close", data = self.img_close_raw, foreground = "steelblue")
+		self.img_close_act = tk.Image("bitmap", "img_close_act", data=self.img_close_raw, foreground="lightsteelblue")
+		self.img_close_pr = tk.Image("bitmap", "img_close_pr", data=self.img_close_raw, foreground="darkslateblue")
+
+		self.img_file = tk.Image("bitmap", "img_file", data=self.img_file_raw, foreground="slateblue")
+		self.img_file_act = tk.Image("bitmap", "img_file_act", data=self.img_file_raw, foreground="lightsteelblue")
+		self.img_file_pr = tk.Image("bitmap", "img_file_pr", data=self.img_file_raw, foreground="darkslateblue")
 
 		style.theme_settings(style.theme_use(), {
 			   "CNotebook": {
@@ -370,33 +369,39 @@ static unsigned char win_bits[] = {
 		})
 		style.element_create(
 			"icon", "image", "img_file",
+			("active", "pressed", "!disabled", "img_file_pr"),
+			("active", "!disabled", "img_file_act"), 
 			border=8, sticky="nswe"
 		)
 		style.element_create(
 			"close", "image", "img_close",
-			("active", "pressed", "!disabled", "img_closepressed"),
-			("active", "!disabled", "img_closeactive"), 
+			("active", "pressed", "!disabled", "img_close_pr"),
+			("active", "!disabled", "img_close_act"), 
 			border=8, sticky=""
 		)
 
-class InfoFrame(ttk.Notebook): # With "CustomNotebook" and TNotebook
-	__initialized = False
+class InfoFrame(ttk.Frame): # With "CustomNotebook" and TNotebook
 	def __init__(self, *args, **kwargs):
+		def grc(row, column): return {"row": row, "column": column}
 		self.style = ttk.Style()
-		self.clr_bg = "#b7b7b7"
-		self.clr_tw = "#ffffff"
-		if not self.__initialized:
-			self.__initialize_custom_style()
-			self.__inititialized = True
+		self.ikw = kwargs.setdefault("_infokw", {})
+		kwargs["_infokw"] = {}
+		kwargs.__delitem__("_infokw")
+		ttk.Frame.__init__(self, *args, **kwargs)
 
-		kwargs["style"] = "CNotebook"
-		self.style.theme_use("deft")
-		ttk.Notebook.__init__(self, *args, **kwargs)
+		self.text = tk.Text(master=self, bd=0, highlightthickness=0, wrap="none")
+		self.text.insert("end", self.ikw.setdefault("text_ph"))
+		self.SCY = ttk.Scrollbar(master=self, orient="vertical", command=self.text.yview)
+		self.SCX = ttk.Scrollbar(master=self, orient="horizontal", command=self.text.xview)
+		self.text.config(yscrollcommand=self.SCY.set, xscrollcommand=self.SCX.set)
+		self.SCY.grid(sticky="nswe", column=1)
+		self.SCX.grid(sticky="nswe", row=1)
+		self.grip = ttk.Sizegrip(master=self, style="ghost.TSizegrip")
+		self.grip.grid(sticky="nswe", row=1, column=1)
+		self.text.grid(sticky="nswe", row=0)
+		self.rowconfigure(0, weight=1)
+		self.columnconfigure(0, weight=1)
 
-		self._active = None
-
-		self.bind("<ButtonPress-1>", self.on_close_press, True)
-		self.bind("<ButtonRelease-1>", self.on_close_release)
 
 class App():
 	# Sourse
@@ -428,9 +433,13 @@ FIXME:
 """
 		self.source = Source()
 		self.mWin = self.source.srcWin
-		self.floatTk()
 		self.mWin.title("ExtPad")
 		self.mWin.geometry("400x300")
+		self.istopTk = tk.BooleanVar()
+		self.isCSD = tk.BooleanVar()
+		self.istopTk.set(True)
+		self.isCSD.set(True)
+		self.ifloatTk()
 		self.mWin["takefocus"] = True
 		self.style = self.source.srcStyle
 		self.nBuffer = ""
@@ -438,9 +447,10 @@ FIXME:
 		self.clr_tw = self.source.clr_tw
 		self.clr_gw = self.source.clr_gw
 		self.clr_sb = self.source.clr_sb
-		self.clr_dsb = "darkslateblue"
+		self.clr_dsb = self.source.clr_dsb
 		self.clr_lsb = self.source.clr_lsb
 		self.fform = [("All formats", "*.*"), ("Text file", "*.txt"), ("Python file", "*.py")]
+		self.nInfo_hints = self.source.hints
 		self.imgs = {}
 		self.img_win = self.source.img_win(self.clr_gw)
 		self.img_win_alt, self.imgname_win_alt = self.source.img_win(self.clr_gw, takename=1)
@@ -452,9 +462,8 @@ FIXME:
 		self.img_min = self.source.img_min(self.clr_gw)
 		self.img_max = self.source.img_max(self.clr_gw)
 		self.img_close = self.source.img_close(self.clr_gw)
-		self.istopTk = tk.BooleanVar()
-		self.istopTk.set(True)
 		self.mLblCheck = -1
+		self.notec = 0
 		self.style.map("ghost.TFrame", background = [("", self.clr_tw)])
 		self.style.map("ghost.TSizegrip", background = [("", self.clr_tw)])
 
@@ -500,8 +509,7 @@ FIXME:
 		self.uMenu.add_cascade(label="Mods", menu=self.modMenu, command=(lambda: self.mpdMenu.focus_force()))
 		self.uMenu.add_cascade(label="App/Help", menu=self.hMenu, command=(lambda: self.hMenu.focus_force()))
 
-		self.wmMenu.add_command(label="Client-Side_Decorations/CSD on", command=self.floatTk)
-		self.wmMenu.add_command(label="Server-Side_Decorations/SSD on", command=self.unfloatTk)
+		self.wmMenu.add_checkbutton(label="CSD/SSD", variable=self.isCSD, offvalue=False, onvalue=True, command=self.ifloatTk)
 		self.wmMenu.add_command(label="Normal window", command=self.withMin)
 		self.wmMenu.add_command(label="Zoom window", command=self.withMax)
 		self.wmMenu.add_checkbutton(label="Always at the top", variable=self.istopTk, offvalue=False, onvalue=True, command=self.topTk)
@@ -511,6 +519,7 @@ FIXME:
 		self.fMenu.add_command(label="Save as...", accelerator="Ctrl-Shift-S", command=self.nSaveas)
 		self.fMenu.add_command(label="Open", accelerator="Ctrl-O", command=self.nOpen)
 		self.fMenu.add_command(label="New", accelerator="Ctrl-N", command=self.nNew)
+		self.fMenu.add_command(label="New note", accelerator="Ctrl-Shift-N", command=self.nNewnote)
 		self.fMenu.add_command(label="Close", accelerator="Ctrl-Shift-D", command=self.nClose)
 
 		self.eMenu.add_command(label="Copy", accelerator="Ctrl-C", command=self.eCopy)
@@ -554,23 +563,7 @@ FIXME:
 
 		# mainNoteBook
 		self.mNB = CNotebook(self.mWin, height=0)
-		self.iif = ttk.Frame(self.mNB)
-		self.iil = ttk.Label(self.iif)
-		self.iil.pack(fill="both")
-			# New page
-		nPage = ttk.Frame(self.mNB, style="ghost.TFrame", name=f'note')
-		nText = tk.Text(nPage, bd=0, highlightthickness=0, wrap="none", undo=True)
-		nSBX = ttk.Scrollbar(nPage, command=nText.xview, orient="horizontal")
-		nSBY = ttk.Scrollbar(nPage, command=nText.yview, orient="vertical")
-		nText.config(xscrollcommand=nSBX.set, yscrollcommand=nSBY.set)
-		nText.bind("<Button-3>", self.popEdit)
-		nSBX.grid(column=0, row=1, sticky="nsew")
-		nSBY.grid(column=1, row=0, sticky="nsew")
-		nText.grid(column=0, row=0, sticky="nsew")
-		nPage.rowconfigure(0, weight=1)
-		nPage.columnconfigure(0, weight=1)
-		self.mNB.add(nPage, text="New")
-			# Pack this
+		self.nNewnote()
 		self.mNB.bind("<<NotebookTabChanged>>", self.nSel)
 		self.mNB.bind("<<NotebookTabClosed>>", lambda event: self.nClose())
 		self.mNB.pack(fill="both", expand=True)
@@ -591,6 +584,12 @@ FIXME:
 	def topTk(self, bl=None): 
 		if bl == None: bl = self.istopTk.get()
 		self.mWin.attributes("-topmost", bl)
+	def ifloatTk(self, bl=None): 
+		if bl == None: bl = self.isCSD.get()
+		if sysplatform == "win32": self.mWin.overrideredirect(bl)
+		else: self.mWin.attributes('-type', ["normal", "dock"][bl])
+		self.mWin.wm_state("withdraw")
+		self.mWin.wm_state("normal")
 	def pointTk(self, event):
 		win_position = [int(coord) for coord in self.mWin.wm_geometry().split('+')[1:]]
 		self.source.xTk, self.source.yTk = win_position[0] - event.x_root, win_position[1] - event.y_root
@@ -756,6 +755,21 @@ FIXME:
 		nPage.rowconfigure(0, weight=1)
 		nPage.columnconfigure(0, weight=1)
 		self.mNB.add(nPage, text=name)
+	def nNewnote(self):
+		nPage = ttk.Frame(self.mNB, style="ghost.TFrame", name=f'note:{self.notec}')
+		nText = tk.Text(nPage, bd=0, highlightthickness=0, wrap="none", undo=True)
+		nSBX = ttk.Scrollbar(nPage, command=nText.xview, orient="horizontal")
+		nSBY = ttk.Scrollbar(nPage, command=nText.yview, orient="vertical")
+		nText.config(xscrollcommand=nSBX.set, yscrollcommand=nSBY.set)
+		nText.bind("<Button-3>", self.popEdit)
+		nSBX.grid(column=0, row=1, sticky="nsew")
+		nSBY.grid(column=1, row=0, sticky="nsew")
+		nText.grid(column=0, row=0, sticky="nsew")
+		nPage.rowconfigure(0, weight=1)
+		nPage.columnconfigure(0, weight=1)
+		if self.notec: self.mNB.add(nPage, text=f"New ({self.notec})")
+		else: self.mNB.add(nPage, text=f"New")
+		self.notec += 1
 	def nClose(self):
 		if self.mNB.tabs() == (): return
 		seltype = self.mNB.select().split(":")[0].split(".")[-1]
@@ -797,38 +811,11 @@ FIXME:
 	def nInfo(self):
 		iWin = tk.Toplevel(self.mWin)
 		iWin.title("About ExtPad")
-
 		iFrame = ttk.Notebook(master=iWin)
-		pVersion = ttk.Frame(master=iFrame, style="ghost.TFrame")
-		vText = tk.Text(master=pVersion, bd=0, highlightthickness=0, wrap="none")
-		vText.insert("end", self.vsm)
-		vSCY = ttk.Scrollbar(master=pVersion, orient="vertical", command=vText.yview)
-		vSCX = ttk.Scrollbar(master=pVersion, orient="horizontal", command=vText.xview)
-		vText.config(yscrollcommand=vSCY.set,xscrollcommand=vSCX.set)
-		vSCY.grid(sticky="nswe", column=1)
-		vSCX.grid(sticky="nswe", row=1)
-		vGrip = ttk.Sizegrip(master=pVersion, style="ghost.TSizegrip")
-		vGrip.grid(sticky="nswe", row=1, column=1)
-		vText.grid(sticky="nswe", row=0)
-		pVersion.rowconfigure(0, weight=1)
-		pVersion.columnconfigure(0, weight=1)
-
-		pDescription = ttk.Frame(master=iFrame, style="ghost.TFrame")
-		dText = tk.Text(master=pDescription, bd=0, highlightthickness=0, wrap="none")
-		dText.insert("end", self.__doc__)
-		dSCY = ttk.Scrollbar(master=pDescription, orient="vertical", command=dText.yview)
-		dSCX = ttk.Scrollbar(master=pDescription, orient="horizontal", command=dText.xview)
-		dText.config(yscrollcommand=dSCY.set, xscrollcommand=dSCX.set)
-		dSCY.grid(sticky="nswe", column=1)
-		dSCX.grid(sticky="nswe", row=1)
-		dGrip = ttk.Sizegrip(master=pDescription, style="ghost.TSizegrip")
-		dGrip.grid(sticky="nswe", row=1, column=1)
-		dText.grid(sticky="nswe", row=0)
-		pDescription.rowconfigure(0, weight=1)
-		pDescription.columnconfigure(0, weight=1)
-
-		iFrame.add(pVersion, text="Version", sticky="nswe")
-		iFrame.add(pDescription, text="Description", sticky="nswe")
+		frst = "ghost.TFrame"
+		iFrame.add(InfoFrame(iFrame, style=frst, _infokw=dict(text_ph=self.vsm)), text="Version", sticky="nswe")
+		iFrame.add(InfoFrame(iFrame, style=frst, _infokw=dict(text_ph=self.__doc__)), text="Description", sticky="nswe")
+		iFrame.add(InfoFrame(iFrame, style=frst, _infokw=dict(text_ph=self.nInfo_hints)), text="Hints", sticky="nswe")
 		iFrame.pack(fill="both", expand=True)
 
 		# Etc
