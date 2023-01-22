@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/bin/python3
 cfgPath=""
 import time
 import tkinter as tk
@@ -6,6 +6,7 @@ import tkinter.ttk as ttk
 import tkinter.filedialog as tkfd
 import tkinter.simpledialog as tksd
 import tkinter.messagebox as tkmb
+from idlelib.tooltip import Hovertip
 import os
 import os.path as ospath
 from random import randint as rint
@@ -477,43 +478,27 @@ FIXME:
 		self.mMaxBtn  = ttk.Button(self.tBar, style="Title.TButton", image=self.img_max,   command=self.withMax)
 		self.mQuitBtn = ttk.Button(self.tBar, style="Title.TButton", image=self.img_close, command=self.withQuit)
 			# Menu
-				# Controls
-		self.menuBar = tk.Frame(self.tBar, bg=self.clr_dsb)
-		self.mbUnion = ttk.Button(self.menuBar, text="U!", style="Title.TButton")
-		self.mbFile = ttk.Button(self.menuBar, text="File", style="Title.TButton")
-		self.mbEdit = ttk.Button(self.menuBar, text="Edit", style="Title.TButton")
-		self.mbView = ttk.Button(self.menuBar, text="View", style="Title.TButton")
-		self.mbMods = ttk.Button(self.menuBar, text="Mods", style="Title.TButton")
-		self.mbHelp = ttk.Button(self.menuBar, text="Help", style="Title.TButton")
 				# Bind this
-		self.wmBtn.bind('<Button-1>', self.popWM)
-		self.mbUnion.bind('<Button-1>', self.popU)
-		self.mbFile.bind('<Button-1>', self.popFile)
-		self.mbEdit.bind('<Button-1>', self.popEdit)
-		self.mbView.bind('<Button-1>', self.popView)
-		self.mbMods.bind('<Button-1>', self.popMods)
-		self.mbHelp.bind('<Button-1>', self.popHelp)
+		self.wmBtn.bind('<Button-1>', self.popU)
 				# Menus
-		self.uMenu = tk.Menu(self.mWin) # Union
-		self.wmMenu = tk.Menu(self.mWin, tearoff=0) # WM
+		self.uMenu = tk.Menu(self.mWin, title="uMenu: extpad") # Union(Wm also)
 		self.fMenu = tk.Menu(self.mWin, tearoff=0) # File
 		self.eMenu = tk.Menu(self.mWin, tearoff=0) # Edit
 		self.vMenu = tk.Menu(self.mWin, tearoff=0) # View
 		self.modMenu = tk.Menu(self.mWin, tearoff=0) # Mods
 		self.hMenu = tk.Menu(self.mWin, tearoff=0) # Help
 
-		self.uMenu.add_cascade(label="App/WM", menu=self.wmMenu, command=(lambda: self.wmMenu.focus_force()))
+		self.uMenu.add_checkbutton(label="CSD/SSD", variable=self.isCSD, offvalue=False, onvalue=True, command=self.ifloatTk)
+		self.uMenu.add_command(label="Normal window", command=self.withMin)
+		self.uMenu.add_command(label="Zoom window", command=self.withMax)
+		self.uMenu.add_checkbutton(label="Always at the top", variable=self.istopTk, offvalue=False, onvalue=True, command=self.topTk)
+		self.uMenu.add_command(label="Quit", accelerator="Ctrl-Q", command=self.withQuit)
+		self.uMenu.add_separator()
 		self.uMenu.add_cascade(label="File", menu=self.fMenu, command=(lambda: self.fMenu.focus_force()))
 		self.uMenu.add_cascade(label="Edit", menu=self.eMenu, command=(lambda: self.eMenu.focus_force()))
 		self.uMenu.add_cascade(label="View", menu=self.vMenu, command=(lambda: self.vMenu.focus_force()))
 		self.uMenu.add_cascade(label="Mods", menu=self.modMenu, command=(lambda: self.mpdMenu.focus_force()))
 		self.uMenu.add_cascade(label="App/Help", menu=self.hMenu, command=(lambda: self.hMenu.focus_force()))
-
-		self.wmMenu.add_checkbutton(label="CSD/SSD", variable=self.isCSD, offvalue=False, onvalue=True, command=self.ifloatTk)
-		self.wmMenu.add_command(label="Normal window", command=self.withMin)
-		self.wmMenu.add_command(label="Zoom window", command=self.withMax)
-		self.wmMenu.add_checkbutton(label="Always at the top", variable=self.istopTk, offvalue=False, onvalue=True, command=self.topTk)
-		self.wmMenu.add_command(label="Quit", accelerator="Ctrl-Q", command=self.withQuit)
 
 		self.fMenu.add_command(label="Save", accelerator="Ctrl-S", command=self.nSave)
 		self.fMenu.add_command(label="Save as...", accelerator="Ctrl-Shift-S", command=self.nSaveas)
@@ -535,12 +520,6 @@ FIXME:
 		self.mQuitBtn.pack(fill="both", side="right")
 		self.mMaxBtn.pack(fill="both", side="right")
 		self.wmBtn.pack(fill="both", side="left")
-		self.menuBar.pack(fill="both", side="left")
-		self.mbFile.pack(fill="both", side="left")
-		self.mbEdit.pack(fill="both", side="left")
-		self.mbView.pack(fill="both", side="left")
-		self.mbMods.pack(fill="both", side="left")
-		self.mbHelp.pack(fill="both", side="left")
 		self.mMG.pack(fill="both", expand=True)
 		self.tBar.pack(fill="both", side="top")
 
@@ -557,9 +536,9 @@ FIXME:
 		self.hotBar = ttk.Frame(self.mWin)
 		self.hotSave = ttk.Button(self.hotBar, image=self.imgs["save-gw"], command=lambda: self.nSave())
 		self.hotOpen = ttk.Button(self.hotBar, image=self.imgs["open-gw"], command=lambda: self.nOpen())
+		self.hotOpen_tip = Hovertip(self.hotOpen, "Open file")
 		self.hotNN = ttk.Button(self.hotBar, image=self.imgs["open-gw"], command=lambda: self.nNewnote())
-		self.hotNN.bind("<Enter>", lambda event: tk.baloon())
-		# FIXME: tk.ballon: Newnone
+		self.hotNN_tip = Hovertip(self.hotNN, "New Note")
 		self.hotSave.pack(fill="both", side="top", padx=2, pady=1)
 		self.hotOpen.pack(fill="both", side="top", padx=2, pady=1)
 		self.hotNN.pack(fill="both", side="top", padx=2, pady=1)
@@ -635,25 +614,8 @@ FIXME:
 		# Menu
 	def popU(self, event):
 		self.uMenu.tk_popup(event.x_root, event.y_root, 0)
-		self.mbUnion.focus_force()
-	def popWM(self, event):
-		self.wmMenu.tk_popup(event.x_root, event.y_root, 0)
 		self.wmBtn.focus_force()
-	def popFile(self, event):
-		self.fMenu.tk_popup(event.x_root, event.y_root, 0)
-		self.mbFile.focus_force()
-	def popEdit(self, event):
-		self.eMenu.tk_popup(event.x_root, event.y_root, 0)
-		self.mbEdit.focus_force()
-	def popView(self, event):
-		self.vMenu.tk_popup(event.x_root, event.y_root, 0)
-		self.mbView.focus_force()
-	def popMods(self, event):
-		self.modMenu.tk_popup(event.x_root, event.y_root, 0)
-		self.mbMods.focus_force()
-	def popHelp(self, event):
-		self.hMenu.tk_popup(event.x_root, event.y_root, 0)
-		self.mbHelp.focus_force()
+	def popEdit(self, event): self.eMenu.tk_popup(event.x_root, event.y_root, 0)
 		# Notebook (aka n-prefixed)
 	def get_nText(self): return self.mWin.nametowidget(self.mNB.select()+".!text")
 	def get_npath(self):
@@ -871,9 +833,10 @@ FIXME:
 		self.mWin.bind("<F1>", lambda ev: self.nInfo())
 		self.mWin.update()
 		self.mWin.minsize(
-			int(self.wmBtn.winfo_width() * 4.5) + self.menuBar.winfo_width(), 
+			int(self.wmBtn.winfo_width() * 4.5), 
 			self.tBar.winfo_height() + self.hBar.winfo_height()
 		)
+		# TODO: add label?
 		self.mWin.after_idle(self.altstream)
 		if sysplatform != "win32": self.mWin.after_idle(lambda: self.mWin.attributes('-type', "normal"))
 		self.topTk(True)
