@@ -327,12 +327,12 @@ class CNotebook(ttk.Notebook): # With "CustomNotebook" and TNotebook
 	def __initialize_custom_style(self):
 		style = self.style
 		self.img_close_raw = \
-"""#define close_width 16
-#define close_height 16
-static unsigned char close_bits[] = {
-   0x00, 0x00, 0xfc, 0x3f, 0x02, 0x40, 0x1a, 0x58, 0x1a, 0x58, 0x62, 0x46,
-   0x62, 0x46, 0x82, 0x41, 0x82, 0x41, 0x62, 0x46, 0x62, 0x46, 0x1a, 0x58,
-   0x1a, 0x58, 0x02, 0x40, 0xfc, 0x3f, 0x00, 0x00 };"""
+"""#define tmp1_width 16
+#define tmp1_height 16
+static unsigned char tmp1_bits[] = {
+   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x08, 0x38, 0x1c, 0x70, 0x0e,
+   0xe0, 0x06, 0xc0, 0x01, 0x80, 0x03, 0x60, 0x07, 0x70, 0x0e, 0x38, 0x1c,
+   0x10, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };"""
 		self.img_file_raw = \
 """#define open16_width 16
 #define open16_height 16
@@ -557,8 +557,12 @@ FIXME:
 		self.hotBar = ttk.Frame(self.mWin)
 		self.hotSave = ttk.Button(self.hotBar, image=self.imgs["save-gw"], command=lambda: self.nSave())
 		self.hotOpen = ttk.Button(self.hotBar, image=self.imgs["open-gw"], command=lambda: self.nOpen())
+		self.hotNN = ttk.Button(self.hotBar, image=self.imgs["open-gw"], command=lambda: self.nNewnote())
+		self.hotNN.bind("<Enter>", lambda event: tk.baloon())
+		# FIXME: tk.ballon: Newnone
 		self.hotSave.pack(fill="both", side="top", padx=2, pady=1)
 		self.hotOpen.pack(fill="both", side="top", padx=2, pady=1)
+		self.hotNN.pack(fill="both", side="top", padx=2, pady=1)
 		self.hotBar.pack(fill="both", side="left")
 
 		# mainNoteBook
@@ -862,6 +866,7 @@ FIXME:
 		self.mWin.bind("<Control-s>", lambda ev: self.nSave())
 		self.mWin.bind("<Control-S>", lambda ev: self.nSaveas())
 		self.mWin.bind("<Control-n>", lambda ev: self.nNew())
+		self.mWin.bind("<Control-N>", lambda ev: self.nNewnote())
 		self.mWin.bind("<Control-D>", lambda ev: self.nClose())
 		self.mWin.bind("<F1>", lambda ev: self.nInfo())
 		self.mWin.update()
