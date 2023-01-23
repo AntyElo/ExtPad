@@ -1,5 +1,5 @@
 #!/bin/python3
-""" extpad-hg mod
+""" extpad-hg random mod
 """
 
 def main(self):

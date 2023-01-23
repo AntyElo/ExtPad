@@ -78,6 +78,12 @@ static unsigned char open16_bits[] = {
    0x00, 0x00, 0x00, 0x00, 0xf8, 0x0f, 0x04, 0x1c, 0x04, 0x3c, 0xf4, 0x3c,
    0x04, 0x20, 0xf4, 0x27, 0x04, 0x20, 0xf4, 0x27, 0x04, 0x20, 0xf4, 0x27,
    0x04, 0x20, 0xf8, 0x1f, 0x00, 0x00, 0x00, 0x00 };""").fimg
+		self.img_note = self.Fimg("open", """#define open16_width 16
+#define open16_height 16
+static unsigned char open16_bits[] = {
+   0x00, 0x00, 0x00, 0x00, 0xf8, 0x0f, 0x04, 0x1c, 0x04, 0x3c, 0xf4, 0x3c,
+   0x04, 0x20, 0xf4, 0x27, 0x04, 0x20, 0xf4, 0x27, 0x04, 0x20, 0xf4, 0x27,
+   0x04, 0x20, 0xf8, 0x1f, 0x00, 0x00, 0x00, 0x00 };""").fimg #FIXME: note icon
 		self.img_save = self.Fimg("save", """#define save16_width 16
 #define save16_height 16
 static unsigned char save16_bits[] = {
@@ -114,128 +120,133 @@ CW6LT1O/VSFHWYlpIugIZuL3hukEtjLW2ZLCJwUAOw==""")
 		self.sbRP = tk.PhotoImage(data="""R0lGODlhEAAQAIAAALDE3rDE3iH+BHNiUlAAIfkEAQoAAQAsAAAAABAAEAAAAieMj3nA7byehMGZ
 CW6LT1O/VSFHWYlpIugIZuL3hukEtjLW2ZLCJwUAOw==""")
 		self.srcStyle = ttk.Style()
-		self.srcStyle.theme_create("deft", parent="alt", settings={
-			   "TLabel": {
-				   "map": {
-						"background": [("", self.clr_bg)]
-				}
-			}, "Flat.TButton": {
-				   "configure": {
-						"margins": [0],
-						"padding": [3],
-						"relief": "flat", 
-						"highlightthickness": 0, 
-						"borderwidth": 0
-				}
-			}, "Togle.TButton": {
-				   "configure": {
-						"margins": [0],
-						"padding": [3],
-						"relief": "raised", 
-						"highlightthickness": 1, 
-						"borderwidth": 1
-				}, "map": {
-						"relief": [("active", "raised"), ("", "flat")], 
-						"foreground": [("active", self.clr_gw), ("", self.clr_sb)], 
-						"background": [("active", self.clr_lsb), ("", self.clr_bg)]
-				}
-			}, "Title.TButton": {
-				   "configure": {
-						"margins": [0],
-						"padding": [3],
-						"relief": "flat", 
-						"highlightthickness": 0, 
-						"borderwidth": 0,
-						"font": 10
-				}, "map": {
-						"foreground": [("active", self.clr_gw), ("", self.clr_gw)], 
-						"background": [("active", self.clr_lsb), ("", self.clr_sb)]
-				}
-			}, "TButton": {
-				   "configure": {
-						"margins": [0],
-						"padding": [3],
-						"relief": "raised", 
-						"highlightthickness": 1, 
-						"borderwidth": 1,
-						"background": self.clr_lsb
-				}, "map": {
-						"foreground": [("active", self.clr_gw), ("", self.clr_gw)], 
-						"background": [("active", self.clr_lsb), ("", self.clr_sb)]
-				}
-			}, "CNotebook": {
-				   "configure": {
-						"borderwidth": 0, 
-						"tabmargins": [3, 4, 2, 0], 
-						#"tabposition": "wn"
-				}
-			}, "CNotebook.Tab": {
-				   "configure": {
-						"borderwidth": 0, 
-						"padding": [5, 3]
-				}, "map": {
-						"background": [("selected", self.clr_tw), ("", self.clr_bg)] 
-				}
-			}, "TNotebook": {
-				   "configure": {
-						"borderwidth": 0, 
-						"tabmargins": [3, 4, 2, 0], 
-						#"tabposition": "wn"
-				}
-			}, "TNotebook.Tab": {
-				   "configure": {
-						"borderwidth": 0, 
-						"padding": [5, 3]
-				}, "map": {
-						"background": [("selected", self.clr_tw), ("", self.clr_bg)] 
-				}
-			}, "Vertical.TScrollbar": {
-				   "configure": {
-						"relief": "flat",
-						"highlightthickness": 0, 
-						"borderwidth": 0,
-						"troughborderwidth": 0,
-						"background": self.clr_tw
-				}, "layout": [
-						("Vertical.Scrollbar.uparrow", {"side": "top", "sticky": ""}),
-						("Vertical.Scrollbar.downarrow", {"side": "bottom", "sticky": ""}),
-						("Vertical.Scrollbar.uparrow", {"side": "bottom", "sticky": ""}),
-						("Vertical.Scrollbar.trough", {"sticky": "ns", "children": [
-							("Vertical.Scrollbar.thumb", {"expand": 1, "unit": 1, "children": [
-								("Vertical.Scrollbar.grip", {"sticky": ""})
+		if "deft" in self.srcStyle.theme_names():
+			print("[src] deft done")
+		else:
+			print("[src] create theme 'deft' ... ", end="")
+			self.srcStyle.theme_create("deft", parent="alt", settings={
+				   "TLabel": {
+					   "map": {
+							"background": [("", self.clr_bg)]
+					}
+				}, "Flat.TButton": {
+					   "configure": {
+							"margins": [0],
+							"padding": [3],
+							"relief": "flat", 
+							"highlightthickness": 0, 
+							"borderwidth": 0
+					}
+				}, "Togle.TButton": {
+					   "configure": {
+							"margins": [0],
+							"padding": [3],
+							"relief": "raised", 
+							"highlightthickness": 1, 
+							"borderwidth": 1
+					}, "map": {
+							"relief": [("active", "raised"), ("", "flat")], 
+							"foreground": [("active", self.clr_gw), ("", self.clr_sb)], 
+							"background": [("active", self.clr_lsb), ("", self.clr_bg)]
+					}
+				}, "Title.TButton": {
+					   "configure": {
+							"margins": [0],
+							"padding": [3],
+							"relief": "flat", 
+							"highlightthickness": 0, 
+							"borderwidth": 0,
+							"font": 10
+					}, "map": {
+							"foreground": [("active", self.clr_gw), ("", self.clr_gw)], 
+							"background": [("active", self.clr_lsb), ("", self.clr_sb)]
+					}
+				}, "TButton": {
+					   "configure": {
+							"margins": [0],
+							"padding": [3],
+							"relief": "raised", 
+							"highlightthickness": 1, 
+							"borderwidth": 1,
+							"background": self.clr_lsb
+					}, "map": {
+							"foreground": [("active", self.clr_gw), ("", self.clr_gw)], 
+							"background": [("active", self.clr_lsb), ("", self.clr_sb)]
+					}
+				}, "CNotebook": {
+					   "configure": {
+							"borderwidth": 0, 
+							"tabmargins": [3, 4, 2, 0], 
+							#"tabposition": "wn"
+					}
+				}, "CNotebook.Tab": {
+					   "configure": {
+							"borderwidth": 0, 
+							"padding": [5, 3]
+					}, "map": {
+							"background": [("selected", self.clr_tw), ("", self.clr_bg)] 
+					}
+				}, "TNotebook": {
+					   "configure": {
+							"borderwidth": 0, 
+							"tabmargins": [3, 4, 2, 0], 
+							#"tabposition": "wn"
+					}
+				}, "TNotebook.Tab": {
+					   "configure": {
+							"borderwidth": 0, 
+							"padding": [5, 3]
+					}, "map": {
+							"background": [("selected", self.clr_tw), ("", self.clr_bg)] 
+					}
+				}, "Vertical.TScrollbar": {
+					   "configure": {
+							"relief": "flat",
+							"highlightthickness": 0, 
+							"borderwidth": 0,
+							"troughborderwidth": 0,
+							"background": self.clr_tw
+					}, "layout": [
+							("Vertical.Scrollbar.uparrow", {"side": "top", "sticky": ""}),
+							("Vertical.Scrollbar.downarrow", {"side": "bottom", "sticky": ""}),
+							("Vertical.Scrollbar.uparrow", {"side": "bottom", "sticky": ""}),
+							("Vertical.Scrollbar.trough", {"sticky": "ns", "children": [
+								("Vertical.Scrollbar.thumb", {"expand": 1, "unit": 1, "children": [
+									("Vertical.Scrollbar.grip", {"sticky": ""})
+								]})
 							]})
-						]})
-				]
-			}, "Horizontal.TScrollbar": {
-				   "configure": {
-						"relief": "flat", 
-						"highlightthickness": 0, 
-						"borderwidth": 0,
-						"background": self.clr_tw
-				}, "layout": [
-						("Horizontal.Scrollbar.leftarrow", {"side": "left", "sticky": ""}),
-						("Horizontal.Scrollbar.rightarrow", {"side": "right", "sticky": ""}),
-						("Horizontal.Scrollbar.leftarrow", {"side": "right", "sticky": ""}),
-						("Horizontal.Scrollbar.trough", {"sticky": "ew", "children": [
-							("Horizontal.Scrollbar.thumb", {"expand": 1, "unit": 1, "children": [
-								("Horizontal.Scrollbar.grip", {"sticky": ""})
+					]
+				}, "Horizontal.TScrollbar": {
+					   "configure": {
+							"relief": "flat", 
+							"highlightthickness": 0, 
+							"borderwidth": 0,
+							"background": self.clr_tw
+					}, "layout": [
+							("Horizontal.Scrollbar.leftarrow", {"side": "left", "sticky": ""}),
+							("Horizontal.Scrollbar.rightarrow", {"side": "right", "sticky": ""}),
+							("Horizontal.Scrollbar.leftarrow", {"side": "right", "sticky": ""}),
+							("Horizontal.Scrollbar.trough", {"sticky": "ew", "children": [
+								("Horizontal.Scrollbar.thumb", {"expand": 1, "unit": 1, "children": [
+									("Horizontal.Scrollbar.grip", {"sticky": ""})
+								]})
 							]})
-						]})
-				]
-			}
-		})
-		self.srcStyle.theme_use("deft")
-		self.srcStyle.element_create("Horizontal.Scrollbar.trough", "image", self.sbHT, border=2, sticky="ew")
-		self.srcStyle.element_create("Horizontal.Scrollbar.thumb", "image", self.sbHH, border=1, sticky="ew")
-		self.srcStyle.element_create("Horizontal.Scrollbar.grip", "image", self.sbHG)
-		self.srcStyle.element_create("Vertical.Scrollbar.trough", "image", self.sbVT, border=2, sticky="ns")
-		self.srcStyle.element_create("Vertical.Scrollbar.thumb", "image", self.sbVH, border=1, sticky="ns")
-		self.srcStyle.element_create("Vertical.Scrollbar.grip", "image", self.sbVG)
-		
-		self.srcStyle.element_create("Scrollbar.uparrow", "image", self.sbUN, ("pressed", self.sbUP), sticky="")
-		self.srcStyle.element_create("Scrollbar.downarrow", "image", self.sbDN, ("pressed", self.sbDP), sticky="")
-		self.srcStyle.element_create("Scrollbar.leftarrow", "image", self.sbLN, ("pressed", self.sbLP), sticky="")
-		self.srcStyle.element_create("Scrollbar.rightarrow", "image", self.sbRN, ("pressed", self.sbRP), sticky="")
+					]
+				}
+			})
+			self.srcStyle.theme_use("deft")
+			self.srcStyle.element_create("Horizontal.Scrollbar.trough", "image", self.sbHT, border=2, sticky="ew")
+			self.srcStyle.element_create("Horizontal.Scrollbar.thumb", "image", self.sbHH, border=1, sticky="ew")
+			self.srcStyle.element_create("Horizontal.Scrollbar.grip", "image", self.sbHG)
+			self.srcStyle.element_create("Vertical.Scrollbar.trough", "image", self.sbVT, border=2, sticky="ns")
+			self.srcStyle.element_create("Vertical.Scrollbar.thumb", "image", self.sbVH, border=1, sticky="ns")
+			self.srcStyle.element_create("Vertical.Scrollbar.grip", "image", self.sbVG)
+			
+			self.srcStyle.element_create("Scrollbar.uparrow", "image", self.sbUN, ("pressed", self.sbUP), sticky="")
+			self.srcStyle.element_create("Scrollbar.downarrow", "image", self.sbDN, ("pressed", self.sbDP), sticky="")
+			self.srcStyle.element_create("Scrollbar.leftarrow", "image", self.sbLN, ("pressed", self.sbLP), sticky="")
+			self.srcStyle.element_create("Scrollbar.rightarrow", "image", self.sbRN, ("pressed", self.sbRP), sticky="")
+			print("Done")
 
 	# Funcions
 	def quit(self): self.srcWin.destroy()
@@ -459,6 +470,8 @@ FIXME:
 		self.imgs["save-sb"] = self.source.img_save(self.clr_sb)
 		self.imgs["open-gw"] = self.source.img_open(self.clr_gw)
 		self.imgs["open-sb"] = self.source.img_open(self.clr_sb)
+		self.imgs["note-gw"] = self.source.img_note(self.clr_gw)
+		self.imgs["note-sb"] = self.source.img_note(self.clr_sb)
 		self.mWin.iconname(self.imgname_win_alt)
 		self.img_min = self.source.img_min(self.clr_gw)
 		self.img_max = self.source.img_max(self.clr_gw)
@@ -537,7 +550,7 @@ FIXME:
 		self.hotSave = ttk.Button(self.hotBar, image=self.imgs["save-gw"], command=lambda: self.nSave())
 		self.hotOpen = ttk.Button(self.hotBar, image=self.imgs["open-gw"], command=lambda: self.nOpen())
 		self.hotOpen_tip = Hovertip(self.hotOpen, "Open file")
-		self.hotNN = ttk.Button(self.hotBar, image=self.imgs["open-gw"], command=lambda: self.nNewnote())
+		self.hotNN = ttk.Button(self.hotBar, image=self.imgs["note-gw"], command=lambda: self.nNewnote())
 		self.hotNN_tip = Hovertip(self.hotNN, "New Note")
 		self.hotSave.pack(fill="both", side="top", padx=2, pady=1)
 		self.hotOpen.pack(fill="both", side="top", padx=2, pady=1)
