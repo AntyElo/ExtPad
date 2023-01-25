@@ -302,7 +302,7 @@ class CNotebook(ttk.Notebook): # With "CustomNotebook" and TNotebook
 			self.__inititialized = True
 
 		kwargs["style"] = "CNotebook"
-		self.style.theme_use("deft")
+		#self.style.theme_use("deft")
 		ttk.Notebook.__init__(self, *args, **kwargs)
 
 		self._active = None
@@ -420,9 +420,9 @@ class App():
 	def __init__(self):
 		self.vkw = {
 			"codename": "mercurial", # Arch
-			"build": 2, # Every update
-			"path": 2, # Is path of version
-			"type": "beta", # edge(alpha)/beta/rc(candidate)/release
+			"build": 3, # Every update
+			"path": 0, # Is path of version
+			"type": "edge", # edge(alpha)/beta/rc(candidate)/release
 		}
 		self.version = f'{self.vkw["build"]}{self.vkw["type"]}{self.vkw["path"]}'# ~ 2beta1, 2release0
 		self.vsm = "Version kw: "
@@ -445,7 +445,7 @@ FIXME:
 """
 		self.source = Source()
 		self.mWin = self.source.srcWin
-		self.mWin.title("ExtPad")
+		self.mWin.title(f"ExtPad {self.version}")
 		self.mWin.geometry("400x300")
 		self.istopTk = tk.BooleanVar()
 		self.isCSD = tk.BooleanVar()
@@ -482,7 +482,7 @@ FIXME:
 		self.style.map("ghost.TSizegrip", background = [("", self.clr_tw)])
 
 		# Title-Bar: wmButton, mainLabel, mainLabel
-		self.tBar = tk.Frame(self.mWin, bg=self.clr_dsb, bd=1)
+		self.tBar = ttk.Frame(self.mWin)
 		self.wmBtn = ttk.Button(self.tBar, image=self.img_win, style="Title.TButton")
 		self.mMG = tk.Canvas(self.tBar, bg=self.clr_sb, highlightthickness=0, height=0)
 		self.mMG.bind('<Button-1>', self.pointTk)
@@ -507,11 +507,11 @@ FIXME:
 		self.uMenu.add_checkbutton(label="Always at the top", variable=self.istopTk, offvalue=False, onvalue=True, command=self.topTk)
 		self.uMenu.add_command(label="Quit", accelerator="Ctrl-Q", command=self.withQuit)
 		self.uMenu.add_separator()
-		self.uMenu.add_cascade(label="File", menu=self.fMenu, command=(lambda: self.fMenu.focus_force()))
-		self.uMenu.add_cascade(label="Edit", menu=self.eMenu, command=(lambda: self.eMenu.focus_force()))
-		self.uMenu.add_cascade(label="View", menu=self.vMenu, command=(lambda: self.vMenu.focus_force()))
-		self.uMenu.add_cascade(label="Mods", menu=self.modMenu, command=(lambda: self.mpdMenu.focus_force()))
-		self.uMenu.add_cascade(label="App/Help", menu=self.hMenu, command=(lambda: self.hMenu.focus_force()))
+		self.uMenu.add_cascade(label="File", menu=self.fMenu)
+		self.uMenu.add_cascade(label="Edit", menu=self.eMenu)
+		self.uMenu.add_cascade(label="View", menu=self.vMenu)
+		self.uMenu.add_cascade(label="Mods", menu=self.modMenu)
+		self.uMenu.add_cascade(label="App/Help", menu=self.hMenu)
 
 		self.fMenu.add_command(label="Save", accelerator="Ctrl-S", command=self.nSave)
 		self.fMenu.add_command(label="Save as...", accelerator="Ctrl-Shift-S", command=self.nSaveas)
@@ -577,9 +577,9 @@ FIXME:
 		else: self.mWin.attributes('-type', "normal")
 		self.mWin.wm_state("withdraw")
 		self.mWin.wm_state("normal")
-	def topTk(self, bl=None): 
+	def topTk(self, bl=None, **kw): 
 		if bl == None: bl = self.istopTk.get()
-		self.mWin.attributes("-topmost", bl)
+		kw.setdefault("win", self.mWin).attributes("-topmost", bl)
 	def ifloatTk(self, bl=None): 
 		if bl == None: bl = self.isCSD.get()
 		if sysplatform == "win32": self.mWin.overrideredirect(bl)
@@ -593,33 +593,33 @@ FIXME:
 		if self.source.Tk == "max": 
 			self.withMin()
 			return
-		else: self.mWin.wm_geometry(f"+{str(event.x_root+self.source.xTk)}+{str(event.y_root+self.source.yTk)}")
+		self.mWin.wm_geometry(f"+{str(event.x_root+self.source.xTk)}+{str(event.y_root+self.source.yTk)}")
 	def withMin(self):
-		if self.source.Tk != "normal":
-			self.mMinBtn.pack_forget()
-			self.mMG.pack_forget()
-			self.mLbl.pack_forget()
-			self.mSG.pack(fill="both", side="right")
-			self.mLbl.pack(fill="both", expand=True)
-			self.mWin.geometry(f"{self.source.ww}x{self.source.wh}+{self.source.wrx}+{self.source.wry}")
-			self.mMaxBtn.pack(fill="both", side="right")
-			self.mMG.pack(fill="both", expand=True)
-			self.source.Tk = "normal"
+		if self.source.Tk == "normal": return
+		self.mMinBtn.pack_forget()
+		self.mMG.pack_forget()
+		self.mLbl.pack_forget()
+		self.mSG.pack(fill="both", side="right")
+		self.mLbl.pack(fill="both", expand=True)
+		self.mWin.geometry(f"{self.source.ww}x{self.source.wh}+{self.source.wrx}+{self.source.wry}")
+		self.mMaxBtn.pack(fill="both", side="right")
+		self.mMG.pack(fill="both", expand=True)
+		self.source.Tk = "normal"
 	def withMax(self):
-		if self.source.Tk != "max":
-			self.mMaxBtn.pack_forget()
-			self.mMG.pack_forget()
-			self.mSG.pack_forget()
-			self.tmpx = self.mWin.cget("padx")
-			self.tmpy = self.mWin.cget("pady")
-			self.source.wrx = self.mWin.winfo_rootx()
-			self.source.wry = self.mWin.winfo_rooty()
-			self.source.ww  = self.mWin.winfo_width()
-			self.source.wh  = self.mWin.winfo_height()
-			self.mWin.geometry(f"{self.mWin.winfo_screenwidth()}x{self.mWin.winfo_screenheight()}+0+0")
-			self.mMinBtn.pack(fill="both", side="right")
-			self.mMG.pack(fill="both", expand=True)
-			self.source.Tk = "max"
+		if self.source.Tk == "max": return
+		self.mMaxBtn.pack_forget()
+		self.mMG.pack_forget()
+		self.mSG.pack_forget()
+		self.tmpx = self.mWin.cget("padx")
+		self.tmpy = self.mWin.cget("pady")
+		self.source.wrx = self.mWin.winfo_rootx()
+		self.source.wry = self.mWin.winfo_rooty()
+		self.source.ww  = self.mWin.winfo_width()
+		self.source.wh  = self.mWin.winfo_height()
+		self.mWin.geometry(f"{self.mWin.winfo_screenwidth()}x{self.mWin.winfo_screenheight()}+0+0")
+		self.mMinBtn.pack(fill="both", side="right")
+		self.mMG.pack(fill="both", expand=True)
+		self.source.Tk = "max"
 	def withQuit(self):
 		for i in range(len(self.mNB.tabs())): 
 			if self.nClose(): return
@@ -627,7 +627,7 @@ FIXME:
 		# Menu
 	def popU(self, event):
 		self.uMenu.tk_popup(event.x_root, event.y_root, 0)
-		self.wmBtn.focus_force()
+		#self.wmBtn.focus_force()
 	def popEdit(self, event): self.eMenu.tk_popup(event.x_root, event.y_root, 0)
 		# Notebook (aka n-prefixed)
 	def get_nText(self): return self.mWin.nametowidget(self.mNB.select()+".!text")
@@ -843,6 +843,7 @@ FIXME:
 		self.mWin.bind("<Control-n>", lambda ev: self.nNew())
 		self.mWin.bind("<Control-N>", lambda ev: self.nNewnote())
 		self.mWin.bind("<Control-D>", lambda ev: self.nClose())
+		self.mWin.bind("<Control-e>", lambda ev: self.nExec())
 		self.mWin.bind("<F1>", lambda ev: self.nInfo())
 		self.mWin.update()
 		self.mWin.minsize(
