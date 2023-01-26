@@ -22,24 +22,14 @@ class Source():
 		self.cfgFile = None
 		self.srcWin = tk.Tk()
 		self.Tk = "normal"
-		self.dbg = tk.BooleanVar()
-		self.dbg.set(False)
-		self.xTk = 0
-		self.yTk = 0
-		self.wrx = 0
-		self.wry = 0
-		self.ww = 400
-		self.wh = 300
-		self.sizeX = 0
-		self.sizeY = 0
+		self.dbg = tk.BooleanVar(value=False) # App.nSel() req
+		self.xTk, self.yTk, self.wrx, self.wry, self.sizeX, self.sizeY = [0, 0, 0, 0, 0, 0]
+		self.ww, self.wh = [400, 300]
 		global imgCont
 		self.imgCont = imgCont
-		self.clr_bg = self.srcWin.cget('bg')
-		self.clr_tw = tk.Entry(self.srcWin).cget("bg")
-		self.clr_gw = "ghostwhite"
-		self.clr_sb = "steelblue"
-		self.clr_dsb = "darkslateblue"
-		self.clr_lsb = "lightsteelblue"
+		self.fileforms = [("All formats", "*.*"), ("Text file", "*.txt"), ("Python file", "*.py")]
+		self.clr_bg, self.clr_tw = [self.srcWin.cget('bg'), tk.Entry(self.srcWin, name="__colorget_entry").cget("bg")]
+		self.clr_gw, self.clr_sb, self.clr_dsb, self.clr_lsb = ["ghostwhite", "steelblue", "darkslateblue", "lightsteelblue"]
 		self.hints = \
 """WM: <C/S>SD = <Client/Server>-Side Decorartion"""
 		self.img_win_alt = self.Fimg("win_alt", """#define win_width 16
@@ -119,150 +109,153 @@ YyUGClHaVZw4Ks0GRp/jseT5rhk8uzUcX+FeAAA7""")
 CW6LT1O/VSFHWYlpIugIZuL3hukEtjLW2ZLCJwUAOw==""")
 		self.sbRP = tk.PhotoImage(data="""R0lGODlhEAAQAIAAALDE3rDE3iH+BHNiUlAAIfkEAQoAAQAsAAAAABAAEAAAAieMj3nA7byehMGZ
 CW6LT1O/VSFHWYlpIugIZuL3hukEtjLW2ZLCJwUAOw==""")
+		self._styling()
+
+	def _styling(self):
 		self.srcStyle = ttk.Style()
 		if "deft" in self.srcStyle.theme_names():
 			print("[src] deft done")
-		else:
-			print("[src] create theme 'deft' ... ", end="")
-			self.srcStyle.theme_create("deft", parent="alt", settings={
-				   "TLabel": {
-					   "map": {
-							"background": [("", self.clr_bg)]
-					}
-				}, "Flat.TButton": {
-					   "configure": {
-							"margins": [0],
-							"padding": [3],
-							"relief": "flat", 
-							"highlightthickness": 0, 
-							"borderwidth": 0
-					}
-				}, "Togle.TButton": {
-					   "configure": {
-							"margins": [0],
-							"padding": [3],
-							"relief": "raised", 
-							"highlightthickness": 1, 
-							"borderwidth": 1
-					}, "map": {
-							"relief": [("active", "raised"), ("", "flat")], 
-							"foreground": [("active", self.clr_gw), ("", self.clr_sb)], 
-							"background": [("active", self.clr_lsb), ("", self.clr_bg)]
-					}
-				}, "Title.TButton": {
-					   "configure": {
-							"margins": [0],
-							"padding": [3],
-							"relief": "flat", 
-							"highlightthickness": 0, 
-							"borderwidth": 0,
-							"font": 10
-					}, "map": {
-							"foreground": [("active", self.clr_gw), ("", self.clr_gw)], 
-							"background": [("active", self.clr_lsb), ("", self.clr_sb)]
-					}
-				}, "TButton": {
-					   "configure": {
-							"margins": [0],
-							"padding": [3],
-							"relief": "raised", 
-							"highlightthickness": 1, 
-							"borderwidth": 1,
-							"background": self.clr_lsb
-					}, "map": {
-							"foreground": [("active", self.clr_gw), ("", self.clr_gw)], 
-							"background": [("active", self.clr_lsb), ("", self.clr_sb)]
-					}
-				}, "CNotebook": {
-					   "configure": {
-							"borderwidth": 0, 
-							"tabmargins": [3, 4, 2, 0], 
-							#"tabposition": "wn"
-					}
-				}, "CNotebook.Tab": {
-					   "configure": {
-							"borderwidth": 0, 
-							"padding": [5, 3]
-					}, "map": {
-							"background": [("selected", self.clr_tw), ("", self.clr_bg)] 
-					}
-				}, "TNotebook": {
-					   "configure": {
-							"borderwidth": 0, 
-							"tabmargins": [3, 4, 2, 0], 
-							#"tabposition": "wn"
-					}
-				}, "TNotebook.Tab": {
-					   "configure": {
-							"borderwidth": 0, 
-							"padding": [5, 3]
-					}, "map": {
-							"background": [("selected", self.clr_tw), ("", self.clr_bg)] 
-					}
-				}, "Vertical.TScrollbar": {
-					   "configure": {
-							"relief": "flat",
-							"highlightthickness": 0, 
-							"borderwidth": 0,
-							"troughborderwidth": 0,
-							"background": self.clr_tw
-					}, "layout": [
-							("Vertical.Scrollbar.uparrow", {"side": "top", "sticky": ""}),
-							("Vertical.Scrollbar.downarrow", {"side": "bottom", "sticky": ""}),
-							("Vertical.Scrollbar.uparrow", {"side": "bottom", "sticky": ""}),
-							("Vertical.Scrollbar.trough", {"sticky": "ns", "children": [
-								("Vertical.Scrollbar.thumb", {"expand": 1, "unit": 1, "children": [
-									("Vertical.Scrollbar.grip", {"sticky": ""})
-								]})
-							]})
-					]
-				}, "Horizontal.TScrollbar": {
-					   "configure": {
-							"relief": "flat", 
-							"highlightthickness": 0, 
-							"borderwidth": 0,
-							"background": self.clr_tw
-					}, "layout": [
-							("Horizontal.Scrollbar.leftarrow", {"side": "left", "sticky": ""}),
-							("Horizontal.Scrollbar.rightarrow", {"side": "right", "sticky": ""}),
-							("Horizontal.Scrollbar.leftarrow", {"side": "right", "sticky": ""}),
-							("Horizontal.Scrollbar.trough", {"sticky": "ew", "children": [
-								("Horizontal.Scrollbar.thumb", {"expand": 1, "unit": 1, "children": [
-									("Horizontal.Scrollbar.grip", {"sticky": ""})
-								]})
-							]})
-					]
+			return
+		print("[src] create theme 'deft' ... ", end="")
+		self.srcStyle.theme_create("deft", parent="alt", settings={
+			   "TLabel": {
+				   "map": {
+						"background": [("", self.clr_bg)]
 				}
-			})
-			self.srcStyle.theme_use("deft")
-			self.srcStyle.element_create("Horizontal.Scrollbar.trough", "image", self.sbHT, border=2, sticky="ew")
-			self.srcStyle.element_create("Horizontal.Scrollbar.thumb", "image", self.sbHH, border=1, sticky="ew")
-			self.srcStyle.element_create("Horizontal.Scrollbar.grip", "image", self.sbHG)
-			self.srcStyle.element_create("Vertical.Scrollbar.trough", "image", self.sbVT, border=2, sticky="ns")
-			self.srcStyle.element_create("Vertical.Scrollbar.thumb", "image", self.sbVH, border=1, sticky="ns")
-			self.srcStyle.element_create("Vertical.Scrollbar.grip", "image", self.sbVG)
-			
-			self.srcStyle.element_create("Scrollbar.uparrow", "image", self.sbUN, ("pressed", self.sbUP), sticky="")
-			self.srcStyle.element_create("Scrollbar.downarrow", "image", self.sbDN, ("pressed", self.sbDP), sticky="")
-			self.srcStyle.element_create("Scrollbar.leftarrow", "image", self.sbLN, ("pressed", self.sbLP), sticky="")
-			self.srcStyle.element_create("Scrollbar.rightarrow", "image", self.sbRN, ("pressed", self.sbRP), sticky="")
-			print("Done")
+			}, "Flat.TButton": {
+				   "configure": {
+						"margins": [0],
+						"padding": [3],
+						"relief": "flat", 
+						"highlightthickness": 0, 
+						"borderwidth": 0
+				}
+			}, "Togle.TButton": {
+				   "configure": {
+						"margins": [0],
+						"padding": [3],
+						"relief": "raised", 
+						"highlightthickness": 1, 
+						"borderwidth": 1
+				}, "map": {
+						"relief": [("active", "raised"), ("", "flat")], 
+						"foreground": [("active", self.clr_gw), ("", self.clr_sb)], 
+						"background": [("active", self.clr_lsb), ("", self.clr_bg)]
+				}
+			}, "Title.TButton": {
+				   "configure": {
+						"margins": [0],
+						"padding": [3],
+						"relief": "flat", 
+						"highlightthickness": 0, 
+						"borderwidth": 0,
+						"font": 10
+				}, "map": {
+						"foreground": [("active", self.clr_gw), ("", self.clr_gw)], 
+						"background": [("active", self.clr_lsb), ("", self.clr_sb)]
+				}
+			}, "TButton": {
+				   "configure": {
+						"margins": [0],
+						"padding": [3],
+						"relief": "raised", 
+						"highlightthickness": 1, 
+						"borderwidth": 1,
+						"background": self.clr_lsb
+				}, "map": {
+						"foreground": [("active", self.clr_gw), ("", self.clr_gw)], 
+						"background": [("active", self.clr_lsb), ("", self.clr_sb)]
+				}
+			}, "CNotebook": {
+				   "configure": {
+						"borderwidth": 0, 
+						"tabmargins": [3, 4, 2, 0], 
+						#"tabposition": "wn"
+				}
+			}, "CNotebook.Tab": {
+				   "configure": {
+						"borderwidth": 0, 
+						"padding": [5, 3]
+				}, "map": {
+						"background": [("selected", self.clr_tw), ("", self.clr_bg)] 
+				}
+			}, "TNotebook": {
+				   "configure": {
+						"borderwidth": 0, 
+						"tabmargins": [3, 4, 2, 0], 
+						#"tabposition": "wn"
+				}
+			}, "TNotebook.Tab": {
+				   "configure": {
+						"borderwidth": 0, 
+						"padding": [5, 3]
+				}, "map": {
+						"background": [("selected", self.clr_tw), ("", self.clr_bg)] 
+				}
+			}, "Vertical.TScrollbar": {
+				   "configure": {
+						"relief": "flat",
+						"highlightthickness": 0, 
+						"borderwidth": 0,
+						"troughborderwidth": 0,
+						"background": self.clr_tw
+				}, "layout": [
+						("Vertical.Scrollbar.uparrow", {"side": "top", "sticky": ""}),
+						("Vertical.Scrollbar.downarrow", {"side": "bottom", "sticky": ""}),
+						("Vertical.Scrollbar.uparrow", {"side": "bottom", "sticky": ""}),
+						("Vertical.Scrollbar.trough", {"sticky": "ns", "children": [
+							("Vertical.Scrollbar.thumb", {"expand": 1, "unit": 1, "children": [
+								("Vertical.Scrollbar.grip", {"sticky": ""})
+							]})
+						]})
+				]
+			}, "Horizontal.TScrollbar": {
+				   "configure": {
+						"relief": "flat", 
+						"highlightthickness": 0, 
+						"borderwidth": 0,
+						"background": self.clr_tw
+				}, "layout": [
+						("Horizontal.Scrollbar.leftarrow", {"side": "left", "sticky": ""}),
+						("Horizontal.Scrollbar.rightarrow", {"side": "right", "sticky": ""}),
+						("Horizontal.Scrollbar.leftarrow", {"side": "right", "sticky": ""}),
+						("Horizontal.Scrollbar.trough", {"sticky": "ew", "children": [
+							("Horizontal.Scrollbar.thumb", {"expand": 1, "unit": 1, "children": [
+								("Horizontal.Scrollbar.grip", {"sticky": ""})
+							]})
+						]})
+				]
+			}
+		})
+		self.srcStyle.theme_use("deft")
+		self.srcStyle.element_create("Horizontal.Scrollbar.trough", "image", self.sbHT, border=2, sticky="ew")
+		self.srcStyle.element_create("Horizontal.Scrollbar.thumb", "image", self.sbHH, border=1, sticky="ew")
+		self.srcStyle.element_create("Horizontal.Scrollbar.grip", "image", self.sbHG)
+		self.srcStyle.element_create("Vertical.Scrollbar.trough", "image", self.sbVT, border=2, sticky="ns")
+		self.srcStyle.element_create("Vertical.Scrollbar.thumb", "image", self.sbVH, border=1, sticky="ns")
+		self.srcStyle.element_create("Vertical.Scrollbar.grip", "image", self.sbVG)
+		
+		self.srcStyle.element_create("Scrollbar.uparrow", "image", self.sbUN, ("pressed", self.sbUP), sticky="")
+		self.srcStyle.element_create("Scrollbar.downarrow", "image", self.sbDN, ("pressed", self.sbDP), sticky="")
+		self.srcStyle.element_create("Scrollbar.leftarrow", "image", self.sbLN, ("pressed", self.sbLP), sticky="")
+		self.srcStyle.element_create("Scrollbar.rightarrow", "image", self.sbRN, ("pressed", self.sbRP), sticky="")
+		print("Done")
 
 	# Funcions
 	def quit(self): self.srcWin.destroy()
 	def lulzf(self): print("Source.lulzf(): LULZ!!!")
 	def cfgpath_set(self, inp=None):
 		global cfgPath
-		if inp == None: cfgPath = tkfd.askopenfilename(filetypes=[("All formats", "*.*"), ("Text file", "*.txt"), ("Python file", "*.py")])
-		else:
-			cfgPath = str(inp)
-			self.cfgPath = str(inp)
+		if inp == None:
+			cfgPath = tkfd.askopenfilename(filetypes=self.fileforms)
+			return
+		cfgPath = str(inp)
+		self.cfgPath = str(inp)
 	def cfg_update(self):
 		if self.cfgPath == "": return
-		else:
-			tmp = open(cfgPath, "x")
-			self.cfgFile = tmp.read()
-			tmp.close()
+		tmp = open(cfgPath, "x")
+		self.cfgFile = tmp.read()
+		tmp.close()
 
 	# Funcion-image (fimage, fimg)
 	class Fimg():
@@ -421,7 +414,7 @@ class App():
 		self.vkw = {
 			"codename": "mercurial", # Arch
 			"build": 3, # Every update
-			"path": 0, # Is path of version
+			"path": 1, # Is path of version
 			"type": "edge", # edge(alpha)/beta/rc(candidate)/release
 		}
 		self.version = f'{self.vkw["build"]}{self.vkw["type"]}{self.vkw["path"]}'# ~ 2beta1, 2release0
@@ -447,21 +440,15 @@ FIXME:
 		self.mWin = self.source.srcWin
 		self.mWin.title(f"ExtPad {self.version}")
 		self.mWin.geometry("400x300")
-		self.istopTk = tk.BooleanVar()
-		self.isCSD = tk.BooleanVar()
-		self.istopTk.set(True)
-		self.isCSD.set(True)
+		self.istopTk = tk.BooleanVar(value=True)
+		self.isCSD = tk.BooleanVar(value=True)
 		self.ifloatTk()
 		self.mWin["takefocus"] = True
 		self.style = self.source.srcStyle
 		self.nBuffer = ""
-		self.clr_bg = self.source.clr_bg
-		self.clr_tw = self.source.clr_tw
-		self.clr_gw = self.source.clr_gw
-		self.clr_sb = self.source.clr_sb
-		self.clr_dsb = self.source.clr_dsb
-		self.clr_lsb = self.source.clr_lsb
-		self.fform = [("All formats", "*.*"), ("Text file", "*.txt"), ("Python file", "*.py")]
+		for clri in ["bg", "tw", "gw", "sb", "dsb", "lsb"]:
+			exec(f"self.clr_{clri} = self.source.clr_{clri}", locals())
+		self.fform = self.source.fileforms
 		self.nInfo_hints = self.source.hints
 		self.imgs = {}
 		self.img_win = self.source.img_win(self.clr_gw)
