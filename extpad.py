@@ -25,7 +25,8 @@ class Source():
 		global imgCont
 		self.imgCont = imgCont
 		self.fileforms = [("All formats", "*.*"), ("Text file", "*.txt"), ("Python file", "*.py")]
-		self.clr_bg, self.clr_tw = [self.srcWin.cget('bg'), tk.Entry(self.srcWin, name="__colorget_entry").cget("bg")]
+		self.tw_twst = tk.Entry(self.srcWin, name="__colorget_entry")
+		self.clr_bg, self.clr_tw = [self.srcWin.cget('bg'), tk.Entry(self.srcWin).cget("bg")]
 		self.clr_gw, self.clr_sb, self.clr_dsb, self.clr_lsb = ["ghostwhite", "steelblue", "darkslateblue", "lightsteelblue"]
 		self.hints = \
 """WM: <C/S>SD = <Client/Server>-Side Decorartion"""
@@ -226,7 +227,23 @@ CW6LT1O/VSFHWYlpIugIZuL3hukEtjLW2ZLCJwUAOw==""")
 		}
 		self._styling()
 
+	def _tth_styling(self):
+		try:
+			import ttkthemes as tth
+			self.srcStyle = tth.ThemedStyle()
+			self.istth = True
+		except ImportError:
+			self.srcStyle = ttk.Style()
+			self.istth = False
+		
+		if self.istth:
+			print("[src] tth enabled")
+			return 1
+		else:
+			print("[src] tth disabled")
+
 	def _styling(self):
+		#if _tth_styling(): return
 		self.srcStyle = ttk.Style()
 		if "deftc" in self.srcStyle.theme_names():
 			print("[src] deftc done")
@@ -265,6 +282,9 @@ CW6LT1O/VSFHWYlpIugIZuL3hukEtjLW2ZLCJwUAOw==""")
 		self.srcStyle.element_create("Scrollbar.leftarrow", "image", self.sbLN, ("pressed", self.sbLP), sticky="")
 		self.srcStyle.element_create("Scrollbar.rightarrow", "image", self.sbRN, ("pressed", self.sbRP), sticky="")
 		print("Done")
+
+	def clr_twx(self):
+		return self.tw_twst.cget("bg")
 
 	# Funcions
 	def quit(self): self.srcWin.destroy()
@@ -531,7 +551,7 @@ FIXME:
 		self.eMenu.add_command(label="Paste", accelerator="Ctrl-V", command=self.ePaste)
 		self.eMenu.add_command(label="Cut", accelerator="Ctrl-X", command=self.eCut)
 
-		self.vMenu.add_command(label="[View]", command=self.source.lulzf)
+		self.vMenu.add_command(label="Styles (built-in mod)", command=self.mod_styles)
 
 		self.modMenu.add_command(label="Exec", command=self.nExec)
 
@@ -573,6 +593,38 @@ FIXME:
 
 	# Funcions
 		# Tk
+	def mod_styles__temme(self, *a, **kw):
+			if self.imgd.get(): # dark
+				for imgi in self.imgst:
+					exec(f"self.img_{imgi}['foreground'] = self.clr_gw", locals())
+			else:
+				for imgi in self.imgst:
+					exec(f"self.img_{imgi}['foreground'] = self.clr_sb", locals())
+	def mod_styles(self):
+		def grcs(row, column, sticky, *args): return {"row": row, "column": column, "sticky": sticky}
+		def newst(*a, **kw):
+			#print(f"[styles] newst func. args: {a}; kw: {kw}")
+			req = combox.get()
+			if req.strip() == "":
+				return
+			self.style.theme_use(req)
+			combox["values"] = sorted(self.style.theme_names(), key=str.lower)
+			#combox.set(invar)
+		self.mWin.bind("<<ThemeChanged>>", self.mod_styles__temme)
+		top = tk.Toplevel()
+		top.title("ExtPad: Themes")
+		self.topTk(True, win=top)
+		combox = ttk.Combobox(top, values=sorted(self.style.theme_names(), key=str.lower))
+		combox.bind("<Return>", newst)
+		btn = ttk.Button(top, text="[Run]", command=newst)
+		cbtn = ttk.Checkbutton(top, text="light/dark icon", variable=self.imgd, offvalue=False, onvalue=True, command=self.mod_styles__temme)
+		combox.grid(**grcs(0, 0, "nswe"))
+		btn.grid(**grcs(0, 1, "nswe"))
+		cbtn.grid(**grcs(1, 0, "nswe"), columnspan=2)
+		#top.rowconfigure(0, weight=1)
+		top.columnconfigure(0, weight=1)
+		top.mainloop()
+		#self.mWin.nametowidget(".!frame")["bg"] = "red"
 	def forceTk(self): self.mWin.focus_force()
 	def floatTk(self):
 		if sysplatform == "win32": self.mWin.overrideredirect(True)
