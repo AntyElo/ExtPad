@@ -460,7 +460,7 @@ class App():
 		self.vkw = {
 			"codename": "mercurial", # Arch
 			"build": 3, # Every update
-			"path": 1, # Is path of version
+			"path": 2, # Is path of version
 			"type": "edge", # edge(alpha)/beta/rc(candidate)/release
 		}
 		self.version = f'{self.vkw["build"]}{self.vkw["type"]}{self.vkw["path"]}'# ~ 2beta1, 2release0
