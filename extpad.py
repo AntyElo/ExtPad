@@ -19,6 +19,7 @@ class Source():
 	def __init__(self):
 		self.srcWin = tk.Tk()
 		self.Tk = "normal"
+		self.future_tth = False # Toggle to get ttkthemes future
 		self.dbg = tk.BooleanVar(value=False) # App.nSel() req
 		self.xTk, self.yTk, self.wrx, self.wry, self.sizeX, self.sizeY = [0, 0, 0, 0, 0, 0]
 		self.ww, self.wh = [400, 300]
@@ -243,8 +244,10 @@ CW6LT1O/VSFHWYlpIugIZuL3hukEtjLW2ZLCJwUAOw==""")
 			print("[src] tth disabled")
 
 	def _styling(self):
-		#if _tth_styling(): return
-		self.srcStyle = ttk.Style()
+		if self.future_tth:
+			if self._tth_styling(): return
+		else:
+			self.srcStyle = ttk.Style()
 		if "deftc" in self.srcStyle.theme_names():
 			print("[src] deftc done")
 			return
@@ -340,7 +343,6 @@ class CNotebook(ttk.Notebook): # With "CustomNotebook" and TNotebook
 			self.__inititialized = True
 
 		kwargs["style"] = "CNotebook"
-		#self.style.theme_use("deft")
 		ttk.Notebook.__init__(self, *args, **kwargs)
 
 		self._active = None
@@ -624,6 +626,7 @@ FIXME:
 		#top.rowconfigure(0, weight=1)
 		top.columnconfigure(0, weight=1)
 		top.mainloop()
+		exit()
 		#self.mWin.nametowidget(".!frame")["bg"] = "red"
 	def forceTk(self): self.mWin.focus_force()
 	def floatTk(self):
@@ -693,7 +696,8 @@ FIXME:
 	def get_npath(self):
 		if self.mNB.select().split(":")[0].split(".")[-1] == "file":
 			return self.mWin.nametowidget(self.mNB.select()+".filepath").cget("text")
-		else: return
+		elif self.mNB.select().split(":")[0].split(".")[-1] == "note":
+			return self.mWin.nametowidget(self.mNB.select()+".filepath").cget("text")
 	def nSel(self, event):
 		if   len(self.mNB.tabs()) == 0:
 			self.mLbl["text"] = f"Hello in ExtPad {self.version}"
