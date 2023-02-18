@@ -5,9 +5,13 @@
 def main(api):
 	"""Main method"""
 	if api.vkw["build"] < 2: return
+	def _ex(*args, **kw):
+		src = ent.get()
+		if src:
+			return eval(src, globals(), locals())
 	def ex(*args, **kw):
 		api
-		lbl.insert("end", f"=== SoF eval\n{ent.get()}\n===\n{eval(ent.get(), globals(), locals())}\n=== Eof eval\n")
+		lbl.insert("end", f"[eval] '{ent.get()}': {_ex()}\n")
 	import tkinter as tk
 	from tkinter import ttk
 	xeTop = tk.Toplevel()

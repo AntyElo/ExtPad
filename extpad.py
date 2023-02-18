@@ -1,459 +1,11 @@
 #!/bin/python3
-#cfgPath="" - Deprecated (TODO?)
-import time
-import tkinter as tk
-import tkinter.ttk as ttk
-import tkinter.filedialog as tkfd
-import tkinter.simpledialog as tksd
-import tkinter.messagebox as tkmb
-from idlelib.tooltip import Hovertip
-import os
-import os.path as ospath
-from random import randint as rint
-from sys import platform as sysplatform
+from deps import *
 currentpath = os.system('$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )')
 imgCont = 0
 
-class Source():
-	# So, sorce
-	def __init__(self):
-		self.srcWin = tk.Tk()
-		self.Tk = "normal"
-		self.future_tth = False # Toggle to get ttkthemes future
-		self.dbg = tk.BooleanVar(value=False) # App.nSel() req
-		self.xTk, self.yTk, self.wrx, self.wry, self.sizeX, self.sizeY = [0, 0, 0, 0, 0, 0]
-		self.ww, self.wh = [400, 300]
-		global imgCont
-		self.imgCont = imgCont
-		self.fileforms = [("All formats", "*.*"), ("Text file", "*.txt"), ("Python file", "*.py")]
-		self.tw_twst = tk.Entry(self.srcWin, name="__colorget_entry")
-		self.clr_bg, self.clr_tw = [self.srcWin.cget('bg'), tk.Entry(self.srcWin).cget("bg")]
-		self.clr_gw, self.clr_sb, self.clr_dsb, self.clr_lsb = ["ghostwhite", "steelblue", "darkslateblue", "lightsteelblue"]
-		self.hints = \
-"""WM: <C/S>SD = <Client/Server>-Side Decorartion"""
-		self.img_win_alt = self.Fimg("win_alt", """#define win_width 16
-#define win_height 16
-static unsigned char win_bits[] = {
-    0x00, 0x00, 0xfe, 0x7f, 0xfe, 0x7f, 0x02, 0x40, 0xea, 0x4e, 0x02, 0x40,
-    0x7a, 0x4f, 0x02, 0x40, 0xba, 0x4d, 0x02, 0x40, 0x7a, 0x4f, 0x02, 0x40,
-    0xda, 0x4d, 0x02, 0x40, 0xfe, 0x7f, 0x00, 0x00 };""").fimg
-		self.img_win = self.Fimg("win", """#define win_width 16
-#define win_height 16
-static unsigned char win_bits[] = {
-    0x00, 0x00, 0x00, 0x00, 0xd8, 0x36, 0xfc, 0x3f, 0x14, 0x22, 0xfc, 0x3f,
-    0x44, 0x28, 0xfc, 0x3f, 0x84, 0x24, 0xfc, 0x3f, 0x04, 0x20, 0xfc, 0x3f,
-    0x04, 0x21, 0xfc, 0x3f, 0x00, 0x00, 0x00, 0x00 };""").fimg
-		self.img_min = self.Fimg("min", """#define min_width 16
-#define min_height 16
-static unsigned char min_bits[] = {
-    0x00, 0x00, 0x00, 0x00, 0xfc, 0x03, 0xfc, 0x03, 0xfc, 0x03, 0xfc, 0x03,
-    0x0c, 0x3b, 0x0c, 0x3b, 0xfc, 0x3b, 0xfc, 0x3b, 0x00, 0x30, 0xc0, 0x30,
-    0xc0, 0x3f, 0xc0, 0x3f, 0x00, 0x00, 0x00, 0x00 };""").fimg
-		self.img_max = self.Fimg("max", """#define max_width 16
-#define max_height 16
-static unsigned char max_bits[] = {
-    0x00, 0x00, 0x00, 0x00, 0xfc, 0x3f, 0xfc, 0x3f, 0xfc, 0x3f, 0xfc, 0x3f,
-    0x0c, 0x30, 0x0c, 0x30, 0x0c, 0x30, 0x0c, 0x30, 0x0c, 0x30, 0x0c, 0x30,
-    0xfc, 0x3f, 0xfc, 0x3f, 0x00, 0x00, 0x00, 0x00 };""").fimg
-		self.img_close = self.Fimg("close", """#define close_width 16
-#define close_height 16
-static unsigned char close_bits[] = {
-    0x00, 0x00, 0x00, 0x00, 0x0c, 0x30, 0x1c, 0x38, 0x38, 0x1c, 0x70, 0x0e,
-    0xe0, 0x07, 0xc0, 0x03, 0xc0, 0x03, 0xe0, 0x07, 0x70, 0x0e, 0x38, 0x1c,
-    0x1c, 0x38, 0x0c, 0x30, 0x00, 0x00, 0x00, 0x00 };""").fimg
-		self.img_open = self.Fimg("open", """#define open16_width 16
-#define open16_height 16
-static unsigned char open16_bits[] = {
-   0x00, 0x00, 0x00, 0x00, 0xf8, 0x0f, 0x04, 0x1c, 0x04, 0x3c, 0xf4, 0x3c,
-   0x04, 0x20, 0xf4, 0x27, 0x04, 0x20, 0xf4, 0x27, 0x04, 0x20, 0xf4, 0x27,
-   0x04, 0x20, 0xf8, 0x1f, 0x00, 0x00, 0x00, 0x00 };""").fimg
-		self.img_note = self.Fimg("open", """#define open16_width 16
-#define open16_height 16
-static unsigned char open16_bits[] = {
-   0x00, 0x00, 0x00, 0x00, 0xf8, 0x0f, 0x04, 0x1c, 0x04, 0x3c, 0xf4, 0x3c,
-   0x04, 0x20, 0xf4, 0x27, 0x04, 0x20, 0xf4, 0x27, 0x04, 0x20, 0xf4, 0x27,
-   0x04, 0x20, 0xf8, 0x1f, 0x00, 0x00, 0x00, 0x00 };""").fimg #FIXME: note icon
-		self.img_save = self.Fimg("save", """#define save16_width 16
-#define save16_height 16
-static unsigned char save16_bits[] = {
-    0x00, 0x00, 0x00, 0x00, 0xf8, 0x0f, 0x74, 0x14, 0x74, 0x24, 0x74, 0x24,
-    0xf4, 0x27, 0x04, 0x20, 0x04, 0x20, 0xe4, 0x27, 0x14, 0x28, 0x14, 0x28,
-    0x14, 0x28, 0xf8, 0x1f, 0x00, 0x00, 0x00, 0x00 };""").fimg
-		self.sbVT = tk.PhotoImage(data="""R0lGODlhEAAQAIABALDE3kaCtCH+CHNiVHJvdWdoACH5BAEKAAEALAAAAAAQABAAAAIgjI95wO28
-lAKGSmTtrXx3vWXeNwbieHpp2KktWz1yqRQAOw==""")
-		self.sbVH = tk.PhotoImage(data="""R0lGODlhEAAgAKEAAEaCtLDE3kaCtEaCtCH+BHNiVlQAIfkEAQoAAgAsAAAAABAAIAAAAkCUgKlo
-Fw/jAwbIG6jDUVsOeWBYjVNpiik6qi0LujHMyTWN2Tl+6T0v8QWBHSJp80LOlDfmzvmDDqVF6vGw
-yBoKADs=""")
-		self.sbVG = tk.PhotoImage(data="""R0lGODlhCgAOAIAAAEaCtEaCtCH+BHNiVkcAIfkEAQoAAQAsAAAAAAoADgAAAhCEj5nB7f+UlLDW
-iY/dLecCADs=""")
-		self.sbHT = tk.PhotoImage(data="""R0lGODlhEAAQAIABALDE3kaCtCH+CHNiVHJvdWdoACH5BAEKAAEALAAAAAAQABAAAAIgjI95wO28
-lAKGSmTtrXx3vWXeNwbieHpp2KktWz1yqRQAOw==""")
-		self.sbHH = tk.PhotoImage(data="""R0lGODlhIAAQAKEAAEaCtLDE3kaCtEaCtCH+BHNiSEgAIfkEAQoAAgAsAAAAACAAEAAAAjOUj6mb
-4A+jnE6AgLPevGPnhWIGjiZXnmqQrmbrinDszTR63XKu13yPA9YslKKxwkgqEwUAOw==""")
-		self.sbHG = tk.PhotoImage(data="""R0lGODlhDgAKAIAAAEaCtEaCtCH+BHNiSEcAIfkEAQoAAQAsAAAAAA4ACgAAAhcEEoaadr2ekzSy
-S3G0FTbtTVvojBiIFQA7""")
-		self.sbUN = tk.PhotoImage(data="""R0lGODlhEAAQAIABAEaCtLDE3iH+BHNiVU4AIfkEAQoAAQAsAAAAABAAEAAAAiaMj3nA7byehGFO
-YyV+23X6AZ/iVWDSbApCnaRoZmksw/VMW+t+FAA7""")
-		self.sbUP = tk.PhotoImage(data="""R0lGODlhEAAQAIAAALDE3rDE3iH+BHNiVVAAIfkEAQoAAQAsAAAAABAAEAAAAiaMj3nA7byehGFO
-YyV+23X6AZ/iVWDSbApCnaRoZmksw/VMW+t+FAA7""")
-		self.sbDN = tk.PhotoImage(data="""R0lGODlhEAAQAIABAEaCtLDE3iH+BHNiRE4AIfkEAQoAAQAsAAAAABAAEAAAAiaMj3nA7byehGFO
-YyUGClHaVZw4Ks0GRp/jseT5rhk8uzUcX+FeAAA7""")
-		self.sbDP = tk.PhotoImage(data="""R0lGODlhEAAQAIAAALDE3rDE3iH+BHNiRFAAIfkEAQoAAQAsAAAAABAAEAAAAiaMj3nA7byehGFO
-YyUGClHaVZw4Ks0GRp/jseT5rhk8uzUcX+FeAAA7""")
-		self.sbLN = tk.PhotoImage(data="""R0lGODlhEAAQAIABAEaCtLDE3iH+BHNiTE4AIfkEAQoAAQAsAAAAABAAEAAAAiaMj3nA7byehGEC
-47CMdPNbZYgojo1GmV2Jgl7bnnDokdbzWcqeFAA7""")
-		self.sbLP = tk.PhotoImage(data="""R0lGODlhEAAQAIAAALDE3rDE3iH+BHNiTFAAIfkEAQoAAQAsAAAAABAAEAAAAiaMj3nA7byehGEC
-47CMdPNbZYgojo1GmV2Jgl7bnnDokdbzWcqeFAA7""")
-		self.sbRN = tk.PhotoImage(data="""R0lGODlhEAAQAIABAEaCtLDE3iH+BHNiUk4AIfkEAQoAAQAsAAAAABAAEAAAAieMj3nA7byehMGZ
-CW6LT1O/VSFHWYlpIugIZuL3hukEtjLW2ZLCJwUAOw==""")
-		self.sbRP = tk.PhotoImage(data="""R0lGODlhEAAQAIAAALDE3rDE3iH+BHNiUlAAIfkEAQoAAQAsAAAAABAAEAAAAieMj3nA7byehMGZ
-CW6LT1O/VSFHWYlpIugIZuL3hukEtjLW2ZLCJwUAOw==""")
-		self.bfg = [("active", self.clr_gw), ("", self.clr_gw)]
-		self.bbg = [("active", self.clr_lsb), ("", self.clr_sb)]
-		self.conf_vbar = {
-			   "configure": {
-				"relief": "flat",
-				"highlightthickness": 0, 
-				"borderwidth": 0,
-				"troughborderwidth": 0,
-				"background": self.clr_tw
-			}, "layout": [
-				("Vertical.Scrollbar.uparrow", {"side": "top", "sticky": ""}),
-				("Vertical.Scrollbar.downarrow", {"side": "bottom", "sticky": ""}),
-				("Vertical.Scrollbar.uparrow", {"side": "bottom", "sticky": ""}),
-				("Vertical.Scrollbar.trough", {"sticky": "ns", "children": [
-					("Vertical.Scrollbar.thumb", {"expand": 1, "unit": 1, "children": [
-						("Vertical.Scrollbar.grip", {"sticky": ""})
-					]})
-				]})
-			]
-		}
-		self.conf_hbar = {
-			   "configure": {
-				"relief": "flat", 
-				"highlightthickness": 0, 
-				"borderwidth": 0,
-				"background": self.clr_tw
-			}, "layout": [
-				("Horizontal.Scrollbar.leftarrow", {"side": "left", "sticky": ""}),
-				("Horizontal.Scrollbar.rightarrow", {"side": "right", "sticky": ""}),
-				("Horizontal.Scrollbar.leftarrow", {"side": "right", "sticky": ""}),
-				("Horizontal.Scrollbar.trough", {"sticky": "ew", "children": [
-					("Horizontal.Scrollbar.thumb", {"expand": 1, "unit": 1, "children": [
-						("Horizontal.Scrollbar.grip", {"sticky": ""})
-					]})
-				]})
-			]
-		}
-		self.deftc_presets = {
-			   "CNotebook": {
-				   "configure": {
-					"borderwidth": 0, 
-					"tabmargins": [3, 4, 2, 0], 
-					#"tabposition": "wn"
-				}
-			}, "CNotebook.Tab": {
-				   "configure": {
-					"borderwidth": 0, 
-					"padding": [5, 3]
-				}, "map": {
-					"background": [("selected", self.clr_tw), ("", self.clr_bg)] 
-				}
-			}, "TNotebook": {
-				   "configure": {
-					"borderwidth": 0, 
-					"tabmargins": [3, 4, 2, 0], 
-					#"tabposition": "wn"
-				}
-			}, "TNotebook.Tab": {
-				   "configure": {
-					"borderwidth": 0, 
-					"padding": [5, 3]
-				}, "map": {
-					"background": [("selected", self.clr_tw), ("", self.clr_bg)] 
-				}
-			}, "Vertical.TScrollbar": self.conf_vbar, "Horizontal.TScrollbar": self.conf_hbar
-		}
-		self.deft_presets = {
-			**self.deftc_presets,
-			   "TLabel": {
-				   "map": {
-					"background": [("", self.clr_bg)]
-				}
-			}, "Flat.TButton": {
-				   "configure": {
-					"margins": [0],
-					"padding": [3],
-					"relief": "flat", 
-					"highlightthickness": 0, 
-					"borderwidth": 0
-				}
-			}, "Togle.TButton": {
-				   "configure": {
-					"margins": [0],
-					"padding": [3],
-					"relief": "raised", 
-					"highlightthickness": 1, 
-					"borderwidth": 1
-				}, "map": {
-					"relief": [("active", "raised"), ("", "flat")], 
-					"foreground": [("active", self.clr_gw), ("", self.clr_sb)], 
-					"background": [("active", self.clr_lsb), ("", self.clr_bg)]
-				}
-			}, "Title.TButton": {
-				   "configure": {
-					"margins": [0],
-					"padding": [3],
-					"relief": "flat", 
-					"highlightthickness": 0, 
-					"borderwidth": 0,
-					"font": 10
-				}, "map": {
-					"foreground": self.bfg, 
-					"background": self.bbg
-				}
-			}, "TButton": {
-				   "configure": {
-					"margins": [0],
-					"padding": [3],
-					"relief": "raised", 
-					"highlightthickness": 1, 
-					"borderwidth": 1,
-					"background": self.clr_lsb
-				}, "map": {
-					"foreground": self.bfg, 
-					"background": self.bbg
-				}
-			}
-		}
-		self._styling()
-
-	def _tth_styling(self):
-		try:
-			import ttkthemes as tth
-			self.srcStyle = tth.ThemedStyle()
-			self.istth = True
-		except ImportError:
-			self.srcStyle = ttk.Style()
-			self.istth = False
-		
-		if self.istth:
-			print("[src] tth enabled")
-			return 1
-		else:
-			print("[src] tth disabled")
-
-	def _styling(self):
-		if self.future_tth:
-			if self._tth_styling(): return
-		else:
-			self.srcStyle = ttk.Style()
-		if "deftc" in self.srcStyle.theme_names():
-			print("[src] deftc done")
-			return
-		print("[src] create theme 'deftc' ... ", end="")
-		self.srcStyle.theme_create("deftc", parent="clam", settings=self.deftc_presets)
-		self.srcStyle.theme_use("deftc")
-		self.srcStyle.element_create("Horizontal.Scrollbar.trough", "image", self.sbHT, border=2, sticky="ew")
-		self.srcStyle.element_create("Horizontal.Scrollbar.thumb", "image", self.sbHH, border=1, sticky="ew")
-		self.srcStyle.element_create("Horizontal.Scrollbar.grip", "image", self.sbHG)
-		self.srcStyle.element_create("Vertical.Scrollbar.trough", "image", self.sbVT, border=2, sticky="ns")
-		self.srcStyle.element_create("Vertical.Scrollbar.thumb", "image", self.sbVH, border=1, sticky="ns")
-		self.srcStyle.element_create("Vertical.Scrollbar.grip", "image", self.sbVG)
-		
-		self.srcStyle.element_create("Scrollbar.uparrow", "image", self.sbUN, ("pressed", self.sbUP), sticky="")
-		self.srcStyle.element_create("Scrollbar.downarrow", "image", self.sbDN, ("pressed", self.sbDP), sticky="")
-		self.srcStyle.element_create("Scrollbar.leftarrow", "image", self.sbLN, ("pressed", self.sbLP), sticky="")
-		self.srcStyle.element_create("Scrollbar.rightarrow", "image", self.sbRN, ("pressed", self.sbRP), sticky="")
-		print("Done")
-
-		if "deft" in self.srcStyle.theme_names():
-			print("[src] deft done")
-			return
-		print("[src] create theme 'deft' ... ", end="")
-		self.srcStyle.theme_create("deft", parent="alt", settings=self.deft_presets)
-		self.srcStyle.theme_use("deft")
-		self.srcStyle.element_create("Horizontal.Scrollbar.trough", "image", self.sbHT, border=2, sticky="ew")
-		self.srcStyle.element_create("Horizontal.Scrollbar.thumb", "image", self.sbHH, border=1, sticky="ew")
-		self.srcStyle.element_create("Horizontal.Scrollbar.grip", "image", self.sbHG)
-		self.srcStyle.element_create("Vertical.Scrollbar.trough", "image", self.sbVT, border=2, sticky="ns")
-		self.srcStyle.element_create("Vertical.Scrollbar.thumb", "image", self.sbVH, border=1, sticky="ns")
-		self.srcStyle.element_create("Vertical.Scrollbar.grip", "image", self.sbVG)
-		
-		self.srcStyle.element_create("Scrollbar.uparrow", "image", self.sbUN, ("pressed", self.sbUP), sticky="")
-		self.srcStyle.element_create("Scrollbar.downarrow", "image", self.sbDN, ("pressed", self.sbDP), sticky="")
-		self.srcStyle.element_create("Scrollbar.leftarrow", "image", self.sbLN, ("pressed", self.sbLP), sticky="")
-		self.srcStyle.element_create("Scrollbar.rightarrow", "image", self.sbRN, ("pressed", self.sbRP), sticky="")
-		print("Done")
-
-	def clr_twx(self):
-		return self.tw_twst.cget("bg")
-
-	# Funcions
-	def quit(self): self.srcWin.destroy()
-	def lulzf(self): print("Source.lulzf(): LULZ!!!")
-	def cfgpath_set(self, inp=None):
-		global cfgPath
-		if inp == None:
-			cfgPath = tkfd.askopenfilename(filetypes=self.fileforms)
-			return
-		cfgPath = str(inp)
-		self.cfgPath = str(inp)
-	def cfg_update(self):
-		if self.cfgPath == "": return
-		tmp = open(cfgPath, "x")
-		self.cfgFile = tmp.read()
-		tmp.close()
-
-	# Funcion-image (fimage, fimg)
-	class Fimg():
-		def __init__(self, fimgName, fimgData):
-			self.fimgData = fimgData
-			self.fimgName = str(fimgName)
-		def fimg(self, fg, bg=None, **kw):
-			global imgCont
-			from random import randint
-			imgCont += 1
-			self.imgCont = imgCont
-			name = f"bitmap:{self.fimgName},rand={randint(0, 65545)}"
-			img = {
-				"name": name, 
-				"imgtype": "bitmap", 
-				"data": self.fimgData, 
-				"foreground": fg
-			}
-			if "takename" in list(kw.keys()): takename = kw["takename"]
-			else: takename = 0
-			if takename == 1:
-				if bg == None: return tk.Image(**img), name
-				else: return tk.Image(**img, background=bg), name
-			elif takename == 0:
-				if bg == None: return tk.Image(**img)
-				else: return tk.Image(**img, background=bg)
-
-
-class CNotebook(ttk.Notebook): # With "CustomNotebook" and TNotebook
-	__initialized = False
-	def __init__(self, *args, **kwargs):
-		self.style = ttk.Style()
-		self.clr_bg = "#b7b7b7"
-		self.clr_tw = "#ffffff"
-		if not self.__initialized:
-			self.__initialize_custom_style()
-			self.__inititialized = True
-
-		kwargs["style"] = "CNotebook"
-		ttk.Notebook.__init__(self, *args, **kwargs)
-
-		self._active = None
-
-		self.bind("<ButtonPress-1>", self.on_close_press, True)
-		self.bind("<ButtonRelease-1>", self.on_close_release)
-
-	def on_close_press(self, event):
-		element = self.identify(event.x, event.y)
-
-		if "close" in element:
-			index = self.index("@%d,%d" % (event.x, event.y))
-			self.state(['pressed'])
-			self._active = index
-			return "break"
-
-	def on_close_release(self, event):
-		if not self.instate(['pressed']):
-			return
-
-		element =  self.identify(event.x, event.y)
-		if "close" not in element:
-			# user moved the mouse off of the close button
-			return
-
-		index = self.index("@%d,%d" % (event.x, event.y))
-
-		if self._active == index:
-			self.event_generate("<<NotebookTabClosed>>")
-
-		self.state(["!pressed"])
-		self._active = None
-
-	def __initialize_custom_style(self):
-		style = self.style
-		self.img_close_raw = \
-"""#define tmp1_width 16
-#define tmp1_height 16
-static unsigned char tmp1_bits[] = {
-   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x08, 0x38, 0x1c, 0x70, 0x0e,
-   0xe0, 0x06, 0xc0, 0x01, 0x80, 0x03, 0x60, 0x07, 0x70, 0x0e, 0x38, 0x1c,
-   0x10, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };"""
-		self.img_file_raw = \
-"""#define open16_width 16
-#define open16_height 16
-static unsigned char open16_bits[] = {
-   0x00, 0x00, 0x00, 0x00, 0xf8, 0x0f, 0x04, 0x1c, 0x04, 0x3c, 0xf4, 0x3c,
-   0x04, 0x20, 0xf4, 0x27, 0x04, 0x20, 0xf4, 0x27, 0x04, 0x20, 0xf4, 0x27,
-   0x04, 0x20, 0xf8, 0x1f, 0x00, 0x00, 0x00, 0x00 };"""
-		self.img_close = tk.Image("bitmap", "img_close", data = self.img_close_raw, foreground = "steelblue")
-		self.img_close_act = tk.Image("bitmap", "img_close_act", data=self.img_close_raw, foreground="lightsteelblue")
-		self.img_close_pr = tk.Image("bitmap", "img_close_pr", data=self.img_close_raw, foreground="darkslateblue")
-
-		self.img_file = tk.Image("bitmap", "img_file", data=self.img_file_raw, foreground="slateblue")
-		self.img_file_act = tk.Image("bitmap", "img_file_act", data=self.img_file_raw, foreground="lightsteelblue")
-		self.img_file_pr = tk.Image("bitmap", "img_file_pr", data=self.img_file_raw, foreground="darkslateblue")
-
-		style.theme_settings(style.theme_use(), {
-			   "CNotebook": {
-				"layout": [
-					("CNotebook.client", {"sticky": "nswe"})
-				]
-			}, "CNotebook.Tab": {
-				"layout": [
-					("CNotebook.tab", {"sticky": "nswe", "children": [
-						("CNotebook.focus", {"side": "top", "sticky": "nswe", "children": [
-							("CNotebook.padding", {"side": "top", "sticky": "nswe", "children": [
-									("CNotebook.icon", {"side": "left", "sticky": ''}),
-									("CNotebook.label", {"side": "left", "sticky": ''}),
-									("CNotebook.close", {"side": "left", "sticky": ''}),
-							]})
-						]})
-					]})
-				]
-			}
-		})
-		style.element_create(
-			"icon", "image", "img_file",
-			("active", "pressed", "!disabled", "img_file_pr"),
-			("active", "!disabled", "img_file_act"), 
-			border=8, sticky="nswe"
-		)
-		style.element_create(
-			"close", "image", "img_close",
-			("active", "pressed", "!disabled", "img_close_pr"),
-			("active", "!disabled", "img_close_act"), 
-			border=8, sticky=""
-		)
-
-class InfoFrame(ttk.Frame): # With "CustomNotebook" and TNotebook
-	def __init__(self, *args, **kwargs):
-		def grc(row, column): return {"row": row, "column": column}
-		self.style = ttk.Style()
-		self.ikw = kwargs.setdefault("_infokw", {})
-		kwargs["_infokw"] = {}
-		kwargs.__delitem__("_infokw")
-		ttk.Frame.__init__(self, *args, **kwargs)
-
-		self.text = tk.Text(master=self, bd=0, highlightthickness=0, wrap="none")
-		self.text.insert("end", self.ikw.setdefault("text_ph"))
-		self.SCY = ttk.Scrollbar(master=self, orient="vertical", command=self.text.yview)
-		self.SCX = ttk.Scrollbar(master=self, orient="horizontal", command=self.text.xview)
-		self.text.config(yscrollcommand=self.SCY.set, xscrollcommand=self.SCX.set)
-		self.SCY.grid(sticky="nswe", column=1)
-		self.SCX.grid(sticky="nswe", row=1)
-		self.grip = ttk.Sizegrip(master=self, style="ghost.TSizegrip")
-		self.grip.grid(sticky="nswe", row=1, column=1)
-		self.text.grid(sticky="nswe", row=0)
-		self.rowconfigure(0, weight=1)
-		self.columnconfigure(0, weight=1)
-
+from sourcelib import Source 
+from wlib import CNotebook, InfoFrame
+# Source and widgets merged on new files
 
 class App():
 	# Sourse
@@ -461,8 +13,8 @@ class App():
 		def grc(row, column, *args): return {"row": row, "column": column}
 		self.vkw = {
 			"codename": "mercurial", # Arch
-			"build": 3, # Every update
-			"path": 2, # Is path of version
+			"build": 4, # Every update
+			"path": 0, # Is path of version
 			"type": "edge", # edge(alpha)/beta/rc(candidate)/release
 		}
 		self.version = f'{self.vkw["build"]}{self.vkw["type"]}{self.vkw["path"]}'# ~ 2beta1, 2release0
@@ -490,6 +42,7 @@ FIXME:
 		self.mWin.geometry("400x300")
 		self.istopTk = tk.BooleanVar(value=True)
 		self.isCSD = tk.BooleanVar(value=True)
+		self.is_floatinit = False
 		self.ifloatTk()
 		self.mWin["takefocus"] = True
 		self.style = self.source.srcStyle
@@ -507,12 +60,13 @@ FIXME:
 		self.mWin.iconname(self.imgname_win_alt)
 		self.mLblCheck = -1
 		self.notec = 0
+		self.style.map("ghost.TLabel", background = [("", self.clr_tw)])
 		self.style.map("ghost.TFrame", background = [("", self.clr_tw)])
 		self.style.map("ghost.TSizegrip", background = [("", self.clr_tw)])
 
 		# Title-Bar: wmButton, mainLabel, mainLabel
 		self.tBar = ttk.Frame(self.mWin)
-		self.wmBtn = ttk.Button(self.tBar, image=self.img_win, style="Title.TButton")
+		self.wmBtn = ttk.Button(self.tBar, style="Title.TButton", image=self.img_win)
 		self.mMG = tk.Canvas(self.tBar, bg=self.clr_sb, highlightthickness=0, height=0)
 		self.mMG.bind('<Button-1>', self.pointTk)
 		self.mMG.bind('<B1-Motion>', self.moveTk)
@@ -563,7 +117,7 @@ FIXME:
 		self.mMaxBtn.pack(fill="both", side="right")
 		self.wmBtn.pack(fill="both", side="left")
 		self.mMG.pack(fill="both", expand=True)
-		self.tBar.pack(fill="both", side="top")
+		self.tBar.grid(**grc(0, 0), columnspan=2, sticky="nswe")
 
 		# Help-Bar: mainSizegrip, tkhelpButton, mainLabel
 		self.hBar = ttk.Frame(self.mWin)
@@ -572,7 +126,7 @@ FIXME:
 			# Pack this
 		self.mSG.pack(fill="both", side="right")
 		self.mLbl.pack(fill="both", expand=True)
-		self.hBar.pack(fill="both", side="bottom")
+		self.hBar.grid(**grc(2, 0), columnspan=2, sticky="nswe")
 
 		# Hot-Bar
 		self.hotBar = ttk.Frame(self.mWin)
@@ -584,14 +138,16 @@ FIXME:
 		self.hotSave.pack(fill="both", side="top", padx=2, pady=1)
 		self.hotOpen.pack(fill="both", side="top", padx=2, pady=1)
 		self.hotNN.pack(fill="both", side="top", padx=2, pady=1)
-		self.hotBar.pack(fill="both", side="left")
+		self.hotBar.grid(**grc(1, 0), sticky="nswe")
 
 		# mainNoteBook
 		self.mNB = CNotebook(self.mWin, height=0)
 		self.nNewnote()
 		self.mNB.bind("<<NotebookTabChanged>>", self.nSel)
 		self.mNB.bind("<<NotebookTabClosed>>", lambda event: self.nClose())
-		self.mNB.pack(fill="both", expand=True)
+		self.mNB.grid(**grc(1, 1), sticky="nswe")
+		self.mWin.grid_rowconfigure(1, weight=1)
+		self.mWin.grid_columnconfigure(1, weight=1)
 
 	# Funcions
 		# Tk
@@ -623,10 +179,11 @@ FIXME:
 		combox.grid(**grcs(0, 0, "nswe"))
 		btn.grid(**grcs(0, 1, "nswe"))
 		cbtn.grid(**grcs(1, 0, "nswe"), columnspan=2)
-		#top.rowconfigure(0, weight=1)
+		ttk.Label(top).grid(**grcs(2, 0, "se"), columnspan=2)
+		ttk.Sizegrip(top).grid(**grcs(3, 1, "se"))
+		top.rowconfigure(2, weight=1)
 		top.columnconfigure(0, weight=1)
 		top.mainloop()
-		exit()
 		#self.mWin.nametowidget(".!frame")["bg"] = "red"
 	def forceTk(self): self.mWin.focus_force()
 	def floatTk(self):
@@ -646,6 +203,10 @@ FIXME:
 		if bl == None: bl = self.isCSD.get()
 		if sysplatform == "win32": self.mWin.overrideredirect(bl)
 		else: self.mWin.attributes('-type', ["normal", "dock"][bl])
+		if self.is_floatinit:
+			if bl: self.tBar.grid()
+			else: self.tBar.grid_remove()
+		else: self.is_floatinit = True
 		self.mWin.wm_state("withdraw")
 		self.mWin.wm_state("normal")
 	def pointTk(self, event):
@@ -683,6 +244,7 @@ FIXME:
 		self.mMG.pack(fill="both", expand=True)
 		self.source.Tk = "max"
 	def withQuit(self):
+		if not tkmb.askokcancel("You sure?", "You may have unsaved changes"): return
 		for i in range(len(self.mNB.tabs())): 
 			if self.nClose(): return
 		self.source.quit()
@@ -794,6 +356,7 @@ FIXME:
 		nSBX.grid(column=0, row=1, sticky="nsew")
 		nSBY.grid(column=1, row=0, sticky="nsew")
 		nText.grid(column=0, row=0, sticky="nsew")
+		ttk.Label(nPage, style="ghost.TFrame").grid(column=1, row=1, sticky="")
 		nPage.rowconfigure(0, weight=1)
 		nPage.columnconfigure(0, weight=1)
 		self.mNB.add(nPage, text=name)
@@ -807,6 +370,7 @@ FIXME:
 		nSBX.grid(column=0, row=1, sticky="nsew")
 		nSBY.grid(column=1, row=0, sticky="nsew")
 		nText.grid(column=0, row=0, sticky="nsew")
+		ttk.Label(nPage, style="ghost.TFrame").grid(column=1, row=1, sticky="")
 		nPage.rowconfigure(0, weight=1)
 		nPage.columnconfigure(0, weight=1)
 		if self.notec: self.mNB.add(nPage, text=f"New ({self.notec})")
@@ -899,6 +463,8 @@ FIXME:
 	# mainloop the mWin
 	def init(self):
 		self.forceTk()
+		self.mWin.wm_protocol("WM_DELETE_WINDOW", self.withQuit)
+		self.mWin.bind("<Button-3>", self.popU)
 		self.mWin.bind("<Control-q>", lambda ev: self.withQuit())
 		self.mWin.bind("<Control-o>", lambda ev: self.nOpen())
 		self.mWin.bind("<Control-s>", lambda ev: self.nSave())
