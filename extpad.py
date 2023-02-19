@@ -1,4 +1,4 @@
-#!/bin/python3
+#!/bin/python3 -B
 from deps import *
 currentpath = os.system('$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )')
 imgCont = 0
@@ -9,15 +9,21 @@ from wlib import CNotebook, InfoFrame
 
 class App():
 	# Sourse
+	def grc(main, row, column, *args): return {"row": row, "column": column}
 	def __init__(self):
-		def grc(row, column, *args): return {"row": row, "column": column}
+		grc = self.grc
 		self.vkw = {
 			"codename": "mercurial", # Arch
-			"build": 4, # Every update
+			"build": 5, # Every update
 			"path": 0, # Is path of version
-			"type": "edge", # edge(alpha)/beta/rc(candidate)/release
+			"type": "e", # e(dge)( alpha)/b(eta)/c( rc)( candidate)/r(elease)
 		}
-		self.version = f'{self.vkw["build"]}{self.vkw["type"]}{self.vkw["path"]}'# ~ 2beta1, 2release0
+		verpath = self.vkw.setdefault("path")
+		if not verpath: verpath = ""
+		self.version = f'{self.vkw["build"]}{self.vkw["type"]}{verpath}'
+		# ~~
+		# 1e -> [2e]             [1e] -+> 2e
+		# \--> 1b -> 1c0 -> 1c1 -> 1r -/
 		self.vsm = "Version kw: "
 		for k, i in self.vkw.items():
 			self.vsm += f"\n    {str(k)}: {str(i)}"
@@ -152,12 +158,9 @@ FIXME:
 	# Funcions
 		# Tk
 	def mod_styles__temme(self, *a, **kw):
-			if self.imgd.get(): # dark
-				for imgi in self.imgst:
-					exec(f"self.img_{imgi}['foreground'] = self.clr_gw", locals())
-			else:
-				for imgi in self.imgst:
-					exec(f"self.img_{imgi}['foreground'] = self.clr_sb", locals())
+		for imgi in self.imgst:
+			color = ['self.clr_sb', 'self.clr_gw'][self.imgd.get()]
+			exec(f"self.img_{imgi}['foreground'] = {color}", locals())
 	def mod_styles(self):
 		def grcs(row, column, sticky, *args): return {"row": row, "column": column, "sticky": sticky}
 		def newst(*a, **kw):
@@ -451,9 +454,9 @@ FIXME:
 				if nText.edit_modified() == True: self.mNB.tab(self.mNB.select(), text=tmp+"*")
 				else: self.mNB.tab(self.mNB.select(), text=tmp.rstrip("*"))
 
-	def nExec(self, path=None):
+	def nExec(api, path=None):
 		if path == None:
-			path = tkfd.askopenfilename(title="Exec file", filetypes=self.fform)
+			path = tkfd.askopenfilename(title="Exec file", filetypes=api.fform)
 			if not path: return
 		modtext = ""
 		with open(path) as modfile:
@@ -464,7 +467,7 @@ FIXME:
 	def init(self):
 		self.forceTk()
 		self.mWin.wm_protocol("WM_DELETE_WINDOW", self.withQuit)
-		self.mWin.bind("<Button-3>", self.popU)
+		self.mWin.bind("<Button-2>", self.popU)
 		self.mWin.bind("<Control-q>", lambda ev: self.withQuit())
 		self.mWin.bind("<Control-o>", lambda ev: self.nOpen())
 		self.mWin.bind("<Control-s>", lambda ev: self.nSave())
