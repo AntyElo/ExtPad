@@ -12,14 +12,11 @@ def main(api):
 		return [entev, entex][is_exec_tkbv.get()].get(*entargs)
 	def _is_exec(*args, **kw):
 		bl = is_exec_tkbv.get()
-		if bl: #exec
-			cmdboxex.grid()
-			cmdboxev.grid_remove()
-		else:
-			cmdboxev.grid()
-			cmdboxex.grid_remove()
+		if bl: cmdboxex.grid(); cmdboxev.grid_remove()
+		else:  cmdboxev.grid(); cmdboxex.grid_remove()
 		xeTop.title(f"ExtPad: {['Eval', 'Exec'][is_exec_tkbv.get()]}")
 	def _ex(*args, **kw):
+		api
 		src = getsent()
 		if kw.setdefault("backend", True):
 			bc = exec
@@ -68,13 +65,9 @@ def main(api):
 
 if __name__ == "__main__":
 	try:
-		self
-		v = self
+		api
+		v = api
 	except NameError:
-		try:
-			api
-			v = api
-		except NameError:
-			print("run ExtPad before")
-			exit()
+		print("run ExtPad >=5 before")
+		exit()
 	main(v)

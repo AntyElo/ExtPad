@@ -15,7 +15,7 @@ class App():
 		self.vkw = {
 			"codename": "mercurial", # Arch
 			"build": 5, # Every update
-			"path": 0, # Is path of version
+			"path": 1, # Is path of version
 			"type": "e", # e(dge)( alpha)/b(eta)/c( rc)( candidate)/r(elease)
 		}
 		verpath = self.vkw.setdefault("path")
@@ -27,7 +27,7 @@ class App():
 		self.vsm = "Version kw: "
 		for k, i in self.vkw.items():
 			self.vsm += f"\n    {str(k)}: {str(i)}"
-		self.__doc__ = f"""New EXTantion notePAD [{self.version}]
+		self.__doc__ = f"""New EXTernal notePAD [{self.version}]
 
 Features:
    - Header-bar
@@ -83,7 +83,7 @@ FIXME:
 				# Bind this
 		self.wmBtn.bind('<Button-1>', self.popU)
 				# Menus
-		self.uMenu = tk.Menu(self.mWin, title="ExtPad: Menu") # Union(Wm also)
+		self.uMenu = tk.Menu(self.mWin, title="ExtPad: Menu\n[button-2]") # Union(Wm also)
 		self.fMenu = tk.Menu(self.mWin, tearoff=0) # File
 		self.eMenu = tk.Menu(self.mWin, tearoff=0) # Edit
 		self.vMenu = tk.Menu(self.mWin, tearoff=0) # View
@@ -113,9 +113,9 @@ FIXME:
 		self.eMenu.add_command(label="Paste", accelerator="Ctrl-V", command=self.ePaste)
 		self.eMenu.add_command(label="Cut", accelerator="Ctrl-X", command=self.eCut)
 
-		self.vMenu.add_command(label="Styles (built-in mod)", command=self.mod_styles)
+		self.vMenu.add_command(label="Styles (built-in mod)", accelerator="Ctrl-T", command=self.mod_styles)
 
-		self.modMenu.add_command(label="Exec", command=self.nExec)
+		self.modMenu.add_command(label="Exec", accelerator="Ctrl-E", command=self.nExec)
 
 		self.hMenu.add_command(label="About", accelerator="F1", command=self.nInfo)
 			# Pack this
@@ -405,6 +405,12 @@ FIXME:
 			print("is Config!")
 		else: print("fail type")
 		self.mNB.forget(self.mNB.select())
+	def iCloseEv(self, ev, *args, **kw):
+		#tab1 - write-select; tab2 - cursor-select
+		tab1 = self.mNB.select()
+		tabx = self.mNB.index(f"@{ev.x},{ev.y}")
+		print(type(self.mNB.identify(ev.x, ev.y)))
+		print(f"[iCloseEv.dbg] wrTab: '{tab1}'; crTab: {ev.x}x{ev.y}'{tabx}'; ev: {ev}")
 	def eCopy(self): 
 		try: self.nBuffer = self.get_nText().selection_get()
 		except: print("AppError: Can't copy")
@@ -469,6 +475,7 @@ FIXME:
 		self.mWin.wm_protocol("WM_DELETE_WINDOW", self.withQuit)
 		self.mWin.bind("<Button-2>", self.popU)
 		self.mWin.bind("<Control-q>", lambda ev: self.withQuit())
+		self.mWin.bind("<Control-C>", self.iCloseEv)
 		self.mWin.bind("<Control-o>", lambda ev: self.nOpen())
 		self.mWin.bind("<Control-s>", lambda ev: self.nSave())
 		self.mWin.bind("<Control-S>", lambda ev: self.nSaveas())
@@ -476,6 +483,7 @@ FIXME:
 		self.mWin.bind("<Control-N>", lambda ev: self.nNewnote())
 		self.mWin.bind("<Control-D>", lambda ev: self.nClose())
 		self.mWin.bind("<Control-e>", lambda ev: self.nExec())
+		self.mWin.bind("<Control-t>", lambda ev: self.mod_styles())
 		self.mWin.bind("<F1>", lambda ev: self.nInfo())
 		self.mWin.update()
 		self.mWin.minsize(
