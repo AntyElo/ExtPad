@@ -18,8 +18,6 @@ class Source():
 		self.tw_twst = tk.Entry(self.srcWin, name="__colorget_entry")
 		self.clr_bg, self.clr_tw = [self.srcWin.cget('bg'), tk.Entry(self.srcWin).cget("bg")]
 		self.clr_gw, self.clr_sb, self.clr_dsb, self.clr_lsb = ["ghostwhite", "steelblue", "darkslateblue", "lightsteelblue"]
-		self.hints = \
-"""WM: <C/S>SD = <Client/Server>-Side Decorartion"""
 		self.img_win_alt = self.Fimg("win_alt", """#define win_width 16
 #define win_height 16
 static unsigned char win_bits[] = {

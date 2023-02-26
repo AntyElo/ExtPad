@@ -4,7 +4,7 @@ currentpath = os.system('$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )')
 imgCont = 0
 
 from sourcelib import Source 
-from wlib import CNotebook, InfoFrame
+from widgetlib import CNotebook, InfoFrame
 # Source and widgets merged on new files
 
 class App():
@@ -15,7 +15,7 @@ class App():
 		self.vkw = {
 			"codename": "mercurial", # Arch
 			"build": 5, # Every update
-			"path": 1, # Is path of version
+			"path": 2, # Is path of version
 			"type": "e", # e(dge)( alpha)/b(eta)/c( rc)( candidate)/r(elease)
 		}
 		verpath = self.vkw.setdefault("path")
@@ -56,7 +56,10 @@ FIXME:
 		for clri in ["bg", "tw", "gw", "sb", "dsb", "lsb"]:
 			exec(f"self.clr_{clri} = self.source.clr_{clri}", locals())
 		self.fform = self.source.fileforms
-		self.nInfo_hints = self.source.hints
+		self.nInfo_hints = \
+"""WM: <C/S>SD = <Client/Server>-Side Decorartion
+Use <Alt-B1> to move window
+Use <Button-2> to call uMenu"""
 		self.imgd = tk.BooleanVar(value=True)
 		self.imgst = ["save", "open", "note", "win", "min", "max", "close"]
 		for imgi in self.imgst:
@@ -76,6 +79,8 @@ FIXME:
 		self.mMG = tk.Canvas(self.tBar, bg=self.clr_sb, highlightthickness=0, height=0)
 		self.mMG.bind('<Button-1>', self.pointTk)
 		self.mMG.bind('<B1-Motion>', self.moveTk)
+		self.mWin.bind("<Alt-Button-1>", self.pointTk)
+		self.mWin.bind("<Alt-B1-Motion>", self.moveTk)
 		self.mMinBtn  = ttk.Button(self.tBar, style="Title.TButton", image=self.img_min,   command=self.withMin)
 		self.mMaxBtn  = ttk.Button(self.tBar, style="Title.TButton", image=self.img_max,   command=self.withMax)
 		self.mQuitBtn = ttk.Button(self.tBar, style="Title.TButton", image=self.img_close, command=self.withQuit)
@@ -83,7 +88,7 @@ FIXME:
 				# Bind this
 		self.wmBtn.bind('<Button-1>', self.popU)
 				# Menus
-		self.uMenu = tk.Menu(self.mWin, title="ExtPad: Menu\n[button-2]") # Union(Wm also)
+		self.uMenu = tk.Menu(self.mWin, title="ExtPad: Menu") # Union(Wm also)
 		self.fMenu = tk.Menu(self.mWin, tearoff=0) # File
 		self.eMenu = tk.Menu(self.mWin, tearoff=0) # Edit
 		self.vMenu = tk.Menu(self.mWin, tearoff=0) # View
