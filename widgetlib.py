@@ -41,7 +41,7 @@ class CNotebook(ttk.Notebook): # With "CustomNotebook" and TNotebook
 		index = self.index("@%d,%d" % (event.x, event.y))
 
 		if self._active == index:
-			self.event_generate("<<NotebookTabClosed>>")
+			self.event_generate("<<NotebookTabClosed>>", x=index)
 
 		self.state(["!pressed"])
 		self._active = None

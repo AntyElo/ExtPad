@@ -15,7 +15,7 @@ class App():
 		self.vkw = {
 			"codename": "mercurial", # Arch
 			"build":6, # Every update
-			"path": 0, # Is path of version
+			"path": 1, # Is path of version
 			"channel": "e (edge)", # e(edge/alpha)/b(beta)/c(rc/release-candidate)/r(release)
 		}
 		verpath = self.vkw.setdefault("path")
@@ -159,7 +159,7 @@ Use <Button-2> to call uMenu"""
 		self.mNB = CNotebook(self.mWin, height=0)
 		self.nNewnote()
 		self.mNB.bind("<<NotebookTabChanged>>", self.nSel)
-		self.mNB.bind("<<NotebookTabClosed>>", lambda event: self.nClose())
+		self.mNB.bind("<<NotebookTabClosed>>", self.iCloseEv)
 		self.mNB.grid(**grc(1, 1), sticky="nswe")
 		self.mWin.grid_rowconfigure(1, weight=1)
 		self.mWin.grid_columnconfigure(1, weight=1)
@@ -398,10 +398,13 @@ Use <Button-2> to call uMenu"""
 		if not fail: self.mNB.forget(self.mNB.select())
 	def iCloseEv(self, ev, *args, **kw):
 		#tab1 - write-select; tab2 - cursor-select
-		tab1 = self.mNB.select()
-		tabx = self.mNB.index(f"@{ev.x},{ev.y}")
-		print(type(self.mNB.identify(ev.x, ev.y)))
-		print(f"[iCloseEv.dbg] wrTab: '{tab1}'; crTab: {ev.x}x{ev.y}'{tabx}'; ev: {ev}")
+		tab1 = self.mNB.index(self.mNB.select())
+		tab2 = ev.x
+		self.mNB.select(tab2)
+		self.nClose()
+		if tab1 != tab2:
+			if tab1 > tab2: tab1 -= 1
+			self.mNB.select(tab1)
 	def eCopy(self): 
 		try: self.nBuffer = self.get_nText().selection_get()
 		except: print("AppError: Can't copy")
@@ -462,7 +465,6 @@ Use <Button-2> to call uMenu"""
 		self.mWin.wm_protocol("WM_DELETE_WINDOW", self.withQuit)
 		self.mWin.bind("<Button-2>", self.popU)
 		self.mWin.bind("<Control-q>", lambda ev: self.withQuit())
-		self.mWin.bind("<Control-C>", self.iCloseEv)
 		self.mWin.bind("<Control-o>", lambda ev: self.nOpen())
 		self.mWin.bind("<Control-s>", lambda ev: self.nSave())
 		self.mWin.bind("<Control-S>", lambda ev: self.nSaveas())
