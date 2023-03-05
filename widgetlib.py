@@ -66,10 +66,6 @@ static unsigned char open16_bits[] = {
 		self.img_close_act = tk.Image("bitmap", "img_close_act", data=self.img_close_raw, foreground="lightsteelblue")
 		self.img_close_pr = tk.Image("bitmap", "img_close_pr", data=self.img_close_raw, foreground="darkslateblue")
 
-		self.img_file = tk.Image("bitmap", "img_file", data=self.img_file_raw, foreground="slateblue")
-		self.img_file_act = tk.Image("bitmap", "img_file_act", data=self.img_file_raw, foreground="lightsteelblue")
-		self.img_file_pr = tk.Image("bitmap", "img_file_pr", data=self.img_file_raw, foreground="darkslateblue")
-
 		style.theme_settings(style.theme_use(), {
 			   "CNotebook": {
 				"layout": [
@@ -80,7 +76,6 @@ static unsigned char open16_bits[] = {
 					("CNotebook.tab", {"sticky": "nswe", "children": [
 						("CNotebook.focus", {"side": "top", "sticky": "nswe", "children": [
 							("CNotebook.padding", {"side": "top", "sticky": "nswe", "children": [
-									("CNotebook.icon", {"side": "left", "sticky": ''}),
 									("CNotebook.label", {"side": "left", "sticky": ''}),
 									("CNotebook.close", {"side": "left", "sticky": ''}),
 							]})
@@ -90,12 +85,6 @@ static unsigned char open16_bits[] = {
 			}
 		})
 		style.element_create(
-			"icon", "image", "img_file",
-			("active", "pressed", "!disabled", "img_file_pr"),
-			("active", "!disabled", "img_file_act"), 
-			border=8, sticky="nswe"
-		)
-		style.element_create(
 			"close", "image", "img_close",
 			("active", "pressed", "!disabled", "img_close_pr"),
 			("active", "!disabled", "img_close_act"), 
@@ -103,12 +92,10 @@ static unsigned char open16_bits[] = {
 		)
 
 class InfoFrame(ttk.Frame): # Frame to info`rmation
-	def __init__(self, *args, **kwargs):
+	def __init__(self, ikw, *args, **kwargs):
 		def grc(row, column): return {"row": row, "column": column}
 		self.style = ttk.Style()
-		self.ikw = kwargs.setdefault("_infokw", {})
-		kwargs["_infokw"] = {}
-		kwargs.__delitem__("_infokw")
+		self.ikw = ikw
 		ttk.Frame.__init__(self, *args, **kwargs)
 
 		self.text = tk.Text(master=self, bd=0, highlightthickness=0, wrap="none")
@@ -121,5 +108,37 @@ class InfoFrame(ttk.Frame): # Frame to info`rmation
 		self.grip = ttk.Sizegrip(master=self, style="ghost.TSizegrip")
 		self.grip.grid(sticky="nswe", row=1, column=1)
 		self.text.grid(sticky="nswe", row=0)
+		self.rowconfigure(0, weight=1)
+		self.columnconfigure(0, weight=1)
+
+class IFrame(ttk.Frame):
+	def __init__(self, ikw, *args, **kwargs):
+		self.style = ttk.Style()
+		self.ikw = ikw
+		self.id = self.ikw.setdefault("fid", ["note", -1])
+		super().__init__(*args, **kwargs)
+
+class NBFrame(ttk.Frame): # nFrame back-end
+	def __init__(self, ikw, *args, **kwargs):
+		def grc(row, column): return {"row": row, "column": column}
+		self.style = ttk.Style()
+		self.ikw = ikw
+		self.id = ikw.setdefault("fid", ["note", -1])
+		super().__init__(*args, **kwargs)
+
+		nPath = tk.Label(self, text=self.id[1], name="filepath")
+		nText = tk.Text(self, bd=0, highlightthickness=0, wrap="none", undo=True)
+		nSBX = ttk.Scrollbar(self, command=nText.xview, orient="horizontal")
+		nSBY = ttk.Scrollbar(self, command=nText.yview, orient="vertical")
+		nText.config(xscrollcommand=nSBX.set, yscrollcommand=nSBY.set)
+		nText.insert("1.0", self.ikw.setdefault("text", ""))
+		nText.edit_reset()
+		nText.edit_modified(0)
+		b3bind = self.ikw.setdefault('b3bind')
+		if b3bind: nText.bind("<Button-3>", b3bind)
+		# Grid controls
+		nSBX.grid(column=0, row=1, sticky="nsew")
+		nSBY.grid(column=1, row=0, sticky="nsew")
+		nText.grid(column=0, row=0, sticky="nsew")
 		self.rowconfigure(0, weight=1)
 		self.columnconfigure(0, weight=1)

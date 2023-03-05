@@ -9,6 +9,7 @@ class Source():
 		self.srcWin = tk.Tk()
 		self.Tk = "normal"
 		self.future_tth = False # Toggle to get ttkthemes future
+		self.future_fast_deftc = False # Toggle to get deftc-first future
 		self.dbg = tk.BooleanVar(value=False) # App.nSel() req
 		self.xTk, self.yTk, self.wrx, self.wry, self.sizeX, self.sizeY = [0, 0, 0, 0, 0, 0]
 		self.ww, self.wh = [400, 300]
@@ -132,7 +133,7 @@ CW6LT1O/VSFHWYlpIugIZuL3hukEtjLW2ZLCJwUAOw==""")
 				]})
 			]
 		}
-		self.deftc_presets = {
+		self.all_presets = {
 			   "CNotebook": {
 				   "configure": {
 					"borderwidth": 0, 
@@ -161,8 +162,57 @@ CW6LT1O/VSFHWYlpIugIZuL3hukEtjLW2ZLCJwUAOw==""")
 				}
 			}, "Vertical.TScrollbar": self.conf_vbar, "Horizontal.TScrollbar": self.conf_hbar
 		}
+		self.deftc_presets = {
+			**(self.all_presets.copy()),
+			   "TLabel": {
+				   "map": {
+					"background": [("", self.clr_bg)],
+				}
+			}, "Hotbar.TFrame": {
+				   "configure": {
+					"relief": "raised",
+				}
+			}, "Flat.TButton": {
+				   "configure": {
+					"padding": [4],
+					"relief": "flat", 
+					"highlightthickness": 0, 
+				}
+			}, "Togle.TButton": {
+				   "configure": {
+					"padding": [4],
+					"relief": "raised", 
+					"highlightthickness": 1, 
+				}, "map": {
+					"relief": [("active", "raised"), ("", "flat")], 
+					"foreground": [("active", self.clr_gw), ("", self.clr_sb)], 
+					"background": [("active", self.clr_lsb), ("", self.clr_bg)]
+				}
+			}, "Title.TButton": {
+				   "configure": {
+					"padding": [4],
+					"highlightthickness": 0, 
+					"borderwidth": 0,
+					"font": 10
+				}, "map": {
+					"foreground": self.bfg, 
+					"background": self.bbg
+				}
+			}, "TButton": {
+				   "configure": {
+					"padding": [3],
+					"relief": "raised", 
+					"highlightthickness": 1, 
+					"borderwidth": 1,
+					"background": self.clr_lsb
+				}, "map": {
+					"foreground": self.bfg, 
+					"background": self.bbg
+				}
+			}
+		}
 		self.deft_presets = {
-			**self.deftc_presets,
+			**(self.all_presets.copy()),
 			   "TLabel": {
 				   "map": {
 					"background": [("", self.clr_bg)]
@@ -235,43 +285,42 @@ CW6LT1O/VSFHWYlpIugIZuL3hukEtjLW2ZLCJwUAOw==""")
 			if self._tth_styling(): return
 		else:
 			self.srcStyle = ttk.Style()
-		if "deftc" in self.srcStyle.theme_names():
-			print("[src] deftc done")
-			return
-		print("[src] create theme 'deftc' ... ", end="")
-		self.srcStyle.theme_create("deftc", parent="clam", settings=self.deftc_presets)
-		self.srcStyle.theme_use("deftc")
-		self.srcStyle.element_create("Horizontal.Scrollbar.trough", "image", self.sbHT, border=2, sticky="ew")
-		self.srcStyle.element_create("Horizontal.Scrollbar.thumb", "image", self.sbHH, border=1, sticky="ew")
-		self.srcStyle.element_create("Horizontal.Scrollbar.grip", "image", self.sbHG)
-		self.srcStyle.element_create("Vertical.Scrollbar.trough", "image", self.sbVT, border=2, sticky="ns")
-		self.srcStyle.element_create("Vertical.Scrollbar.thumb", "image", self.sbVH, border=1, sticky="ns")
-		self.srcStyle.element_create("Vertical.Scrollbar.grip", "image", self.sbVG)
-		
-		self.srcStyle.element_create("Scrollbar.uparrow", "image", self.sbUN, ("pressed", self.sbUP), sticky="")
-		self.srcStyle.element_create("Scrollbar.downarrow", "image", self.sbDN, ("pressed", self.sbDP), sticky="")
-		self.srcStyle.element_create("Scrollbar.leftarrow", "image", self.sbLN, ("pressed", self.sbLP), sticky="")
-		self.srcStyle.element_create("Scrollbar.rightarrow", "image", self.sbRN, ("pressed", self.sbRP), sticky="")
-		print("Done")
+		if "deftc" not in self.srcStyle.theme_names():
+			print("[src] create theme 'deftc' ... ", end="")
+			self.srcStyle.theme_create("deftc", parent="clam", settings=self.deftc_presets)
+			self.srcStyle.theme_use("deftc")
+			self.srcStyle.element_create("Horizontal.Scrollbar.trough", "image", self.sbHT, border=2, sticky="ew")
+			self.srcStyle.element_create("Horizontal.Scrollbar.thumb", "image", self.sbHH, border=1, sticky="ew")
+			self.srcStyle.element_create("Horizontal.Scrollbar.grip", "image", self.sbHG)
+			self.srcStyle.element_create("Vertical.Scrollbar.trough", "image", self.sbVT, border=2, sticky="ns")
+			self.srcStyle.element_create("Vertical.Scrollbar.thumb", "image", self.sbVH, border=1, sticky="ns")
+			self.srcStyle.element_create("Vertical.Scrollbar.grip", "image", self.sbVG)
+			
+			self.srcStyle.element_create("Scrollbar.uparrow", "image", self.sbUN, ("pressed", self.sbUP), sticky="")
+			self.srcStyle.element_create("Scrollbar.downarrow", "image", self.sbDN, ("pressed", self.sbDP), sticky="")
+			self.srcStyle.element_create("Scrollbar.leftarrow", "image", self.sbLN, ("pressed", self.sbLP), sticky="")
+			self.srcStyle.element_create("Scrollbar.rightarrow", "image", self.sbRN, ("pressed", self.sbRP), sticky="")
+			print("Done")
+		else: print("[src] deftc done")
 
-		if "deft" in self.srcStyle.theme_names():
-			print("[src] deft done")
-			return
-		print("[src] create theme 'deft' ... ", end="")
-		self.srcStyle.theme_create("deft", parent="alt", settings=self.deft_presets)
-		self.srcStyle.theme_use("deft")
-		self.srcStyle.element_create("Horizontal.Scrollbar.trough", "image", self.sbHT, border=2, sticky="ew")
-		self.srcStyle.element_create("Horizontal.Scrollbar.thumb", "image", self.sbHH, border=1, sticky="ew")
-		self.srcStyle.element_create("Horizontal.Scrollbar.grip", "image", self.sbHG)
-		self.srcStyle.element_create("Vertical.Scrollbar.trough", "image", self.sbVT, border=2, sticky="ns")
-		self.srcStyle.element_create("Vertical.Scrollbar.thumb", "image", self.sbVH, border=1, sticky="ns")
-		self.srcStyle.element_create("Vertical.Scrollbar.grip", "image", self.sbVG)
-		
-		self.srcStyle.element_create("Scrollbar.uparrow", "image", self.sbUN, ("pressed", self.sbUP), sticky="")
-		self.srcStyle.element_create("Scrollbar.downarrow", "image", self.sbDN, ("pressed", self.sbDP), sticky="")
-		self.srcStyle.element_create("Scrollbar.leftarrow", "image", self.sbLN, ("pressed", self.sbLP), sticky="")
-		self.srcStyle.element_create("Scrollbar.rightarrow", "image", self.sbRN, ("pressed", self.sbRP), sticky="")
-		print("Done")
+		if "deft" not in self.srcStyle.theme_names():
+			print("[src] create theme 'deft' ... ", end="")
+			self.srcStyle.theme_create("deft", parent="alt", settings=self.deft_presets)
+			self.srcStyle.theme_use("deft")
+			self.srcStyle.element_create("Horizontal.Scrollbar.trough", "image", self.sbHT, border=2, sticky="ew")
+			self.srcStyle.element_create("Horizontal.Scrollbar.thumb", "image", self.sbHH, border=1, sticky="ew")
+			self.srcStyle.element_create("Horizontal.Scrollbar.grip", "image", self.sbHG)
+			self.srcStyle.element_create("Vertical.Scrollbar.trough", "image", self.sbVT, border=2, sticky="ns")
+			self.srcStyle.element_create("Vertical.Scrollbar.thumb", "image", self.sbVH, border=1, sticky="ns")
+			self.srcStyle.element_create("Vertical.Scrollbar.grip", "image", self.sbVG)
+			
+			self.srcStyle.element_create("Scrollbar.uparrow", "image", self.sbUN, ("pressed", self.sbUP), sticky="")
+			self.srcStyle.element_create("Scrollbar.downarrow", "image", self.sbDN, ("pressed", self.sbDP), sticky="")
+			self.srcStyle.element_create("Scrollbar.leftarrow", "image", self.sbLN, ("pressed", self.sbLP), sticky="")
+			self.srcStyle.element_create("Scrollbar.rightarrow", "image", self.sbRN, ("pressed", self.sbRP), sticky="")
+			print("Done")
+		else: print("[src] deft done")
+		if self.future_fast_deftc: self.srcStyle.theme_use("deftc")
 
 	def clr_twx(self):
 		return self.tw_twst.cget("bg")

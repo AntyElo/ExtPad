@@ -4,7 +4,7 @@ currentpath = os.system('$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )')
 imgCont = 0
 
 from sourcelib import Source 
-from widgetlib import CNotebook, InfoFrame
+from widgetlib import *
 # Source and widgets merged on new files
 
 class App():
@@ -14,33 +14,31 @@ class App():
 		grc = self.grc
 		self.vkw = {
 			"codename": "mercurial", # Arch
-			"build": 5, # Every update
-			"path": 2, # Is path of version
-			"type": "e", # e(dge)( alpha)/b(eta)/c( rc)( candidate)/r(elease)
+			"build":6, # Every update
+			"path": 0, # Is path of version
+			"channel": "e (edge)", # e(edge/alpha)/b(beta)/c(rc/release-candidate)/r(release)
 		}
 		verpath = self.vkw.setdefault("path")
 		if not verpath: verpath = ""
-		self.version = f'{self.vkw["build"]}{self.vkw["type"]}{verpath}'
+		self.vsm = "Version kw: " + "".join((f"\n    {str(k)}: {str(w)}" for k, w in self.vkw.items()))
+		self.version = f'{self.vkw["build"]}{self.vkw["channel"][0:1]}{verpath}'
 		# ~~
-		# 1e -> [2e]             [1e] -+> 2e
-		# \--> 1b -> 1c0 -> 1c1 -> 1r -/
-		self.vsm = "Version kw: "
-		for k, i in self.vkw.items():
-			self.vsm += f"\n    {str(k)}: {str(i)}"
+		# 1e -> [2e]                 [1e]--> 2e
+		#    \--> 1b -> 1c0 -> 1c1 -> 1r -/
 		self.__doc__ = f"""New EXTernal notePAD [{self.version}]
 
 Features:
-   - Header-bar
-   - Extentions (Hacks)
-   - TKinter
-   - Cute steel/silver - blue theme
+   - Header-bar (csd/ssd support)
+   - Hot-bar
+   - Extentions (Hacks?)
+   - TKinter (ttk)
+   - Cute steelblue themes (deft & deftc)
  
 TODO:
    - New ext-ons
-   - New panel
  
 FIXME:
-   - New panel
+   - Nuitka3
 """
 		self.source = Source()
 		self.mWin = self.source.srcWin
@@ -62,11 +60,17 @@ Use <Alt-B1> to move window
 Use <Button-2> to call uMenu"""
 		self.imgd = tk.BooleanVar(value=True)
 		self.imgst = ["save", "open", "note", "win", "min", "max", "close"]
+		#TODO: make (?) self.imgpool[imgi] = self.source.imgspool[imgi](self.color)
 		for imgi in self.imgst:
 			exec(f"self.img_{imgi} = self.source.img_{imgi}(self.clr_gw)", locals())
+		self.img_mbnote, self.img_mbfile = self.source.img_note(self.clr_sb), self.source.img_open(self.clr_sb)
 		self.img_win_alt, self.imgname_win_alt = self.source.img_win(self.clr_gw, takename=1)
 		self.imgst.append("win_alt")
 		self.mWin.iconname(self.imgname_win_alt)
+		self.config_frames = {}
+		#FIXME: csd+ssd title src
+		self.title_str = "[Miniformulas++ -> ExtPad-tk def[ept] -> ExtPad-Qt -> ExtPad-Qt-git; [ept] -> ExtPad-tk-hg]"
+		self.title_trg = None
 		self.mLblCheck = -1
 		self.notec = 0
 		self.style.map("ghost.TLabel", background = [("", self.clr_tw)])
@@ -74,7 +78,7 @@ Use <Button-2> to call uMenu"""
 		self.style.map("ghost.TSizegrip", background = [("", self.clr_tw)])
 
 		# Title-Bar: wmButton, mainLabel, mainLabel
-		self.tBar = ttk.Frame(self.mWin)
+		self.tBar = tk.Frame(self.mWin, bg=self.clr_sb, highlightthickness=0, height=0)
 		self.wmBtn = ttk.Button(self.tBar, style="Title.TButton", image=self.img_win)
 		self.mMG = tk.Canvas(self.tBar, bg=self.clr_sb, highlightthickness=0, height=0)
 		self.mMG.bind('<Button-1>', self.pointTk)
@@ -140,7 +144,7 @@ Use <Button-2> to call uMenu"""
 		self.hBar.grid(**grc(2, 0), columnspan=2, sticky="nswe")
 
 		# Hot-Bar
-		self.hotBar = ttk.Frame(self.mWin)
+		self.hotBar = ttk.Frame(self.mWin, style="Hotbar.TFrame")
 		self.hotSave = ttk.Button(self.hotBar, image=self.img_save, command=lambda: self.nSave())
 		self.hotOpen = ttk.Button(self.hotBar, image=self.img_open, command=lambda: self.nOpen())
 		self.hotOpen_tip = Hovertip(self.hotOpen, "Open file")
@@ -160,6 +164,16 @@ Use <Button-2> to call uMenu"""
 		self.mWin.grid_rowconfigure(1, weight=1)
 		self.mWin.grid_columnconfigure(1, weight=1)
 
+		## The cfg-panes
+		# cfg:info
+		
+		self.config_frames["info"] = IFrame(dict(fid=["conf", "info"]), master=self.mNB, name='conf:"info"')
+		self.infoNB = ttk.Notebook(master=self.config_frames["info"])
+		self.infoNB.add(InfoFrame(dict(text_ph=self.vsm), self.infoNB, style="ghost.TFrame"), text="Version", sticky="nswe")
+		self.infoNB.add(InfoFrame(dict(text_ph=self.__doc__), self.infoNB, style="ghost.TFrame"), text="Description", sticky="nswe")
+		self.infoNB.add(InfoFrame(dict(text_ph=self.nInfo_hints), self.infoNB, style="ghost.TFrame"), text="Hints", sticky="nswe")
+		self.infoNB.pack(expand=1, fill="both")
+
 	# Funcions
 		# Tk
 	def mod_styles__temme(self, *a, **kw):
@@ -168,27 +182,31 @@ Use <Button-2> to call uMenu"""
 			exec(f"self.img_{imgi}['foreground'] = {color}", locals())
 	def mod_styles(self):
 		def grcs(row, column, sticky, *args): return {"row": row, "column": column, "sticky": sticky}
+		def get_sorted_themes(): return sorted(self.style.theme_names(), key=str.lower)
 		def newst(*a, **kw):
 			#print(f"[styles] newst func. args: {a}; kw: {kw}")
 			req = combox.get()
 			if req.strip() == "":
 				return
 			self.style.theme_use(req)
-			combox["values"] = sorted(self.style.theme_names(), key=str.lower)
+			combox["value"] = get_sorted_themes()
 			#combox.set(invar)
 		self.mWin.bind("<<ThemeChanged>>", self.mod_styles__temme)
 		top = tk.Toplevel()
 		top.title("ExtPad: Themes")
 		self.topTk(True, win=top)
-		combox = ttk.Combobox(top, values=sorted(self.style.theme_names(), key=str.lower))
+		combox = ttk.Combobox(top, value=get_sorted_themes())
+		combox.set(self.style.theme_use())
 		combox.bind("<Return>", newst)
 		btn = ttk.Button(top, text="[Run]", command=newst)
-		cbtn = ttk.Checkbutton(top, text="light/dark icon", variable=self.imgd, offvalue=False, onvalue=True, command=self.mod_styles__temme)
+		optbox = ttk.Frame(top)
+		cbtn = ttk.Checkbutton(optbox, text="light/dark icon", variable=self.imgd, offvalue=False, onvalue=True, command=self.mod_styles__temme)
+		cbtn.pack(side="top", fill="x")
+		ttk.Sizegrip(top).grid(**grcs(3, 0, "nswe"), columnspan=2)
 		combox.grid(**grcs(0, 0, "nswe"))
 		btn.grid(**grcs(0, 1, "nswe"))
-		cbtn.grid(**grcs(1, 0, "nswe"), columnspan=2)
-		ttk.Label(top).grid(**grcs(2, 0, "se"), columnspan=2)
-		ttk.Sizegrip(top).grid(**grcs(3, 1, "se"))
+		optbox.grid(**grcs(1, 0, "nswe"), columnspan=2)
+		ttk.Label(top).grid(**grcs(2, 0, "nswe"), columnspan=2)
 		top.rowconfigure(2, weight=1)
 		top.columnconfigure(0, weight=1)
 		top.mainloop()
@@ -252,9 +270,10 @@ Use <Button-2> to call uMenu"""
 		self.mMG.pack(fill="both", expand=True)
 		self.source.Tk = "max"
 	def withQuit(self):
-		if not tkmb.askokcancel("You sure?", "You may have unsaved changes"): return
-		for i in range(len(self.mNB.tabs())): 
-			if self.nClose(): return
+		if self.mNB.tabs() != ():
+			if not tkmb.askokcancel("You sure?", "You may have unsaved changes"): return
+			for i in range(len(self.mNB.tabs())): 
+				if self.nClose(): return
 		self.source.quit()
 		# Menu
 	def popU(self, event):
@@ -263,6 +282,7 @@ Use <Button-2> to call uMenu"""
 	def popEdit(self, event): self.eMenu.tk_popup(event.x_root, event.y_root, 0)
 		# Notebook (aka n-prefixed)
 	def get_nText(self): return self.mWin.nametowidget(self.mNB.select()+".!text")
+	def get_pfid(self, i): return self.mWin.nametowidget(self.mNB.select()).id[i]
 	def get_npath(self):
 		if self.mNB.select().split(":")[0].split(".")[-1] == "file":
 			return self.mWin.nametowidget(self.mNB.select()+".filepath").cget("text")
@@ -285,30 +305,15 @@ Use <Button-2> to call uMenu"""
 			)
 			self.forceTk()
 			if not path: return
-		nfile = open(str(path))
-		text = nfile.read()
-		nfile.close()
-		name = ospath.split(path)[-1]
+		with open(str(path)) as nfile: text = nfile.read()
 		# Controls
-		nPage = ttk.Frame(self.mNB, style="ghost.TFrame", name=f'file:"{path.replace(".", "%2E")}"')
-		nPath = tk.Label(nPage, text=path, name="filepath")
-		nText = tk.Text(nPage, bd=0, highlightthickness=0, wrap="none", undo=True)
-		nSBX = ttk.Scrollbar(nPage, command=nText.xview, orient="horizontal")
-		nSBY = ttk.Scrollbar(nPage, command=nText.yview, orient="vertical")
-		nText.config(xscrollcommand=nSBX.set, yscrollcommand=nSBY.set)
-		nText.insert("1.0", text)
-		nText.edit_reset()
-		nText.edit_modified(0)
-		nText.bind("<Button-3>", self.popEdit)
-		# Grid controls
-		nSBX.grid(column=0, row=1, sticky="nsew")
-		nSBY.grid(column=1, row=0, sticky="nsew")
-		nText.grid(column=0, row=0, sticky="nsew")
-		nPage.rowconfigure(0, weight=1)
-		nPage.columnconfigure(0, weight=1)
-		self.mNB.add(nPage, text=name)
+		nPage = NBFrame(
+			dict(b3bind=self.popEdit, fid=["file", path], text=text),
+			self.mNB, style="ghost.TFrame", name=f'file:"{path.replace(".", "%2E")}"'
+		)
+		self.mNB.add(nPage, image=self.img_mbfile, text=ospath.split(path)[-1], compound="left")
 	def nSaveas(self):
-		if self.mNB.tabs() == (): return
+		if self.mNB.tabs() == (): return "cancel:notabs"
 		ntype = self.mNB.select().split(":")[0].split(".")[-1]
 		if ntype in ("file", "note"):
 			path = tkfd.asksaveasfilename(
@@ -317,7 +322,7 @@ Use <Button-2> to call uMenu"""
 				filetypes=self.fform
 			)
 			self.forceTk()
-			if not path: return
+			if not path: return "cancel:nopath"
 			try:
 				nText = self.get_nText()
 				nText.edit_reset()
@@ -351,42 +356,23 @@ Use <Button-2> to call uMenu"""
 		)
 		self.forceTk()
 		if not path: return
-		name = ospath.split(path)[-1]
 		# Controls
-		nPage = ttk.Frame(self.mNB, style="ghost.TFrame", name=f'file:"{path.replace(".", "%2E")}"')
-		nPath = tk.Label(nPage, text=path, name="filepath")
-		nText = tk.Text(nPage, bd=0, highlightthickness=0, wrap="none", undo=True)
-		nSBX = ttk.Scrollbar(nPage, command=nText.xview, orient="horizontal")
-		nSBY = ttk.Scrollbar(nPage, command=nText.yview, orient="vertical")
-		nText.config(xscrollcommand=nSBX.set, yscrollcommand=nSBY.set)
-		nText.bind("<Button-3>", self.popEdit)
-		# Grid controls
-		nSBX.grid(column=0, row=1, sticky="nsew")
-		nSBY.grid(column=1, row=0, sticky="nsew")
-		nText.grid(column=0, row=0, sticky="nsew")
-		ttk.Label(nPage, style="ghost.TFrame").grid(column=1, row=1, sticky="")
-		nPage.rowconfigure(0, weight=1)
-		nPage.columnconfigure(0, weight=1)
-		self.mNB.add(nPage, text=name)
+		nPage = NBFrame(
+			dict(b3bind=self.popEdit, fid=["file", path]),
+			self.mNB, style="ghost.TFrame", name=f'file:"{path.replace(".", "%2E")}"'
+		)
+		self.mNB.add(nPage, image=self.img_mbfile, text=ospath.split(path)[-1], compound="left")
 	def nNewnote(self):
-		nPage = ttk.Frame(self.mNB, style="ghost.TFrame", name=f'note:{self.notec}')
-		nText = tk.Text(nPage, bd=0, highlightthickness=0, wrap="none", undo=True)
-		nSBX = ttk.Scrollbar(nPage, command=nText.xview, orient="horizontal")
-		nSBY = ttk.Scrollbar(nPage, command=nText.yview, orient="vertical")
-		nText.config(xscrollcommand=nSBX.set, yscrollcommand=nSBY.set)
-		nText.bind("<Button-3>", self.popEdit)
-		nSBX.grid(column=0, row=1, sticky="nsew")
-		nSBY.grid(column=1, row=0, sticky="nsew")
-		nText.grid(column=0, row=0, sticky="nsew")
-		ttk.Label(nPage, style="ghost.TFrame").grid(column=1, row=1, sticky="")
-		nPage.rowconfigure(0, weight=1)
-		nPage.columnconfigure(0, weight=1)
-		if self.notec: self.mNB.add(nPage, text=f"New ({self.notec})")
-		else: self.mNB.add(nPage, text=f"New")
+		nPage = NBFrame(
+			dict(b3bind=self.popEdit, fid=["note", self.notec]), 
+			self.mNB, style="ghost.TFrame", name=f'note:"{self.notec}"'
+		)
+		self.mNB.add(nPage, image=self.img_mbnote, text=f"New{['', f' ({self.notec})'][bool(self.notec)]}", compound="left")
 		self.notec += 1
 	def nClose(self):
 		if self.mNB.tabs() == (): return
-		seltype = self.mNB.select().split(":")[0].split(".")[-1]
+		seltype = self.get_pfid(0)
+		fail = None
 		if seltype == "file":
 			nText = self.get_nText()
 			if nText.edit_modified():
@@ -395,7 +381,7 @@ Use <Button-2> to call uMenu"""
 					f"Save file {tmp}",
 					"You have unsaved changes.\nDo you want to save before closing?",
 				)
-				if save: self.nSave()
+				if save: fail = self.nSave()
 				elif save == None: return "break"
 		elif seltype == "note":
 			nText = self.get_nText()
@@ -404,12 +390,12 @@ Use <Button-2> to call uMenu"""
 					f"Save note",
 					"You have unsaved changes.\nDo you want to save before closing?",
 				)
-				if save: self.nSave()
+				if save: fail = self.nSave()
 				elif save == None: return "break"
-		elif seltype == "cfg":
-			print("is Config!")
-		else: print("fail type")
-		self.mNB.forget(self.mNB.select())
+		elif seltype == "conf":
+			print(f"[nClose] Closing config: {self.get_pfid(1)}")
+		else: print("[nClose] Unknown type (fail)")
+		if not fail: self.mNB.forget(self.mNB.select())
 	def iCloseEv(self, ev, *args, **kw):
 		#tab1 - write-select; tab2 - cursor-select
 		tab1 = self.mNB.select()
@@ -428,37 +414,33 @@ Use <Button-2> to call uMenu"""
 			self.nBuffer = nText.selection_get()
 			nText.delete(tk.SEL_FIRST, tk.SEL_LAST)
 		except: print("AppError: Can't cut")
-	def nInfo(self):
-		iWin = tk.Toplevel(self.mWin)
-		iWin.title("About ExtPad")
-		iFrame = ttk.Notebook(master=iWin)
-		frst = "ghost.TFrame"
-		iFrame.add(InfoFrame(iFrame, style=frst, _infokw=dict(text_ph=self.vsm)), text="Version", sticky="nswe")
-		iFrame.add(InfoFrame(iFrame, style=frst, _infokw=dict(text_ph=self.__doc__)), text="Description", sticky="nswe")
-		iFrame.add(InfoFrame(iFrame, style=frst, _infokw=dict(text_ph=self.nInfo_hints)), text="Hints", sticky="nswe")
-		iFrame.pack(fill="both", expand=True)
+	def nInfo(self): self.mNB.add(self.config_frames["info"], text=f"Info")
 
 		# Etc
 	def altstream(self):
-		self.mWin.after(80, self.altstream)
+		self.mWin.after(100, self.altstream)
 		self.mLblCheck = round(self.mLblCheck)
 		if self.mNB.tabs() != ():
-			ntype = self.mNB.select().split(":")[0].split('.')[-1]
-			nText = self.mWin.nametowidget(self.mNB.select()+".!text")
+			if self.get_pfid(0) == "conf": nText = None
+			else: nText = self.mWin.nametowidget(self.mNB.select()+".!text")
 			if self.mLblCheck == 0:
-				insLine, insCol = str.split(nText.index("insert"), ".")
-				endLine = str(int(str.split(nText.index("end"), ".")[0]) - 1)
-				endCol = str.split(nText.index(f"{insLine}.end"), ".")[1]
-				if ntype == "file":
+				if nText:
+					insLine, insCol = str.split(nText.index("insert"), ".")
+					endLine = str(int(str.split(nText.index("end"), ".")[0]) - 1)
+					endCol = str.split(nText.index(f"{insLine}.end"), ".")[1]
+				else: insLine, insCol, endLine, endCol = [0 for i in " "*4]
+				if self.get_pfid(0) == "file":
 					path = self.get_npath()
 					self.mLbl["text"] = f"[File] Line: {insLine}/{endLine}  Col: {insCol}/{endCol}  Path: {path}"
-				elif ntype == "note":
+				elif self.get_pfid(0) == "note":
 					self.mLbl["text"] = f"[Note] Line: {insLine}/{endLine}  Col: {insCol}/{endCol}"
+				elif self.get_pfid(0) == "conf":
+					self.mLbl["text"] = f"[Config] Name: {self.get_pfid(1)}"
 				else:
 					self.mLbl["text"] = f"[Err] undifined type"
 			elif self.mLblCheck > 0:
 				self.mLblCheck -= 1
-			if ntype == "file":
+			if self.get_pfid(0) == "file":
 				path = self.get_npath()
 				if sysplatform == "win32": tmp = path.split("\\")[-1]
 				else: tmp = path.split("/")[-1]
@@ -495,7 +477,7 @@ Use <Button-2> to call uMenu"""
 			int(self.wmBtn.winfo_width() * 4.5), 
 			self.tBar.winfo_height() + self.hBar.winfo_height()
 		)
-		# TODO: add label?
+		# TODO: add csd+ssd title?
 		self.mWin.after_idle(self.altstream)
 		if sysplatform != "win32": self.mWin.after_idle(lambda: self.mWin.attributes('-type', "normal"))
 		self.topTk(True)
