@@ -15,8 +15,8 @@ class App():
 		self.vkw = {
 			"codename": "mercurial", # Arch
 			"build":6, # Every update
-			"path": 1, # Is path of version
-			"channel": "e (edge)", # e(edge/alpha)/b(beta)/c(rc/release-candidate)/r(release)
+			"path": 0, # Is path of version
+			"channel": "c (candidate)", # e(edge/alpha)/b(beta)/c(rc/release-candidate)/r(release)
 		}
 		verpath = self.vkw.setdefault("path")
 		if not verpath: verpath = ""
@@ -73,9 +73,7 @@ Use <Button-2> to call uMenu"""
 		self.title_trg = None
 		self.mLblCheck = -1
 		self.notec = 0
-		self.style.map("ghost.TLabel", background = [("", self.clr_tw)])
-		self.style.map("ghost.TFrame", background = [("", self.clr_tw)])
-		self.style.map("ghost.TSizegrip", background = [("", self.clr_tw)])
+		self.gwpath_theme()
 
 		# Title-Bar: wmButton, mainLabel, mainLabel
 		self.tBar = tk.Frame(self.mWin, bg=self.clr_sb, highlightthickness=0, height=0)
@@ -166,13 +164,27 @@ Use <Button-2> to call uMenu"""
 
 		## The cfg-panes
 		# cfg:info
-		
-		self.config_frames["info"] = IFrame(dict(fid=["conf", "info"]), master=self.mNB, name='conf:"info"')
-		self.infoNB = ttk.Notebook(master=self.config_frames["info"])
+		self.config_frames["root.info"] = IFrame(dict(fid=["conf", "info"]), master=self.mNB, name='conf:"info"')
+		self.infoNB = ttk.Notebook(master=self.config_frames["root.info"])
 		self.infoNB.add(InfoFrame(dict(text_ph=self.vsm), self.infoNB, style="ghost.TFrame"), text="Version", sticky="nswe")
 		self.infoNB.add(InfoFrame(dict(text_ph=self.__doc__), self.infoNB, style="ghost.TFrame"), text="Description", sticky="nswe")
 		self.infoNB.add(InfoFrame(dict(text_ph=self.nInfo_hints), self.infoNB, style="ghost.TFrame"), text="Hints", sticky="nswe")
 		self.infoNB.pack(expand=1, fill="both")
+
+		self.config_frames["root.theme"] = IFrame(dict(fid=["conf", "theme"]), master=self.mNB, name='conf:"theme"')
+		self.iTheme_combox = ttk.Combobox(self.config_frames["root.theme"], value=sorted(self.style.theme_names(), key=str.lower))
+		self.iTheme_combox.set(self.style.theme_use())
+		self.iTheme_combox.bind("<Return>", self.mod_styles__newst)
+		self.iTheme_btn = ttk.Button(self.config_frames["root.theme"], text="[Run]", command=self.mod_styles__newst)
+		self.iTheme_optbox = ttk.Frame(self.config_frames["root.theme"])
+		self.iTheme_cbtn = ttk.Checkbutton(self.iTheme_optbox, text="light/dark icon", variable=self.imgd, offvalue=False, onvalue=True, command=self.mod_styles__temme)
+		self.iTheme_cbtn.pack(side="top", fill="x")
+		self.iTheme_combox.grid(**self.grc(0, 0), sticky="nswe")
+		self.iTheme_btn.grid(**self.grc(0, 1), sticky="nswe")
+		self.iTheme_optbox.grid(**self.grc(1, 0), sticky="nswe", columnspan=2)
+		ttk.Label(self.config_frames["root.theme"]).grid(**self.grc(2, 0), sticky="nswe", columnspan=2)
+		self.config_frames["root.theme"].rowconfigure(2, weight=1)
+		self.config_frames["root.theme"].columnconfigure(0, weight=1)
 
 	# Funcions
 		# Tk
@@ -180,37 +192,20 @@ Use <Button-2> to call uMenu"""
 		for imgi in self.imgst:
 			color = ['self.clr_sb', 'self.clr_gw'][self.imgd.get()]
 			exec(f"self.img_{imgi}['foreground'] = {color}", locals())
-	def mod_styles(self):
-		def grcs(row, column, sticky, *args): return {"row": row, "column": column, "sticky": sticky}
-		def get_sorted_themes(): return sorted(self.style.theme_names(), key=str.lower)
-		def newst(*a, **kw):
-			#print(f"[styles] newst func. args: {a}; kw: {kw}")
-			req = combox.get()
-			if req.strip() == "":
-				return
-			self.style.theme_use(req)
-			combox["value"] = get_sorted_themes()
-			#combox.set(invar)
-		self.mWin.bind("<<ThemeChanged>>", self.mod_styles__temme)
-		top = tk.Toplevel()
-		top.title("ExtPad: Themes")
-		self.topTk(True, win=top)
-		combox = ttk.Combobox(top, value=get_sorted_themes())
-		combox.set(self.style.theme_use())
-		combox.bind("<Return>", newst)
-		btn = ttk.Button(top, text="[Run]", command=newst)
-		optbox = ttk.Frame(top)
-		cbtn = ttk.Checkbutton(optbox, text="light/dark icon", variable=self.imgd, offvalue=False, onvalue=True, command=self.mod_styles__temme)
-		cbtn.pack(side="top", fill="x")
-		ttk.Sizegrip(top).grid(**grcs(3, 0, "nswe"), columnspan=2)
-		combox.grid(**grcs(0, 0, "nswe"))
-		btn.grid(**grcs(0, 1, "nswe"))
-		optbox.grid(**grcs(1, 0, "nswe"), columnspan=2)
-		ttk.Label(top).grid(**grcs(2, 0, "nswe"), columnspan=2)
-		top.rowconfigure(2, weight=1)
-		top.columnconfigure(0, weight=1)
-		top.mainloop()
-		#self.mWin.nametowidget(".!frame")["bg"] = "red"
+		self.gwpath_theme()
+	def mod_styles__newst(self, *a, **kw):
+		#print(f"[styles] newst func. args: {a}; kw: {kw}")
+		req = self.iTheme_combox.get()
+		if req.strip() == "":
+			return
+		self.style.theme_use(req)
+		self.iTheme_combox["value"] = sorted(self.style.theme_names(), key=str.lower)
+		#combox.set(invar)
+	def mod_styles(self): self.mNB.add(self.config_frames["root.theme"], text=f"Themes")
+	def gwpath_theme(self):
+		self.style.map("ghost.TLabel", background = [("", self.clr_tw)])
+		self.style.map("ghost.TFrame", background = [("", self.clr_tw)])
+		self.style.map("ghost.TSizegrip", background = [("", self.clr_tw)])
 	def forceTk(self): self.mWin.focus_force()
 	def floatTk(self):
 		if sysplatform == "win32": self.mWin.overrideredirect(True)
@@ -283,11 +278,6 @@ Use <Button-2> to call uMenu"""
 		# Notebook (aka n-prefixed)
 	def get_nText(self): return self.mWin.nametowidget(self.mNB.select()+".!text")
 	def get_pfid(self, i): return self.mWin.nametowidget(self.mNB.select()).id[i]
-	def get_npath(self):
-		if self.mNB.select().split(":")[0].split(".")[-1] == "file":
-			return self.mWin.nametowidget(self.mNB.select()+".filepath").cget("text")
-		elif self.mNB.select().split(":")[0].split(".")[-1] == "note":
-			return self.mWin.nametowidget(self.mNB.select()+".filepath").cget("text")
 	def nSel(self, event):
 		if   len(self.mNB.tabs()) == 0:
 			self.mLbl["text"] = f"Hello in ExtPad {self.version}"
@@ -314,7 +304,7 @@ Use <Button-2> to call uMenu"""
 		self.mNB.add(nPage, image=self.img_mbfile, text=ospath.split(path)[-1], compound="left")
 	def nSaveas(self):
 		if self.mNB.tabs() == (): return "cancel:notabs"
-		ntype = self.mNB.select().split(":")[0].split(".")[-1]
+		ntype = self.get_pfid(0)
 		if ntype in ("file", "note"):
 			path = tkfd.asksaveasfilename(
 				title="Save as",
@@ -337,9 +327,9 @@ Use <Button-2> to call uMenu"""
 			self.mNB.forget(tmp)
 	def nSave(self):
 		if self.mNB.tabs() == (): return
-		ntype = self.mNB.select().split(":")[0].split(".")[-1]
+		ntype = self.get_pfid(0)
 		if ntype == "file":
-			path = self.get_npath()
+			path = self.get_pfid(1)
 			nText = self.get_nText()
 			nText.edit_modified(0)
 			nfile = open(path, "w")
@@ -417,7 +407,7 @@ Use <Button-2> to call uMenu"""
 			self.nBuffer = nText.selection_get()
 			nText.delete(tk.SEL_FIRST, tk.SEL_LAST)
 		except: print("AppError: Can't cut")
-	def nInfo(self): self.mNB.add(self.config_frames["info"], text=f"Info")
+	def nInfo(self): self.mNB.add(self.config_frames["root.info"], text=f"Info")
 
 		# Etc
 	def altstream(self):
@@ -433,7 +423,7 @@ Use <Button-2> to call uMenu"""
 					endCol = str.split(nText.index(f"{insLine}.end"), ".")[1]
 				else: insLine, insCol, endLine, endCol = [0 for i in " "*4]
 				if self.get_pfid(0) == "file":
-					path = self.get_npath()
+					path = self.get_pfid(1)
 					self.mLbl["text"] = f"[File] Line: {insLine}/{endLine}  Col: {insCol}/{endCol}  Path: {path}"
 				elif self.get_pfid(0) == "note":
 					self.mLbl["text"] = f"[Note] Line: {insLine}/{endLine}  Col: {insCol}/{endCol}"
@@ -444,7 +434,7 @@ Use <Button-2> to call uMenu"""
 			elif self.mLblCheck > 0:
 				self.mLblCheck -= 1
 			if self.get_pfid(0) == "file":
-				path = self.get_npath()
+				path = self.get_pfid(1)
 				if sysplatform == "win32": tmp = path.split("\\")[-1]
 				else: tmp = path.split("/")[-1]
 				if nText.edit_modified() == True: self.mNB.tab(self.mNB.select(), text=tmp+"*")

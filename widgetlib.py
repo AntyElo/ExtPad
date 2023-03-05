@@ -126,7 +126,6 @@ class NBFrame(ttk.Frame): # nFrame back-end
 		self.id = ikw.setdefault("fid", ["note", -1])
 		super().__init__(*args, **kwargs)
 
-		nPath = tk.Label(self, text=self.id[1], name="filepath")
 		nText = tk.Text(self, bd=0, highlightthickness=0, wrap="none", undo=True)
 		nSBX = ttk.Scrollbar(self, command=nText.xview, orient="horizontal")
 		nSBY = ttk.Scrollbar(self, command=nText.yview, orient="vertical")
