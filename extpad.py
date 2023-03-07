@@ -13,7 +13,7 @@ class App():
 	def __init__(self):
 		grc = self.grc
 		self.vkw = {
-			"codename": "mercurial", # Arch
+			"codename": "crypton", # Arch
 			"build": 7, # Every update
 			"path": 0, # Is path of version
 			"channel": "b (beta)", # e(edge/alpha)/b(beta)/c(rc/release-candidate)/r(release)
