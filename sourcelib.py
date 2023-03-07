@@ -8,8 +8,9 @@ class Source():
 	def __init__(self):
 		self.srcWin = tk.Tk()
 		self.Tk = "normal"
-		self.future_tth = False # Toggle to get ttkthemes future
-		self.future_fast_deftc = False # Toggle to get deftc-first future
+		self.future_tth = False # Toggle to get(1) ttkthemes - future
+		self.future_fast_deftc = False # Toggle to get(1) deftc-first - future
+		self.future_fast_quit = True # Toggle to fast(1) quit - future
 		self.dbg = tk.BooleanVar(value=False) # App.nSel() req
 		self.xTk, self.yTk, self.wrx, self.wry, self.sizeX, self.sizeY = [0, 0, 0, 0, 0, 0]
 		self.ww, self.wh = [400, 300]
@@ -170,7 +171,7 @@ CW6LT1O/VSFHWYlpIugIZuL3hukEtjLW2ZLCJwUAOw==""")
 				}
 			}, "Hotbar.TFrame": {
 				   "configure": {
-					"relief": "raised",
+					"relief": "raised"
 				}
 			}, "Flat.TButton": {
 				   "configure": {

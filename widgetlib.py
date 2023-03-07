@@ -96,7 +96,7 @@ class InfoFrame(ttk.Frame): # Frame to info`rmation
 		def grc(row, column): return {"row": row, "column": column}
 		self.style = ttk.Style()
 		self.ikw = ikw
-		ttk.Frame.__init__(self, *args, **kwargs)
+		super().__init__(*args, **kwargs)
 
 		self.text = tk.Text(master=self, bd=0, highlightthickness=0, wrap="none")
 		self.text.insert("end", self.ikw.setdefault("text_ph"))
@@ -105,8 +105,6 @@ class InfoFrame(ttk.Frame): # Frame to info`rmation
 		self.text.config(yscrollcommand=self.SCY.set, xscrollcommand=self.SCX.set)
 		self.SCY.grid(sticky="nswe", column=1)
 		self.SCX.grid(sticky="nswe", row=1)
-		self.grip = ttk.Sizegrip(master=self, style="ghost.TSizegrip")
-		self.grip.grid(sticky="nswe", row=1, column=1)
 		self.text.grid(sticky="nswe", row=0)
 		self.rowconfigure(0, weight=1)
 		self.columnconfigure(0, weight=1)

@@ -14,9 +14,9 @@ class App():
 		grc = self.grc
 		self.vkw = {
 			"codename": "mercurial", # Arch
-			"build":6, # Every update
+			"build": 7, # Every update
 			"path": 0, # Is path of version
-			"channel": "c (candidate)", # e(edge/alpha)/b(beta)/c(rc/release-candidate)/r(release)
+			"channel": "b (beta)", # e(edge/alpha)/b(beta)/c(rc/release-candidate)/r(release)
 		}
 		verpath = self.vkw.setdefault("path")
 		if not verpath: verpath = ""
@@ -57,7 +57,8 @@ FIXME:
 		self.nInfo_hints = \
 """WM: <C/S>SD = <Client/Server>-Side Decorartion
 Use <Alt-B1> to move window
-Use <Button-2> to call uMenu"""
+Use <Button-2> to call uMenu
+Use <Control-Button-1> to find selecton in text"""
 		self.imgd = tk.BooleanVar(value=True)
 		self.imgst = ["save", "open", "note", "win", "min", "max", "close"]
 		#TODO: make (?) self.imgpool[imgi] = self.source.imgspool[imgi](self.color)
@@ -73,7 +74,8 @@ Use <Button-2> to call uMenu"""
 		self.title_trg = None
 		self.mLblCheck = -1
 		self.notec = 0
-		self.gwpath_theme()
+		self.eFind_str = tk.StringVar()
+		self.theme_path_gw()
 
 		# Title-Bar: wmButton, mainLabel, mainLabel
 		self.tBar = tk.Frame(self.mWin, bg=self.clr_sb, highlightthickness=0, height=0)
@@ -119,8 +121,9 @@ Use <Button-2> to call uMenu"""
 		self.eMenu.add_command(label="Copy", accelerator="Ctrl-C", command=self.eCopy)
 		self.eMenu.add_command(label="Paste", accelerator="Ctrl-V", command=self.ePaste)
 		self.eMenu.add_command(label="Cut", accelerator="Ctrl-X", command=self.eCut)
+		self.eMenu.add_command(label="Find", accelerator="Ctrl-B1", command=self.eFind)
 
-		self.vMenu.add_command(label="Styles (built-in mod)", accelerator="Ctrl-T", command=self.mod_styles)
+		self.vMenu.add_command(label="Styles (built-in mod)", accelerator="F2", command=self.mod_styles)
 
 		self.modMenu.add_command(label="Exec", accelerator="Ctrl-E", command=self.nExec)
 
@@ -133,13 +136,15 @@ Use <Button-2> to call uMenu"""
 		self.tBar.grid(**grc(0, 0), columnspan=2, sticky="nswe")
 
 		# Help-Bar: mainSizegrip, tkhelpButton, mainLabel
+		self.api_pane = ttk.Frame(self.mWin)
 		self.hBar = ttk.Frame(self.mWin)
 		self.mSG = ttk.Sizegrip(self.hBar)
 		self.mLbl = ttk.Label(self.hBar, text=f"Hello in ExtPad {self.version}")
 			# Pack this
 		self.mSG.pack(fill="both", side="right")
 		self.mLbl.pack(fill="both", expand=True)
-		self.hBar.grid(**grc(2, 0), columnspan=2, sticky="nswe")
+		self.api_pane.grid(**grc(2, 0), columnspan=2, sticky="nswe")
+		self.hBar.grid(**grc(3, 0), columnspan=2, sticky="nswe")
 
 		# Hot-Bar
 		self.hotBar = ttk.Frame(self.mWin, style="Hotbar.TFrame")
@@ -171,13 +176,18 @@ Use <Button-2> to call uMenu"""
 		self.infoNB.add(InfoFrame(dict(text_ph=self.nInfo_hints), self.infoNB, style="ghost.TFrame"), text="Hints", sticky="nswe")
 		self.infoNB.pack(expand=1, fill="both")
 
+		# cfg:theme
 		self.config_frames["root.theme"] = IFrame(dict(fid=["conf", "theme"]), master=self.mNB, name='conf:"theme"')
 		self.iTheme_combox = ttk.Combobox(self.config_frames["root.theme"], value=sorted(self.style.theme_names(), key=str.lower))
 		self.iTheme_combox.set(self.style.theme_use())
 		self.iTheme_combox.bind("<Return>", self.mod_styles__newst)
 		self.iTheme_btn = ttk.Button(self.config_frames["root.theme"], text="[Run]", command=self.mod_styles__newst)
 		self.iTheme_optbox = ttk.Frame(self.config_frames["root.theme"])
-		self.iTheme_cbtn = ttk.Checkbutton(self.iTheme_optbox, text="light/dark icon", variable=self.imgd, offvalue=False, onvalue=True, command=self.mod_styles__temme)
+		self.iTheme_cbtn = ttk.Checkbutton(
+			self.iTheme_optbox, text="light/dark icon", 
+			variable=self.imgd, offvalue=False, onvalue=True, 
+			command=self.themeChanged
+		)
 		self.iTheme_cbtn.pack(side="top", fill="x")
 		self.iTheme_combox.grid(**self.grc(0, 0), sticky="nswe")
 		self.iTheme_btn.grid(**self.grc(0, 1), sticky="nswe")
@@ -185,14 +195,15 @@ Use <Button-2> to call uMenu"""
 		ttk.Label(self.config_frames["root.theme"]).grid(**self.grc(2, 0), sticky="nswe", columnspan=2)
 		self.config_frames["root.theme"].rowconfigure(2, weight=1)
 		self.config_frames["root.theme"].columnconfigure(0, weight=1)
+		self.mWin.bind("<<ThemeChanged>>", self.themeChanged)
 
 	# Funcions
 		# Tk
-	def mod_styles__temme(self, *a, **kw):
+	def themeChanged(self, *a, **kw):
 		for imgi in self.imgst:
 			color = ['self.clr_sb', 'self.clr_gw'][self.imgd.get()]
 			exec(f"self.img_{imgi}['foreground'] = {color}", locals())
-		self.gwpath_theme()
+		self.theme_path_gw()
 	def mod_styles__newst(self, *a, **kw):
 		#print(f"[styles] newst func. args: {a}; kw: {kw}")
 		req = self.iTheme_combox.get()
@@ -202,24 +213,17 @@ Use <Button-2> to call uMenu"""
 		self.iTheme_combox["value"] = sorted(self.style.theme_names(), key=str.lower)
 		#combox.set(invar)
 	def mod_styles(self): self.mNB.add(self.config_frames["root.theme"], text=f"Themes")
-	def gwpath_theme(self):
+	def nInfo(self): self.mNB.add(self.config_frames["root.info"], text=f"Info")
+	def theme_path_gw(self):
 		self.style.map("ghost.TLabel", background = [("", self.clr_tw)])
 		self.style.map("ghost.TFrame", background = [("", self.clr_tw)])
 		self.style.map("ghost.TSizegrip", background = [("", self.clr_tw)])
 	def forceTk(self): self.mWin.focus_force()
-	def floatTk(self):
-		if sysplatform == "win32": self.mWin.overrideredirect(True)
-		else: self.mWin.attributes('-type', "dock")
-		self.mWin.wm_state("withdraw")
-		self.mWin.wm_state("normal")
-	def unfloatTk(self):
-		if sysplatform == "win32": self.mWin.overrideredirect(False)
-		else: self.mWin.attributes('-type', "normal")
-		self.mWin.wm_state("withdraw")
-		self.mWin.wm_state("normal")
 	def topTk(self, bl=None, **kw): 
 		if bl == None: bl = self.istopTk.get()
 		kw.setdefault("win", self.mWin).attributes("-topmost", bl)
+	def csd_title(self, s):
+		print(f"[app][csd_title] New title: {s}")
 	def ifloatTk(self, bl=None): 
 		if bl == None: bl = self.isCSD.get()
 		if sysplatform == "win32": self.mWin.overrideredirect(bl)
@@ -265,10 +269,10 @@ Use <Button-2> to call uMenu"""
 		self.mMG.pack(fill="both", expand=True)
 		self.source.Tk = "max"
 	def withQuit(self):
-		if self.mNB.tabs() != ():
+		if self.mNB.tabs() != () and self.source.future_fast_quit:
 			if not tkmb.askokcancel("You sure?", "You may have unsaved changes"): return
-			for i in range(len(self.mNB.tabs())): 
-				if self.nClose(): return
+		for i in range(len(self.mNB.tabs())): 
+			if self.nClose(): return
 		self.source.quit()
 		# Menu
 	def popU(self, event):
@@ -396,18 +400,51 @@ Use <Button-2> to call uMenu"""
 			if tab1 > tab2: tab1 -= 1
 			self.mNB.select(tab1)
 	def eCopy(self): 
-		try: self.nBuffer = self.get_nText().selection_get()
-		except: print("AppError: Can't copy")
+		try: 
+			nText = self.get_nText()
+			s = nText.selection_get()
+			nText.clipboard_clear()
+			nText.clipboard_append(s)
+		except Exception as exc: print(f"AppError: Can't copy: {exc}")
 	def ePaste(self): 
-		try: self.get_nText().insert("insert", self.nBuffer)
-		except: print("AppError: Can't paste")
+		try: 
+			nText = self.get_nText()
+			s = nText.clipboard_get()
+			self.get_nText().insert("insert", s)
+		except Exception as exc: print(f"AppError: Can't paste: {exc}")
 	def eCut(self):
 		try:
 			nText = self.get_nText()
-			self.nBuffer = nText.selection_get()
+			s = nText.selection_get()
+			nText.clipboard_clear()
+			nText.clipboard_append(s)
 			nText.delete(tk.SEL_FIRST, tk.SEL_LAST)
-		except: print("AppError: Can't cut")
-	def nInfo(self): self.mNB.add(self.config_frames["root.info"], text=f"Info")
+		except Exception as exc: print(f"AppError: Can't cut: {exc}")
+	def eFind_engene(self, s, w):
+		fill = "".join([" ", "Z"][i == " "] for i in w)
+		if w == "" or s == "": return
+		ss = s.split("\n")
+		rs = []
+		for i, e in enumerate(ss):
+			while 1:
+				f = e.find(w)
+				if f < 0: break
+				e = e[0:f]+fill+e[f+len(w):]
+				rs.append([i+1, f])
+		return rs
+	def eFind(self):
+		nText = self.get_nText()
+		nText.tag_remove("search", "1.0", "end")
+		try: word = nText.selection_get()
+		except tk.TclError: word = ""
+		text = nText.get("1.0", "end")
+		self.eFind_str.set(None)
+		poss = self.eFind_engene(text, word)
+		if poss:
+			for i, f in poss:
+				pos = f"{i}.{f}"
+				nText.tag_add(f"search", pos, f"{pos} + {len(word)}c")
+				nText.tag_configure(f"search", background='SkyBlue', relief='raised')
 
 		# Etc
 	def altstream(self):
@@ -455,6 +492,7 @@ Use <Button-2> to call uMenu"""
 		self.mWin.wm_protocol("WM_DELETE_WINDOW", self.withQuit)
 		self.mWin.bind("<Button-2>", self.popU)
 		self.mWin.bind("<Control-q>", lambda ev: self.withQuit())
+		self.mWin.bind("<Control-Button-1>", lambda ev: self.eFind())
 		self.mWin.bind("<Control-o>", lambda ev: self.nOpen())
 		self.mWin.bind("<Control-s>", lambda ev: self.nSave())
 		self.mWin.bind("<Control-S>", lambda ev: self.nSaveas())
@@ -462,7 +500,7 @@ Use <Button-2> to call uMenu"""
 		self.mWin.bind("<Control-N>", lambda ev: self.nNewnote())
 		self.mWin.bind("<Control-D>", lambda ev: self.nClose())
 		self.mWin.bind("<Control-e>", lambda ev: self.nExec())
-		self.mWin.bind("<Control-t>", lambda ev: self.mod_styles())
+		self.mWin.bind("<F2>", lambda ev: self.mod_styles())
 		self.mWin.bind("<F1>", lambda ev: self.nInfo())
 		self.mWin.update()
 		self.mWin.minsize(
