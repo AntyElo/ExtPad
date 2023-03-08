@@ -121,10 +121,10 @@ class NBFrame(ttk.Frame): # nFrame back-end
 		def grc(row, column): return {"row": row, "column": column}
 		self.style = ttk.Style()
 		self.ikw = ikw
-		self.id = ikw.setdefault("fid", ["note", -1])
+		self.id = self.ikw.setdefault("fid", ["note", -1])
 		super().__init__(*args, **kwargs)
 
-		nText = tk.Text(self, bd=0, highlightthickness=0, wrap="none", undo=True)
+		nText = tk.Text(self, bd=0, highlightthickness=0, wrap="none", undo=True, tabs="0.5c")
 		nSBX = ttk.Scrollbar(self, command=nText.xview, orient="horizontal")
 		nSBY = ttk.Scrollbar(self, command=nText.yview, orient="vertical")
 		nText.config(xscrollcommand=nSBX.set, yscrollcommand=nSBY.set)

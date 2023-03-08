@@ -15,7 +15,7 @@ class App():
 		self.vkw = {
 			"codename": "crypton", # Arch
 			"build": 7, # Every update
-			"path": 0, # Is path of version
+			"path": 1, # Is path of version
 			"channel": "b (beta)", # e(edge/alpha)/b(beta)/c(rc/release-candidate)/r(release)
 		}
 		verpath = self.vkw.setdefault("path")
@@ -69,9 +69,6 @@ Use <Control-Button-1> to find selecton in text"""
 		self.imgst.append("win_alt")
 		self.mWin.iconname(self.imgname_win_alt)
 		self.config_frames = {}
-		#FIXME: csd+ssd title src
-		self.title_str = "[Miniformulas++ -> ExtPad-tk def[ept] -> ExtPad-Qt -> ExtPad-Qt-git; [ept] -> ExtPad-tk-hg]"
-		self.title_trg = None
 		self.mLblCheck = -1
 		self.notec = 0
 		self.eFind_str = tk.StringVar()
@@ -205,7 +202,7 @@ Use <Control-Button-1> to find selecton in text"""
 			exec(f"self.img_{imgi}['foreground'] = {color}", locals())
 		self.theme_path_gw()
 	def mod_styles__newst(self, *a, **kw):
-		#print(f"[styles] newst func. args: {a}; kw: {kw}")
+		#print(f"[app][styles] newst func. args: {a}; kw: {kw}")
 		req = self.iTheme_combox.get()
 		if req.strip() == "":
 			return
@@ -222,8 +219,11 @@ Use <Control-Button-1> to find selecton in text"""
 	def topTk(self, bl=None, **kw): 
 		if bl == None: bl = self.istopTk.get()
 		kw.setdefault("win", self.mWin).attributes("-topmost", bl)
-	def csd_title(self, s):
-		print(f"[app][csd_title] New title: {s}")
+	def retitle(self, s):
+		# FIXME: csd add title
+		# rewrite ssd and csd title
+		self.mWin.title(s)
+		print(f"[app][retitle] New title: {s}")
 	def ifloatTk(self, bl=None): 
 		if bl == None: bl = self.isCSD.get()
 		if sysplatform == "win32": self.mWin.overrideredirect(bl)
@@ -324,7 +324,7 @@ Use <Control-Button-1> to find selecton in text"""
 				nfile = open(path, "w")
 				nfile.write(nText.get("1.0", "end").rstrip("\n"))
 				nfile.close()
-			except: print("AppErorr: Can't save file")
+			except: print("[app][nSaveas] Can't save file")
 		if ntype == "note":
 			tmp = self.mNB.select()
 			self.nOpen(path)
@@ -387,8 +387,8 @@ Use <Control-Button-1> to find selecton in text"""
 				if save: fail = self.nSave()
 				elif save == None: return "break"
 		elif seltype == "conf":
-			print(f"[nClose] Closing config: {self.get_pfid(1)}")
-		else: print("[nClose] Unknown type (fail)")
+			print(f"[app][nClose] Closing config: {self.get_pfid(1)}")
+		else: print("[app][nClose] Unknown type (fail)")
 		if not fail: self.mNB.forget(self.mNB.select())
 	def iCloseEv(self, ev, *args, **kw):
 		#tab1 - write-select; tab2 - cursor-select
@@ -405,13 +405,13 @@ Use <Control-Button-1> to find selecton in text"""
 			s = nText.selection_get()
 			nText.clipboard_clear()
 			nText.clipboard_append(s)
-		except Exception as exc: print(f"AppError: Can't copy: {exc}")
+		except Exception as exc: print(f"[app][eCopy] Can't copy: {exc}")
 	def ePaste(self): 
 		try: 
 			nText = self.get_nText()
 			s = nText.clipboard_get()
 			self.get_nText().insert("insert", s)
-		except Exception as exc: print(f"AppError: Can't paste: {exc}")
+		except Exception as exc: print(f"[app][ePaste] Can't paste: {exc}")
 	def eCut(self):
 		try:
 			nText = self.get_nText()
@@ -419,7 +419,7 @@ Use <Control-Button-1> to find selecton in text"""
 			nText.clipboard_clear()
 			nText.clipboard_append(s)
 			nText.delete(tk.SEL_FIRST, tk.SEL_LAST)
-		except Exception as exc: print(f"AppError: Can't cut: {exc}")
+		except Exception as exc: print(f"[app][eCut] Can't cut: {exc}")
 	def eFind_engene(self, s, w):
 		fill = "".join([" ", "Z"][i == " "] for i in w)
 		if w == "" or s == "": return
