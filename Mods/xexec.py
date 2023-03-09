@@ -58,7 +58,7 @@ def main(api):
 	helpbar.grid(**grc(3, 0), **EXP)
 	api.config_frames["ext.xexec"].rowconfigure(2, weight=1)
 	api.config_frames["ext.xexec"].columnconfigure(0, weight=1)
-	api.mNB.add(api.config_frames["ext.xexec"], image=api.img_mbrun, text="Exec", compound="left")
+	api.mNB_addc(api.config_frames["ext.xexec"], text="Exec")
 
 if __name__ == "__main__":
 	try:

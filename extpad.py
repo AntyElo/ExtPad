@@ -15,7 +15,7 @@ class App():
 		self.vkw = {
 			"codename": "crypton", # Arch
 			"build": 8, # Every update
-			"path": 0, # Is path of version
+			"path": 1, # Is path of version
 			"channel": "b (beta)", # e(edge/alpha)/b(beta)/c(rc/release-candidate)/r(release)
 		}
 		verpath = self.vkw.setdefault("path")
@@ -54,7 +54,7 @@ FIXME:
 		self.nBuffer = ""
 		for clri in ["tw", "gw", "sb", "dsb", "lsb"]:
 			exec(f"self.clr_{clri} = self.source.clr_{clri}", locals())
-		self.clr_bg, self.clr_ts = self.clr_tw, self.clr_sb
+		self.clr_bg, self.clr_ts = self.clr_tw, self.clr_lsb
 		self.fform = self.source.fileforms
 		self.cInfo_hints = \
 """WM: <C/S>SD = <Client/Server>-Side Decorartion
@@ -165,7 +165,7 @@ Use <Control-Button-1> to find selecton in text"""
 		self.mNB = CNotebook(self.mWin, height=0)
 		self.nNewnote()
 		self.mNB.bind("<<NotebookTabChanged>>", self.nSel)
-		self.mNB.bind("<<NotebookTabClosed>>", self.nCloseEv)
+		self.mNB.bind("<<NotebookTabClosed>>", lambda ev: self.nClose(k=ev.x))
 		self.mNB.grid(**grc(1, 1), sticky="nswe")
 		self.mWin.grid_rowconfigure(1, weight=1)
 		self.mWin.grid_columnconfigure(1, weight=1)
@@ -214,6 +214,8 @@ Use <Control-Button-1> to find selecton in text"""
 
 	# Funcions
 		# Tk
+	def mNB_addc(self, frame, text):
+		self.mNB.add(frame, image=self.img_mbrun, text=text, compound="left")
 	def themeChanged(self, *a, **kw):
 		for imgi in self.imgst:
 			color1 = ['self.clr_sb', 'self.clr_gw'][self.imgd.get()]
@@ -247,10 +249,10 @@ Use <Control-Button-1> to find selecton in text"""
 		req = self.iTheme_tsfield.text.get().strip()
 		if req == "": return
 		self.clr_ts = req
-	def cThemes(self): self.mNB.add(self.config_frames["root.theme"], text=f"Themes")
+	def cThemes(self): self.mNB_addc(self.config_frames["root.theme"], text=f"Themes")
 	def cInfo_text(self):
 		self.config_frames["root.info"].text = self.mWin.nametowidget(self.infoNB.select()).text
-	def cInfo(self): self.mNB.add(self.config_frames["root.info"], text=f"Info")
+	def cInfo(self): self.mNB_addc(self.config_frames["root.info"], text=f"Info")
 	def theme_path_gw(self):
 		self.style.map("ghost.TLabel", background = [("", self.clr_bg)])
 		self.style.map("ghost.TFrame", background = [("", self.clr_bg)])
@@ -408,11 +410,12 @@ Use <Control-Button-1> to find selecton in text"""
 		nPage.ikw["tid"] = self.text_shared.addw(nPage.text)
 		self.mNB.add(nPage, image=self.img_mbnote, text=f"New{['', f' ({self.notec})'][bool(self.notec)]}", compound="left")
 		self.notec += 1
-	def nClose(self):
+	def nClose(self, **kw):
 		if self.mNB.tabs() == (): return
-		seltype = self.get_pfid(0)
+		tab = kw.setdefault("k", self.mNB.index("current"))
+		pfid = self.mWin.nametowidget(self.mNB.tabs()[tab]).id
 		fail = None
-		if seltype == "file":
+		if pfid[0] == "file":
 			nText = self.get_nText()
 			if nText.edit_modified():
 				tmp = self.mNB.select().split(":")[1].strip('"').replace("%2E", ".")
@@ -422,7 +425,7 @@ Use <Control-Button-1> to find selecton in text"""
 				)
 				if save: fail = self.nSave()
 				elif save == None: return "break"
-		elif seltype == "note":
+		elif pfid[0] == "note":
 			nText = self.get_nText()
 			if nText.edit_modified():
 				save = tkmb.askyesnocancel(
@@ -431,19 +434,10 @@ Use <Control-Button-1> to find selecton in text"""
 				)
 				if save: fail = self.nSave()
 				elif save == None: return "break"
-		elif seltype == "conf":
-			print(f"[app][nClose] Closing config: {self.get_pfid(1)}")
+		elif pfid[0] == "conf":
+			print(f"[app][nClose] Closing config: {pfid[1]}")
 		else: print("[app][nClose] Unknown type (fail)")
-		if not fail: self.mNB.forget(self.mNB.select())
-	def nCloseEv(self, ev, *args, **kw):
-		#tab1 - write-select; tab2 - cursor-select
-		tab1 = self.mNB.index(self.mNB.select())
-		tab2 = ev.x
-		self.mNB.select(tab2)
-		self.nClose()
-		if tab1 != tab2:
-			if tab1 > tab2: tab1 -= 1
-			self.mNB.select(tab1)
+		if not fail: self.mNB.forget(tab)
 	def eCopy(self): 
 		try: 
 			nText = self.get_nText()
