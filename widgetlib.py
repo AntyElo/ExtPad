@@ -93,12 +93,11 @@ static unsigned char open16_bits[] = {
 
 class InfoFrame(ttk.Frame): # Frame to info`rmation
 	def __init__(self, ikw, *args, **kwargs):
-		def grc(row, column): return {"row": row, "column": column}
 		self.style = ttk.Style()
 		self.ikw = ikw
 		super().__init__(*args, **kwargs)
 
-		self.text = tk.Text(master=self, bd=0, highlightthickness=0, wrap="none")
+		self.text = tk.Text(master=self)
 		self.text.insert("end", self.ikw.setdefault("text_ph"))
 		self.SCY = ttk.Scrollbar(master=self, orient="vertical", command=self.text.yview)
 		self.SCX = ttk.Scrollbar(master=self, orient="horizontal", command=self.text.xview)
@@ -115,27 +114,67 @@ class IFrame(ttk.Frame):
 		self.ikw = ikw
 		self.id = self.ikw.setdefault("fid", ["note", -1])
 		super().__init__(*args, **kwargs)
+		self.text = None
 
 class NBFrame(ttk.Frame): # nFrame back-end
 	def __init__(self, ikw, *args, **kwargs):
-		def grc(row, column): return {"row": row, "column": column}
 		self.style = ttk.Style()
 		self.ikw = ikw
 		self.id = self.ikw.setdefault("fid", ["note", -1])
 		super().__init__(*args, **kwargs)
 
-		nText = tk.Text(self, bd=0, highlightthickness=0, wrap="none", undo=True, tabs="0.5c")
-		nSBX = ttk.Scrollbar(self, command=nText.xview, orient="horizontal")
-		nSBY = ttk.Scrollbar(self, command=nText.yview, orient="vertical")
-		nText.config(xscrollcommand=nSBX.set, yscrollcommand=nSBY.set)
-		nText.insert("1.0", self.ikw.setdefault("text", ""))
-		nText.edit_reset()
-		nText.edit_modified(0)
+		self.text = tk.Text(self, undo=True)
+		self.SBX = ttk.Scrollbar(self, command=self.text.xview, orient="horizontal")
+		self.SBY = ttk.Scrollbar(self, command=self.text.yview, orient="vertical")
+		self.text.config(xscrollcommand=self.SBX.set, yscrollcommand=self.SBY.set)
+		self.text.insert("1.0", self.ikw.setdefault("text", ""))
+		self.text.edit_reset()
+		self.text.edit_modified(0)
 		b3bind = self.ikw.setdefault('b3bind')
-		if b3bind: nText.bind("<Button-3>", b3bind)
+		if b3bind: self.text.bind("<Button-3>", b3bind)
 		# Grid controls
-		nSBX.grid(column=0, row=1, sticky="nsew")
-		nSBY.grid(column=1, row=0, sticky="nsew")
-		nText.grid(column=0, row=0, sticky="nsew")
+		self.SBX.grid(column=0, row=1, sticky="nsew")
+		self.SBY.grid(column=1, row=0, sticky="nsew")
+		self.text.grid(column=0, row=0, sticky="nsew")
 		self.rowconfigure(0, weight=1)
 		self.columnconfigure(0, weight=1)
+
+class EntryField(ttk.Frame): # nFrame back-end
+	def __init__(self, ikw, *args, **kwargs):
+		self.style = ttk.Style()
+		self.ikw = ikw
+		ebind = self.ikw.setdefault('ebind')
+		super().__init__(*args, **kwargs)
+
+		self.text = ttk.Entry(self)
+		self.text.insert(1, self.ikw.setdefault('efill', ""))
+		self.btn = ttk.Button(self, text=self.ikw.setdefault('bfill', "[Run]"))
+		if ebind:
+			self.text.bind("<Return>", lambda ev: ebind())
+			self.btn["command"] = ebind
+		self.text.grid(row=0, column=0, sticky="nsew")
+		self.btn.grid(row=0, column=1, sticky="nsew")
+		self.rowconfigure(0, weight=1)
+		self.columnconfigure(0, weight=1)
+
+class SharedConf(object):
+	def __init__(self, **cfg):
+		self.cfg = cfg
+		self.ws = {}
+		self.c = 0
+	def __getitem__(self, key): return self.cfg[key]
+	def __setitem__(self, key, new):
+		self.cfg[key] = new
+		self.update()
+	def setdefault(self, key, default=None):
+		return self.cfg.setdefault(key, default)
+	def update(self):
+		for e in self.ws.values():
+			e.configure(**self.cfg)
+	def addw(self, w):
+		self.c += 1
+		self.ws[self.c] = w
+		self.update()
+		return self.c
+	def rmw(self, i):
+		return self.ws.pop(i, None)

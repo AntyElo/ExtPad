@@ -4,7 +4,7 @@
 
 def main(api):
 	"""Main method"""
-	if api.vkw["build"] < 2: return
+	if api.vkw["build"] < 7: return
 	grc = api.grc
 	EXP = {"sticky": "nswe"}
 	def getsent(*args, **kw):
@@ -14,7 +14,6 @@ def main(api):
 		bl = is_exec_tkbv.get()
 		if bl: cmdboxex.grid(); cmdboxev.grid_remove()
 		else:  cmdboxev.grid(); cmdboxex.grid_remove()
-		xeTop.title(f"ExtPad: {['Eval', 'Exec'][is_exec_tkbv.get()]}")
 	def _ex(*args, **kw):
 		api
 		src = getsent()
@@ -28,23 +27,22 @@ def main(api):
 		return e
 	def ex(*args, **kw):
 		api
-		lbl.insert("end", [f"[eval] '{getsent()}': {_ex(backend=is_exec_tkbv.get())} \n", f"[exec] '''{getsent()}'''\n"][is_exec_tkbv.get()])
+		api.config_frames["ext.xexec"].text.insert("end", [f"[eval] '{getsent()}': {_ex(backend=is_exec_tkbv.get())} \n", f"[exec] '''{getsent()}'''\n"][is_exec_tkbv.get()])
 	import tkinter as tk
 	from tkinter import ttk
-	xeTop = tk.Toplevel()
-	is_exec_tkbv = tk.BooleanVar(xeTop, value=False)
-	xeTop.title("ExtPad: Eval")
-	api.topTk(True, win=xeTop)
-	cmdboxev = ttk.Frame(xeTop)
-	entev = ttk.Entry(cmdboxev)
+	api
+	api.config_frames["ext.xexec"] = api.IFrame(dict(fid=["conf", "exec"]), master=api.mNB)
+	is_exec_tkbv = tk.BooleanVar(api.config_frames["ext.xexec"], value=False)
+	cmdboxev = ttk.Frame(api.config_frames["ext.xexec"])
+	entev = ttk.Entry(cmdboxev, width=2)
 	entev.bind("<Return>", ex)
 	btnev = ttk.Button(cmdboxev, text="[Run]", command=ex)
 	entev.pack(expand=True, fill="both", side="left")
 	btnev.pack(fill="both", side="left")
 	cmdboxev.grid(**grc(0, 0), **EXP)
 	
-	cmdboxex = ttk.Frame(xeTop)
-	entex = tk.Text(cmdboxex, height=3)
+	cmdboxex = ttk.Frame(api.config_frames["ext.xexec"])
+	entex = tk.Text(cmdboxex, width=2, height=3)
 	entex.bind("<Shift-Return>", ex)
 	btnex = ttk.Button(cmdboxex, text="[Run]", command=ex)
 	entex.pack(expand=True, fill="both", side="left")
@@ -52,22 +50,21 @@ def main(api):
 	cmdboxex.grid(**grc(1, 0), **EXP)
 	cmdboxex.grid_remove()
 	
-	lbl = tk.Text(xeTop)
-	lbl.grid(**grc(2, 0), **EXP)
-	helpbar = ttk.Frame(xeTop)
+	api.config_frames["ext.xexec"].text = tk.Text(api.config_frames["ext.xexec"])
+	api.config_frames["ext.xexec"].text.grid(**grc(2, 0), **EXP)
+	helpbar = ttk.Frame(api.config_frames["ext.xexec"])
 	is_exec_btn = tk.Checkbutton(helpbar, text="eval/exec", variable=is_exec_tkbv, offvalue=False, onvalue=True, command=_is_exec)
-	ttk.Sizegrip(helpbar).pack(side="right", fill="both")
 	is_exec_btn.pack(side="left", fill="both")
 	helpbar.grid(**grc(3, 0), **EXP)
-	xeTop.rowconfigure(2, weight=1)
-	xeTop.columnconfigure(0, weight=1)
-	xeTop.mainloop()
+	api.config_frames["ext.xexec"].rowconfigure(2, weight=1)
+	api.config_frames["ext.xexec"].columnconfigure(0, weight=1)
+	api.mNB.add(api.config_frames["ext.xexec"], image=api.img_mbrun, text="Exec", compound="left")
 
 if __name__ == "__main__":
 	try:
 		api
 		v = api
 	except NameError:
-		print("run ExtPad >=5 before")
+		print("run ExtPad >=7 before")
 		exit()
 	main(v)
