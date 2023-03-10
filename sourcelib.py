@@ -20,12 +20,9 @@ class Source():
 		self.tw_twst = tk.Entry(self.srcWin, name="__colorget_entry")
 		self.clr_tkbg, self.clr_tw = [self.srcWin.cget('bg'), tk.Entry(self.srcWin).cget("bg")]
 		self.clr_gw, self.clr_sb, self.clr_dsb, self.clr_lsb = ["ghostwhite", "steelblue", "darkslateblue", "lightsteelblue"]
-		self.img_win_alt = self.Fimg("win_alt", """#define win_width 16
-#define win_height 16
-static unsigned char win_bits[] = {
-    0x00, 0x00, 0xfe, 0x7f, 0xfe, 0x7f, 0x02, 0x40, 0xea, 0x4e, 0x02, 0x40,
-    0x7a, 0x4f, 0x02, 0x40, 0xba, 0x4d, 0x02, 0x40, 0x7a, 0x4f, 0x02, 0x40,
-    0xda, 0x4d, 0x02, 0x40, 0xfe, 0x7f, 0x00, 0x00 };""").fimg
+		self.img_win3 = tk.PhotoImage(data=\
+"""R0lGODlhEAAQAKEBAEg9i7DE3vj4/7DE3iH5BAEKAAMALAAAAAAQABAAAAIynI+pu+APEwi0WoCg
+fjkAAYYgdkyfKHykYaJp2p2iGrt06bljDb3r0NL9gBsO44hcFAAAOw==""")
 		self.img_win = self.Fimg("win", """#define win2_width 16
 #define win2_height 16
 static unsigned char win2_bits[] = {

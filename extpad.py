@@ -15,7 +15,7 @@ class App():
 		self.vkw = {
 			"codename": "crypton", # Arch
 			"build": 8, # Every update
-			"path": 1, # Is path of version
+			"path": 2, # Is path of version
 			"channel": "b (beta)", # e(edge/alpha)/b(beta)/c(rc/release-candidate)/r(release)
 		}
 		verpath = self.vkw.setdefault("path")
@@ -46,6 +46,7 @@ FIXME:
 		self.mWin.geometry("400x300")
 		self.is_topTk = tk.BooleanVar(value=True)
 		self.isCSD = tk.BooleanVar(value=True)
+		self.is_hotbar = tk.BooleanVar(value=True)
 		self.is_floatinit = False
 		self.wTk_float()
 		self.mWin["takefocus"] = True
@@ -56,7 +57,7 @@ FIXME:
 			exec(f"self.clr_{clri} = self.source.clr_{clri}", locals())
 		self.clr_bg, self.clr_ts = self.clr_tw, self.clr_lsb
 		self.fform = self.source.fileforms
-		self.cInfo_hints = \
+		self.vInfo_hints = \
 """WM: <C/S>SD = <Client/Server>-Side Decorartion
 Use <Alt-B1> to move window
 Use <Button-2> to call uMenu
@@ -70,6 +71,7 @@ Use <Control-Button-1> to find selecton in text"""
 			exec(f"self.img_{imgi}_dark = self.source.img_{imgi}(self.clr_sb)", locals())
 		for imgi in self.imgstmb:
 			exec(f"self.img_mb{imgi} = self.source.img_{imgi}(self.clr_sb)", locals())
+		self.mWin.iconphoto(True, self.source.img_win3)
 		self.config_frames = {}
 		self.mLblCheck = -1
 		self.notec = 0
@@ -89,14 +91,12 @@ Use <Control-Button-1> to find selecton in text"""
 		self.mQuitBtn = ttk.Button(self.tBar, style="Title.TButton", image=self.img_close, command=self.withQuit)
 			# Menu
 				# Bind this
-		self.wmBtn.bind('<Button-1>', self.popU)
+		self.wmBtn.bind('<Button-1>', lambda ev: self.pop_menu(ev, self.uMenu))
 				# Menus
-		self.uMenu = tk.Menu(self.mWin, title="ExtPad: Menu") # Union(Wm also)
+		self.uMenu = tk.Menu(self.mWin, tearoff=0) # Union(Wm also)
 		self.fMenu = tk.Menu(self.mWin, tearoff=0) # File
 		self.eMenu = tk.Menu(self.mWin, tearoff=0) # Edit
 		self.vMenu = tk.Menu(self.mWin, tearoff=0) # View
-		self.modMenu = tk.Menu(self.mWin, tearoff=0) # Mods
-		self.hMenu = tk.Menu(self.mWin, tearoff=0) # Help
 
 		self.uMenu.add_checkbutton(label="CSD/SSD", variable=self.isCSD, offvalue=False, onvalue=True, command=self.wTk_float)
 		self.uMenu.add_command(label="Normal window", command=self.withMin)
@@ -107,8 +107,6 @@ Use <Control-Button-1> to find selecton in text"""
 		self.uMenu.add_cascade(label="File", menu=self.fMenu)
 		self.uMenu.add_cascade(label="Edit", menu=self.eMenu)
 		self.uMenu.add_cascade(label="View", menu=self.vMenu)
-		self.uMenu.add_cascade(label="Mods", menu=self.modMenu)
-		self.uMenu.add_cascade(label="App/Help", menu=self.hMenu)
 
 		self.fMenu.add_command(label="Save", accelerator="Ctrl-S", command=self.nSave)
 		self.fMenu.add_command(label="Save as...", accelerator="Ctrl-Shift-S", command=self.nSaveas)
@@ -116,17 +114,17 @@ Use <Control-Button-1> to find selecton in text"""
 		self.fMenu.add_command(label="New", accelerator="Ctrl-N", command=self.nNew)
 		self.fMenu.add_command(label="New note", accelerator="Ctrl-Shift-N", command=self.nNewnote)
 		self.fMenu.add_command(label="Close", accelerator="Ctrl-Shift-D", command=self.nClose)
+		self.fMenu.add_command(label="Exec ext-on", accelerator="Ctrl-E", command=self.nExec)
 
 		self.eMenu.add_command(label="Copy", accelerator="Ctrl-C", command=self.eCopy)
 		self.eMenu.add_command(label="Paste", accelerator="Ctrl-V", command=self.ePaste)
 		self.eMenu.add_command(label="Cut", accelerator="Ctrl-X", command=self.eCut)
 		self.eMenu.add_command(label="Find", accelerator="Ctrl-B1", command=self.eFind)
 
-		self.vMenu.add_command(label="Styles (built-in mod)", accelerator="F2", command=self.cThemes)
+		self.vMenu.add_command(label="About", accelerator="F1", command=self.vInfo)
+		self.vMenu.add_command(label="Themes", accelerator="F2", command=self.vThemes)
+		self.vMenu.add_checkbutton(label="Hotbar", variable=self.is_hotbar, offvalue=False, onvalue=True, command=self.vHotbar)
 
-		self.modMenu.add_command(label="Exec", accelerator="Ctrl-E", command=self.nExec)
-
-		self.hMenu.add_command(label="About", accelerator="F1", command=self.cInfo)
 			# Pack this
 		self.mQuitBtn.pack(fill="both", side="right")
 		self.mMaxBtn.pack(fill="both", side="right")
@@ -148,11 +146,11 @@ Use <Control-Button-1> to find selecton in text"""
 		# Hot-Bar
 		self.hotBar = ttk.Frame(self.mWin, style="Hotbar.TFrame")
 		self.hotBtns = [
+			[self.img_open, self.nOpen, "Open file"], 
 			[self.img_save, self.nSave, "Save file"], 
 			[self.img_saveas, self.nSaveas, "Save as ..."],
-			[self.img_open, self.nOpen, "Open file"], 
-			[self.img_new, self.nNew, "New file"], 
 			[self.img_note, self.nNewnote, "New note"], 
+			[self.img_new, self.nNew, "New file"], 
 			[self.img_run, self.nExec, "Exec"], 
 		]
 		for i in list(range(len(self.hotBtns))):
@@ -177,29 +175,29 @@ Use <Control-Button-1> to find selecton in text"""
 		self.infoNBpages = {
 			"ver": InfoFrame(dict(text_ph=self.vsm), self.infoNB, style="ghost.TFrame"),
 			"doc": InfoFrame(dict(text_ph=self.__doc__), self.infoNB, style="ghost.TFrame"),
-			"hint": InfoFrame(dict(text_ph=self.cInfo_hints), self.infoNB, style="ghost.TFrame")
+			"hint": InfoFrame(dict(text_ph=self.vInfo_hints), self.infoNB, style="ghost.TFrame")
 		}
 		self.infoNB.add(self.infoNBpages["ver"], text="Version", sticky="nswe")
 		self.infoNB.add(self.infoNBpages["doc"], text="Description", sticky="nswe")
 		self.infoNB.add(self.infoNBpages["hint"], text="Hints", sticky="nswe")
 		for e in self.infoNBpages.values():
 			self.text_shared.addw(e.text)
-		self.infoNB.bind("<<NotebookTabChanged>>", lambda ev: self.cInfo_text())
+		self.infoNB.bind("<<NotebookTabChanged>>", lambda ev: self.vInfo_text())
 		self.infoNB.pack(expand=1, fill="both")
 
 		# cfg:theme
 		self.config_frames["root.theme"] = IFrame(dict(fid=["conf", "theme"]), master=self.mNB, name='conf:"theme"')
 		self.iTheme_tcombox = ttk.Combobox(self.config_frames["root.theme"], value=sorted(self.style.theme_names(), key=str.lower))
 		self.iTheme_tcombox.set(self.style.theme_use())
-		self.iTheme_tcombox.bind("<Return>", self.cThemes_sel)
-		self.iTheme_tbtn = ttk.Button(self.config_frames["root.theme"], text="[Run]", command=self.cThemes_sel)
+		self.iTheme_tcombox.bind("<Return>", self.vThemes_sel)
+		self.iTheme_tbtn = ttk.Button(self.config_frames["root.theme"], text="[Run]", command=self.vThemes_sel)
 		self.iTheme_cbtn = ttk.Checkbutton(
 			self.config_frames["root.theme"], text="light/dark icon", 
 			variable=self.imgd, offvalue=False, onvalue=True, 
 			command=self.themeChanged)
-		self.iTheme_bgfield = EntryField(dict(ebind=self.cThemes_textbg, efill=self.clr_bg, bfill="[text_bg]"), self.config_frames["root.theme"])
-		self.iTheme_fgfield = EntryField(dict(ebind=self.cThemes_textfg, efill="black", bfill="[text_fg]"), self.config_frames["root.theme"])
-		self.iTheme_tsfield = EntryField(dict(ebind=self.cThemes_textsel, efill=self.clr_ts, bfill="[text_ts]"), self.config_frames["root.theme"])
+		self.iTheme_bgfield = EntryField(dict(ebind=self.vThemes_textbg, efill=self.clr_bg, bfill="[text_bg]"), self.config_frames["root.theme"])
+		self.iTheme_fgfield = EntryField(dict(ebind=self.vThemes_textfg, efill="black", bfill="[text_fg]"), self.config_frames["root.theme"])
+		self.iTheme_tsfield = EntryField(dict(ebind=self.vThemes_textsel, efill=self.clr_ts, bfill="[text_ts]"), self.config_frames["root.theme"])
 		self.iTheme_tcombox.grid(**self.grc(0, 0), sticky="nswe")
 		self.iTheme_tbtn.grid(**self.grc(0, 1), sticky="nswe")
 		self.iTheme_cbtn.grid(**self.grc(1, 0), sticky="nswe", columnspan=2)
@@ -223,12 +221,12 @@ Use <Control-Button-1> to find selecton in text"""
 			exec(f"self.img_{imgi}['foreground'] = {color1}", locals())
 			exec(f"self.img_{imgi}_dark['foreground'] = {color2}", locals())
 		self.theme_path_gw()
-	def cThemes_sel(self, *a, **kw):
+	def vThemes_sel(self, *a, **kw):
 		req = self.iTheme_tcombox.get()
 		if req.strip() == "": return
 		self.style.theme_use(req)
 		self.iTheme_tcombox["value"] = sorted(self.style.theme_names(), key=str.lower)
-	def cThemes_textbg(self, *a, **kw):
+	def vThemes_textbg(self, *a, **kw):
 		req = self.iTheme_bgfield.text.get().strip()
 		if req == "": return
 		old = self.text_shared.setdefault("bg", self.clr_bg)
@@ -239,20 +237,24 @@ Use <Control-Button-1> to find selecton in text"""
 			self.text_shared["bg"] = old
 			self.clr_bg = old
 		self.theme_path_gw()
-	def cThemes_textfg(self, *a, **kw):
+	def vThemes_textfg(self, *a, **kw):
 		req = self.iTheme_fgfield.text.get().strip()
 		if req == "": return
 		old = self.text_shared.setdefault("fg", "black")
 		try: self.text_shared["fg"] = req
 		except: self.text_shared["fg"] = old
-	def cThemes_textsel(self, *a, **kw):
+	def vThemes_textsel(self, *a, **kw):
 		req = self.iTheme_tsfield.text.get().strip()
 		if req == "": return
 		self.clr_ts = req
-	def cThemes(self): self.mNB_addc(self.config_frames["root.theme"], text=f"Themes")
-	def cInfo_text(self):
+	def vThemes(self): self.mNB_addc(self.config_frames["root.theme"], text=f"Themes")
+	def vInfo_text(self):
 		self.config_frames["root.info"].text = self.mWin.nametowidget(self.infoNB.select()).text
-	def cInfo(self): self.mNB_addc(self.config_frames["root.info"], text=f"Info")
+	def vInfo(self): self.mNB_addc(self.config_frames["root.info"], text=f"Info")
+	def vHotbar(self, bl=None):
+		if bl == None: bl = self.is_hotbar.get()
+		if bl: self.hotBar.grid()
+		else: self.hotBar.grid_remove()
 	def theme_path_gw(self):
 		self.style.map("ghost.TLabel", background = [("", self.clr_bg)])
 		self.style.map("ghost.TFrame", background = [("", self.clr_bg)])
@@ -319,15 +321,15 @@ Use <Control-Button-1> to find selecton in text"""
 			if self.nClose(): return
 		self.source.quit()
 		# Menu
-	def popU(self, event):
-		self.uMenu.tk_popup(event.x_root, event.y_root, 0)
-		#self.wmBtn.focus_force()
-	def popEdit(self, event): self.eMenu.tk_popup(event.x_root, event.y_root, 0)
-		# Notebook (aka n-prefixed)
+	def pop_menu(self, ev, menu):
+		try:
+			menu.tk_popup(ev.x_root, ev.y_root, 0)
+		finally:
+			menu.grab_release()
 	def get_nText(self): return self.mWin.nametowidget(self.mNB.select()).text
 	def get_pfid(self, i): return self.mWin.nametowidget(self.mNB.select()).id[i]
 	def nSel(self, event):
-		if   len(self.mNB.tabs()) == 0:
+		if   self.mNB.tabs() == ():
 			self.mLbl["text"] = f"Hello in ExtPad {self.version}"
 			self.mLblCheck = -1
 		elif self.source.dbg.get() == True:
@@ -346,7 +348,7 @@ Use <Control-Button-1> to find selecton in text"""
 		with open(str(path)) as nfile: text = nfile.read()
 		# Controls
 		nPage = NBFrame(
-			dict(b3bind=self.popEdit, fid=["file", path], text=text),
+			dict(b3bind=lambda ev: self.pop_menu(ev, self.eMenu), fid=["file", path], text=text),
 			self.mNB, style="ghost.TFrame", name=f'file:"{path.replace(".", "%2E")}"'
 		)
 		nPage.ikw["tid"] = self.text_shared.addw(nPage.text)
@@ -397,14 +399,14 @@ Use <Control-Button-1> to find selecton in text"""
 		if not path: return
 		# Controls
 		nPage = NBFrame(
-			dict(b3bind=self.popEdit, fid=["file", path]),
+			dict(b3bind=lambda ev: self.pop_menu(ev, self.eMenu), fid=["file", path]),
 			self.mNB, style="ghost.TFrame", name=f'file:"{path.replace(".", "%2E")}"'
 		)
 		nPage.ikw["tid"] = self.text_shared.addw(nPage.text)
 		self.mNB.add(nPage, image=self.img_mbfile, text=ospath.split(path)[-1], compound="left")
 	def nNewnote(self):
 		nPage = NBFrame(
-			dict(b3bind=self.popEdit, fid=["note", self.notec]), 
+			dict(b3bind=lambda ev: self.pop_menu(ev, self.eMenu), fid=["note", self.notec]), 
 			self.mNB, style="ghost.TFrame", name=f'note:"{self.notec}"'
 		)
 		nPage.ikw["tid"] = self.text_shared.addw(nPage.text)
@@ -529,7 +531,7 @@ Use <Control-Button-1> to find selecton in text"""
 	def init(self):
 		self.wTk_force()
 		self.mWin.wm_protocol("WM_DELETE_WINDOW", self.withQuit)
-		self.mWin.bind("<Button-2>", self.popU)
+		self.mWin.bind("<Button-2>", lambda ev: self.pop_menu(ev, self.uMenu))
 		self.mWin.bind("<Control-q>", lambda ev: self.withQuit())
 		self.mWin.bind("<Control-Button-1>", lambda ev: self.eFind())
 		self.mWin.bind("<Control-o>", lambda ev: self.nOpen())
@@ -539,8 +541,8 @@ Use <Control-Button-1> to find selecton in text"""
 		self.mWin.bind("<Control-N>", lambda ev: self.nNewnote())
 		self.mWin.bind("<Control-D>", lambda ev: self.nClose())
 		self.mWin.bind("<Control-e>", lambda ev: self.nExec())
-		self.mWin.bind("<F2>", lambda ev: self.cThemes())
-		self.mWin.bind("<F1>", lambda ev: self.cInfo())
+		self.mWin.bind("<F2>", lambda ev: self.vThemes())
+		self.mWin.bind("<F1>", lambda ev: self.vInfo())
 		self.mWin.update()
 		self.mWin.minsize(
 			int(self.wmBtn.winfo_width() * 4.5), 
