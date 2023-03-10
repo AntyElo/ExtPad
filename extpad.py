@@ -15,7 +15,7 @@ class App():
 		self.vkw = {
 			"codename": "crypton", # Arch
 			"build": 8, # Every update
-			"path": 0, # Is path of version
+			"path": 1, # Is path of version
 			"channel": "c (candidate)", # e(edge/alpha)/b(beta)/c(rc/release-candidate)/r(release)
 		}
 		verpath = self.vkw.setdefault("path")
