@@ -15,7 +15,7 @@ class App():
 		self.vkw = {
 			"codename": "crypton", # Arch
 			"build": 8, # Every update
-			"path": 1, # Is path of version
+			"path": 2, # Is path of version
 			"channel": "c (candidate)", # e(edge/alpha)/b(beta)/c(rc/release-candidate)/r(release)
 		}
 		verpath = self.vkw.setdefault("path")
@@ -60,7 +60,8 @@ FIXME:
 """WM: <C/S>SD = <Client/Server>-Side Decorartion
 Use <Alt-B1> to move window
 Use <Button-2> to call uMenu
-Use <Control-Button-1> to find selecton in text"""
+Use <Control-Button-1> to find selecton in text
+(On CSD mode) Move window to take focus;;"""
 		self.imgd = tk.BooleanVar(value=True)
 		self.imgst = ["save", "saveas", "new", "open", "note", "min", "max", "close", "run", "win", "file"]
 		self.imgstmb = ["file", "note", "run"]
@@ -266,12 +267,14 @@ Use <Control-Button-1> to find selecton in text"""
 		self.style.map("ghost.TSizegrip", background = [("", self.clr_bg)])
 		if self.style.theme_use() in ["deft", "deftc"]:
 			self.style.map("TScrollbar", background = [("", self.clr_bg)])
-	def wTk_force(self): self.mWin.focus_force()
+	def wTk_force(self, *args): 
+		self.mWin.focus_force()
+		self.mWin.grab_release()
 	def wTk_top(self, bl=None, **kw): 
 		if bl == None: bl = self.is_topTk.get()
 		kw.setdefault("win", self.mWin).attributes("-topmost", bl)
 	def retitle(self, s):
-		self.MGL["text"] = s
+		self.mMGL["text"] = s
 		self.mWin.title(s)
 	def wTk_float(self, bl=None): 
 		if bl == None: bl = self.isCSD.get()
@@ -287,6 +290,7 @@ Use <Control-Button-1> to find selecton in text"""
 	def wTk_point(self, event):
 		win_position = [int(coord) for coord in self.mWin.wm_geometry().split('+')[1:]]
 		self.source.xTk, self.source.yTk = win_position[0] - event.x_root, win_position[1] - event.y_root
+		self.wTk_force() # Take focus
 	def wTk_move(self, event): 
 		if self.source.Tk == "max": 
 			self.withMin()
