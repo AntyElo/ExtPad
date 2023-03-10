@@ -15,8 +15,8 @@ class App():
 		self.vkw = {
 			"codename": "crypton", # Arch
 			"build": 8, # Every update
-			"path": 2, # Is path of version
-			"channel": "b (beta)", # e(edge/alpha)/b(beta)/c(rc/release-candidate)/r(release)
+			"path": 0, # Is path of version
+			"channel": "c (candidate)", # e(edge/alpha)/b(beta)/c(rc/release-candidate)/r(release)
 		}
 		verpath = self.vkw.setdefault("path")
 		if not verpath: verpath = ""
@@ -91,7 +91,7 @@ Use <Control-Button-1> to find selecton in text"""
 		self.mQuitBtn = ttk.Button(self.tBar, style="Title.TButton", image=self.img_close, command=self.withQuit)
 			# Menu
 				# Bind this
-		self.wmBtn.bind('<Button-1>', lambda ev: self.pop_menu(ev, self.uMenu))
+		self.wmBtn.bind('<Button-1>', lambda ev: self.pop_menu(ev, self.uMenu, self.wmBtn))
 				# Menus
 		self.uMenu = tk.Menu(self.mWin, tearoff=0) # Union(Wm also)
 		self.fMenu = tk.Menu(self.mWin, tearoff=0) # File
@@ -151,7 +151,7 @@ Use <Control-Button-1> to find selecton in text"""
 			[self.img_saveas, self.nSaveas, "Save as ..."],
 			[self.img_note, self.nNewnote, "New note"], 
 			[self.img_new, self.nNew, "New file"], 
-			[self.img_run, self.nExec, "Exec"], 
+			[self.img_run, self.nExec, "Exec ext-on"], 
 		]
 		for i in list(range(len(self.hotBtns))):
 			self.hotBtns[i].append(ttk.Button(self.hotBar, image=self.hotBtns[i][0], command=self.hotBtns[i][1]))
@@ -321,9 +321,10 @@ Use <Control-Button-1> to find selecton in text"""
 			if self.nClose(): return
 		self.source.quit()
 		# Menu
-	def pop_menu(self, ev, menu):
+	def pop_menu(self, ev, menu, button=None):
 		try:
 			menu.tk_popup(ev.x_root, ev.y_root, 0)
+			if button: button["state"] = ""
 		finally:
 			menu.grab_release()
 	def get_nText(self): return self.mWin.nametowidget(self.mNB.select()).text
@@ -519,13 +520,10 @@ Use <Control-Button-1> to find selecton in text"""
 				else: self.mNB.tab(self.mNB.select(), text=tmp.rstrip("*"))
 
 	def nExec(api, path=None):
-		if path == None:
-			path = tkfd.askopenfilename(title="Exec file", filetypes=api.fform)
+		if not path:
+			path = tkfd.askopenfilename(title="Exec ext-on", filetypes=api.fform)
 			if not path: return
-		modtext = ""
-		with open(path) as modfile:
-			modtext = modfile.read()
-		exec(modtext)
+		with open(path) as modfile: exec(modfile.read())
 
 	# mainloop the mWin
 	def init(self):

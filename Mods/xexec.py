@@ -1,10 +1,8 @@
 #!/bin/python3
-""" extpad-hg x-exec
-"""
+" extpad-hg x-exec "
 
 def main(api):
-	"""Main method"""
-	if api.vkw["build"] < 7: return
+	if api.vkw["build"] < 7: return # Req version <ver> or high
 	grc = api.grc
 	EXP = {"sticky": "nswe"}
 	def getsent(*args, **kw):
