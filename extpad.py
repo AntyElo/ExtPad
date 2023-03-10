@@ -49,7 +49,6 @@ FIXME:
 		self.is_hotbar = tk.BooleanVar(value=True)
 		self.is_floatinit = False
 		self.wTk_float()
-		self.mWin["takefocus"] = True
 		self.style = self.source.srcStyle
 		self.text_shared = SharedConf(tabs="0.5c", bd=0, highlightthickness=0, wrap="none")
 		self.nBuffer = ""
@@ -81,9 +80,15 @@ Use <Control-Button-1> to find selecton in text"""
 		# Title-Bar: wmButton, mainLabel, mainLabel
 		self.tBar = tk.Frame(self.mWin, bg=self.clr_sb, highlightthickness=0, height=0)
 		self.wmBtn = ttk.Button(self.tBar, style="Title.TButton", image=self.img_win)
-		self.mMG = tk.Canvas(self.tBar, bg=self.clr_sb, highlightthickness=0, height=0)
+		self.mMG = tk.Frame(self.tBar, bg=self.clr_sb, highlightthickness=0, height=0)
+		self.mMGL = tk.Label(self.mMG, text=f"ExtPad {self.version}", bg=self.clr_sb, fg=self.clr_gw, height=0, width=0)
+		self.mMGL.pack(fill="y", expand=1)
 		self.mMG.bind('<Button-1>', self.wTk_point)
 		self.mMG.bind('<B1-Motion>', self.wTk_move)
+		self.mMG.bind('<Double-Button-1>', lambda ev: self.withDB1())
+		self.mMGL.bind('<Button-1>', self.wTk_point)
+		self.mMGL.bind('<B1-Motion>', self.wTk_move)
+		self.mMGL.bind('<Double-Button-1>', lambda ev: self.withDB1())
 		self.mWin.bind("<Alt-Button-1>", self.wTk_point)
 		self.mWin.bind("<Alt-B1-Motion>", self.wTk_move)
 		self.mMinBtn  = ttk.Button(self.tBar, style="Title.TButton", image=self.img_min,   command=self.withMin)
@@ -215,9 +220,9 @@ Use <Control-Button-1> to find selecton in text"""
 	def mNB_addc(self, frame, text):
 		self.mNB.add(frame, image=self.img_mbrun, text=text, compound="left")
 	def themeChanged(self, *a, **kw):
+		color1 = ['self.clr_sb', 'self.clr_gw'][self.imgd.get()]
+		color2 = ['self.clr_gw', 'self.clr_sb'][self.imgd.get()]
 		for imgi in self.imgst:
-			color1 = ['self.clr_sb', 'self.clr_gw'][self.imgd.get()]
-			color2 = ['self.clr_gw', 'self.clr_sb'][self.imgd.get()]
 			exec(f"self.img_{imgi}['foreground'] = {color1}", locals())
 			exec(f"self.img_{imgi}_dark['foreground'] = {color2}", locals())
 		self.theme_path_gw()
@@ -266,10 +271,8 @@ Use <Control-Button-1> to find selecton in text"""
 		if bl == None: bl = self.is_topTk.get()
 		kw.setdefault("win", self.mWin).attributes("-topmost", bl)
 	def retitle(self, s):
-		# FIXME: csd add title
-		# rewrite ssd and csd title
+		self.MGL["text"] = s
 		self.mWin.title(s)
-		print(f"[app][retitle] New title: {s}")
 	def wTk_float(self, bl=None): 
 		if bl == None: bl = self.isCSD.get()
 		if sysplatform == "win32": self.mWin.overrideredirect(bl)
@@ -280,6 +283,7 @@ Use <Control-Button-1> to find selecton in text"""
 		else: self.is_floatinit = True
 		self.mWin.wm_state("withdraw")
 		self.mWin.wm_state("normal")
+		self.mWin["takefocus"] = True
 	def wTk_point(self, event):
 		win_position = [int(coord) for coord in self.mWin.wm_geometry().split('+')[1:]]
 		self.source.xTk, self.source.yTk = win_position[0] - event.x_root, win_position[1] - event.y_root
@@ -314,6 +318,9 @@ Use <Control-Button-1> to find selecton in text"""
 		self.mMinBtn.pack(fill="both", side="right")
 		self.mMG.pack(fill="both", expand=True)
 		self.source.Tk = "max"
+	def withDB1(self):
+		if   self.source.Tk == "max": self.withMin()
+		elif self.source.Tk == "normal": self.withMax()
 	def withQuit(self):
 		if self.mNB.tabs() != () and self.source.future_fast_quit:
 			if not tkmb.askokcancel("You sure?", "You may have unsaved changes"): return
@@ -546,7 +553,6 @@ Use <Control-Button-1> to find selecton in text"""
 			int(self.wmBtn.winfo_width() * 4.5), 
 			self.tBar.winfo_height() + self.hBar.winfo_height()
 		)
-		# TODO: add csd+ssd title?
 		self.mWin.after_idle(self.altstream)
 		if sysplatform != "win32": self.mWin.after_idle(lambda: self.mWin.attributes('-type', "normal"))
 		self.wTk_top(True)

@@ -1,8 +1,10 @@
 #!/bin/python3
 " extpad-hg x-exec "
+reqv = 7
 
 def main(api):
-	if api.vkw["build"] < 7: return # Req version <ver> or high
+	global reqv
+	if api.vkw["build"] < reqv: return # Req version <ver> or high
 	grc = api.grc
 	EXP = {"sticky": "nswe"}
 	def getsent(*args, **kw):
@@ -63,6 +65,6 @@ if __name__ == "__main__":
 		api
 		v = api
 	except NameError:
-		print("run ExtPad >=7 before")
+		print(f"run ExtPad >={reqv} before")
 		exit()
 	main(v)
