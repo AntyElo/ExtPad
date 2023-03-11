@@ -337,7 +337,6 @@ Use <Control-Button-1> to find selecton in text
 		self.mMinBtn.pack(fill="both", side="right")
 		self.mMG.pack(fill="both", expand=True)
 		self.source.Tk = "normal"
-		print("[app][withNormal] Success")
 	def withMax(self):
 		if   self.source.Tk == "max": return
 		elif self.source.Tk == "min": 
@@ -356,7 +355,6 @@ Use <Control-Button-1> to find selecton in text
 		self.mNormalBtn.pack(fill="both", side="right")
 		self.mMG.pack(fill="both", expand=True)
 		self.source.Tk = "max"
-		print("[app][withMax] Success")
 	def withMin(self):
 		if   not self.isCSD.get():
 			self.mWin.state("icon")
@@ -379,7 +377,6 @@ Use <Control-Button-1> to find selecton in text
 		self.mMinBtn.pack(fill="both", side="right")
 		self.mMG.pack(fill="both", expand=True)
 		self.source.Tk = "min"
-		print("[app][withMin] Success")
 	def withDB1(self):
 		if   self.source.Tk in ["max", "min"]: self.withNormal()
 		elif self.source.Tk == "normal": self.withMax()
