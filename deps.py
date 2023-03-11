@@ -9,4 +9,4 @@ from idlelib.tooltip import Hovertip
 import os
 import os.path as ospath
 from random import randint as rint
-from sys import platform as sysplatform
+import sys
