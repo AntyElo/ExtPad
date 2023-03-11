@@ -6,6 +6,9 @@ from sourcelib import Source
 from widgetlib import *
 # Source and widgets merged on new files
 
+#TODO: sys.argv - open files by `extpad.bin '%f'`
+#TODO: kill, to_title, to_helpbar - func on IFrame-side
+
 class App():
 	# Sourse
 	def grc(main, row, column, *args): return {"row": row, "column": column}
@@ -14,9 +17,9 @@ class App():
 		self.IFrame = IFrame
 		self.vkw = {
 			"codename": "crypton", # Arch
-			"build": 8, # Every update
-			"path": 2, # Is path of version
-			"channel": "c (candidate)", # e(edge/alpha)/b(beta)/c(rc/release-candidate)/r(release)
+			"build": 9, # Every update
+			"path": 0, # Is path of version
+			"channel": "b (beta)", # e(edge/alpha)/b(beta)/c(rc/release-candidate)/r(release)
 		}
 		verpath = self.vkw.setdefault("path")
 		if not verpath: verpath = ""
@@ -63,7 +66,7 @@ Use <Button-2> to call uMenu
 Use <Control-Button-1> to find selecton in text
 (On CSD mode) Move window to take focus;;"""
 		self.imgd = tk.BooleanVar(value=True)
-		self.imgst = ["save", "saveas", "new", "open", "note", "min", "max", "close", "run", "win", "file"]
+		self.imgst = ["save", "saveas", "new", "open", "note", "min", "max", "normal", "close", "run", "win", "file"]
 		self.imgstmb = ["file", "note", "run"]
 		#TODO: make (?) self.imgpool[imgi] = self.source.imgspool[imgi](self.color)
 		for imgi in self.imgst:
@@ -92,9 +95,10 @@ Use <Control-Button-1> to find selecton in text
 		self.mMGL.bind('<Double-Button-1>', lambda ev: self.withDB1())
 		self.mWin.bind("<Alt-Button-1>", self.wTk_point)
 		self.mWin.bind("<Alt-B1-Motion>", self.wTk_move)
-		self.mMinBtn  = ttk.Button(self.tBar, style="Title.TButton", image=self.img_min,   command=self.withMin)
-		self.mMaxBtn  = ttk.Button(self.tBar, style="Title.TButton", image=self.img_max,   command=self.withMax)
-		self.mQuitBtn = ttk.Button(self.tBar, style="Title.TButton", image=self.img_close, command=self.withQuit)
+		self.mMinBtn     = ttk.Button(self.tBar, style="Title.TButton", image=self.img_min,    command=self.withMin)
+		self.mNormalBtn  = ttk.Button(self.tBar, style="Title.TButton", image=self.img_normal, command=self.withNormal)
+		self.mMaxBtn     = ttk.Button(self.tBar, style="Title.TButton", image=self.img_max,    command=self.withMax)
+		self.mQuitBtn    = ttk.Button(self.tBar, style="Title.TButton", image=self.img_close,  command=self.withQuit)
 			# Menu
 				# Bind this
 		self.wmBtn.bind('<Button-1>', lambda ev: self.pop_menu(ev, self.uMenu, self.wmBtn))
@@ -105,8 +109,9 @@ Use <Control-Button-1> to find selecton in text
 		self.vMenu = tk.Menu(self.mWin, tearoff=0) # View
 
 		self.uMenu.add_checkbutton(label="CSD/SSD", variable=self.isCSD, offvalue=False, onvalue=True, command=self.wTk_float)
-		self.uMenu.add_command(label="Normal window", command=self.withMin)
+		self.uMenu.add_command(label="Normal window", command=self.withNormal)
 		self.uMenu.add_command(label="Zoom window", command=self.withMax)
+		self.uMenu.add_command(label="In-dock window", command=self.withMin)
 		self.uMenu.add_checkbutton(label="Always at the top", variable=self.is_topTk, offvalue=False, onvalue=True, command=self.wTk_top)
 		self.uMenu.add_command(label="Quit", accelerator="Ctrl-Q", command=self.withQuit)
 		self.uMenu.add_separator()
@@ -134,6 +139,7 @@ Use <Control-Button-1> to find selecton in text
 			# Pack this
 		self.mQuitBtn.pack(fill="both", side="right")
 		self.mMaxBtn.pack(fill="both", side="right")
+		self.mMinBtn.pack(fill="both", side="right")
 		self.wmBtn.pack(fill="both", side="left")
 		self.mMG.pack(fill="both", expand=True)
 		self.tBar.grid(**grc(0, 0), columnspan=2, sticky="nswe")
@@ -216,6 +222,28 @@ Use <Control-Button-1> to find selecton in text
 		self.config_frames["root.theme"].columnconfigure(0, weight=1)
 		self.mWin.bind("<<ThemeChanged>>", self.themeChanged)
 
+		self.wTk_force()
+		self.mWin.wm_protocol("WM_DELETE_WINDOW", self.withQuit)
+		self.mWin.bind("<Button-2>", lambda ev: self.pop_menu(ev, self.uMenu))
+		self.mWin.bind("<Control-q>", lambda ev: self.withQuit())
+		self.mWin.bind("<Control-Button-1>", lambda ev: self.eFind())
+		self.mWin.bind("<Control-o>", lambda ev: self.nOpen())
+		self.mWin.bind("<Control-s>", lambda ev: self.nSave())
+		self.mWin.bind("<Control-S>", lambda ev: self.nSaveas())
+		self.mWin.bind("<Control-n>", lambda ev: self.nNew())
+		self.mWin.bind("<Control-N>", lambda ev: self.nNewnote())
+		self.mWin.bind("<Control-D>", lambda ev: self.nClose())
+		self.mWin.bind("<Control-e>", lambda ev: self.nExec())
+		self.mWin.bind("<F2>", lambda ev: self.vThemes())
+		self.mWin.bind("<F1>", lambda ev: self.vInfo())
+		self.mWin.update()
+		self.mWin.after_idle(self.altstream)
+		if sysplatform != "win32": self.mWin.after_idle(lambda: self.mWin.attributes('-type', "normal"))
+		self.wTk_top(True)
+		self.mWin_min = [self.wmBtn.winfo_width()*5, (self.tBar.winfo_height()+self.hBar.winfo_height())]
+		self.mWin.minsize(*self.mWin_min)
+		self.mWin.mainloop()
+
 	# Funcions
 		# Tk
 	def mNB_addc(self, frame, text):
@@ -293,11 +321,12 @@ Use <Control-Button-1> to find selecton in text
 		self.wTk_force() # Take focus
 	def wTk_move(self, event): 
 		if self.source.Tk == "max": 
-			self.withMin()
+			self.withNormal()
 			return
 		self.mWin.wm_geometry(f"+{str(event.x_root+self.source.xTk)}+{str(event.y_root+self.source.yTk)}")
-	def withMin(self):
+	def withNormal(self):
 		if self.source.Tk == "normal": return
+		self.mNormalBtn.pack_forget()
 		self.mMinBtn.pack_forget()
 		self.mMG.pack_forget()
 		self.mLbl.pack_forget()
@@ -305,10 +334,15 @@ Use <Control-Button-1> to find selecton in text
 		self.mLbl.pack(fill="both", expand=True)
 		self.mWin.geometry(f"{self.source.ww}x{self.source.wh}+{self.source.wrx}+{self.source.wry}")
 		self.mMaxBtn.pack(fill="both", side="right")
+		self.mMinBtn.pack(fill="both", side="right")
 		self.mMG.pack(fill="both", expand=True)
 		self.source.Tk = "normal"
+		print("[app][withNormal] Success")
 	def withMax(self):
-		if self.source.Tk == "max": return
+		if   self.source.Tk == "max": return
+		elif self.source.Tk == "min": 
+			self.withNormal()
+			return
 		self.mMaxBtn.pack_forget()
 		self.mMG.pack_forget()
 		self.mSG.pack_forget()
@@ -319,11 +353,35 @@ Use <Control-Button-1> to find selecton in text
 		self.source.ww  = self.mWin.winfo_width()
 		self.source.wh  = self.mWin.winfo_height()
 		self.mWin.geometry(f"{self.mWin.winfo_screenwidth()}x{self.mWin.winfo_screenheight()}+0+0")
-		self.mMinBtn.pack(fill="both", side="right")
+		self.mNormalBtn.pack(fill="both", side="right")
 		self.mMG.pack(fill="both", expand=True)
 		self.source.Tk = "max"
+		print("[app][withMax] Success")
+	def withMin(self):
+		if   not self.isCSD.get():
+			self.mWin.state("icon")
+			return
+		if   self.source.Tk in ["min", "max"]:
+			self.withNormal()
+			return
+		self.mMaxBtn.pack_forget()
+		self.mMinBtn.pack_forget()
+		self.mMG.pack_forget()
+		self.mSG.pack_forget()
+		self.tmpx = self.mWin.cget("padx")
+		self.tmpy = self.mWin.cget("pady")
+		self.source.wrx = self.mWin.winfo_rootx()
+		self.source.wry = self.mWin.winfo_rooty()
+		self.source.ww  = self.mWin.winfo_width()
+		self.source.wh  = self.mWin.winfo_height()
+		self.mWin.geometry(f"{self.mWin_min[0]}x{self.mWin_min[1]}+0+{self.mWin.winfo_screenheight()-self.mWin_min[1]}")
+		self.mNormalBtn.pack(fill="both", side="right")
+		self.mMinBtn.pack(fill="both", side="right")
+		self.mMG.pack(fill="both", expand=True)
+		self.source.Tk = "min"
+		print("[app][withMin] Success")
 	def withDB1(self):
-		if   self.source.Tk == "max": self.withMin()
+		if   self.source.Tk in ["max", "min"]: self.withNormal()
 		elif self.source.Tk == "normal": self.withMax()
 	def withQuit(self):
 		if self.mNB.tabs() != () and self.source.future_fast_quit:
@@ -340,7 +398,7 @@ Use <Control-Button-1> to find selecton in text
 			menu.grab_release()
 	def get_nText(self): return self.mWin.nametowidget(self.mNB.select()).text
 	def get_pfid(self, i): return self.mWin.nametowidget(self.mNB.select()).id[i]
-	def nSel(self, event):
+	def nSel(self, *args):
 		if   self.mNB.tabs() == ():
 			self.mLbl["text"] = f"Hello in ExtPad {self.version}"
 			self.mLblCheck = -1
@@ -426,10 +484,10 @@ Use <Control-Button-1> to find selecton in text
 		self.notec += 1
 	def nClose(self, **kw):
 		if self.mNB.tabs() == (): return
-		tab = kw.setdefault("k", self.mNB.index("current"))
-		pfid = self.mWin.nametowidget(self.mNB.tabs()[tab]).id
+		tabid = kw.setdefault("k", self.mNB.index("current"))
+		tab = self.mWin.nametowidget(self.mNB.tabs()[tabid])
 		fail = None
-		if pfid[0] == "file":
+		if tab.id[0] == "file":
 			nText = self.get_nText()
 			if nText.edit_modified():
 				tmp = self.mNB.select().split(":")[1].strip('"').replace("%2E", ".")
@@ -439,7 +497,7 @@ Use <Control-Button-1> to find selecton in text
 				)
 				if save: fail = self.nSave()
 				elif save == None: return "break"
-		elif pfid[0] == "note":
+		elif tab.id[0] == "note":
 			nText = self.get_nText()
 			if nText.edit_modified():
 				save = tkmb.askyesnocancel(
@@ -448,10 +506,14 @@ Use <Control-Button-1> to find selecton in text
 				)
 				if save: fail = self.nSave()
 				elif save == None: return "break"
-		elif pfid[0] == "conf":
-			print(f"[app][nClose] Closing config: {pfid[1]}")
+		elif tab.id[0] == "conf":
+			print(f"[app][nClose] Closing config: {tab.id[1]}")
 		else: print("[app][nClose] Unknown type (fail)")
-		if not fail: self.mNB.forget(tab)
+		tid = tab.ikw.setdefault("tid")
+		if   isinstance(tid, dict): pass
+		elif not isinstance(tid, list | tuple): self.text_shared.rmw(tid)
+		elif isinstance(tid, list | tuple): [self.text_shared.rmw(i) for i in tid]
+		if not fail: self.mNB.forget(tabid)
 	def eCopy(self): 
 		try: 
 			nText = self.get_nText()
@@ -473,7 +535,7 @@ Use <Control-Button-1> to find selecton in text
 			nText.clipboard_append(s)
 			nText.delete(tk.SEL_FIRST, tk.SEL_LAST)
 		except Exception as exc: print(f"[app][eCut] Can't cut: {exc}")
-	def eFind_engene(self, s, w):
+	def eFind_engene(self, s: str, w: str) -> list:
 		fill = "".join([" ", "Z"][i == " "] for i in w)
 		if w == "" or s == "": return
 		ss = s.split("\n")
@@ -536,33 +598,5 @@ Use <Control-Button-1> to find selecton in text
 			if not path: return
 		with open(path) as modfile: exec(modfile.read())
 
-	# mainloop the mWin
-	def init(self):
-		self.wTk_force()
-		self.mWin.wm_protocol("WM_DELETE_WINDOW", self.withQuit)
-		self.mWin.bind("<Button-2>", lambda ev: self.pop_menu(ev, self.uMenu))
-		self.mWin.bind("<Control-q>", lambda ev: self.withQuit())
-		self.mWin.bind("<Control-Button-1>", lambda ev: self.eFind())
-		self.mWin.bind("<Control-o>", lambda ev: self.nOpen())
-		self.mWin.bind("<Control-s>", lambda ev: self.nSave())
-		self.mWin.bind("<Control-S>", lambda ev: self.nSaveas())
-		self.mWin.bind("<Control-n>", lambda ev: self.nNew())
-		self.mWin.bind("<Control-N>", lambda ev: self.nNewnote())
-		self.mWin.bind("<Control-D>", lambda ev: self.nClose())
-		self.mWin.bind("<Control-e>", lambda ev: self.nExec())
-		self.mWin.bind("<F2>", lambda ev: self.vThemes())
-		self.mWin.bind("<F1>", lambda ev: self.vInfo())
-		self.mWin.update()
-		self.mWin.minsize(
-			int(self.wmBtn.winfo_width() * 4.5), 
-			self.tBar.winfo_height() + self.hBar.winfo_height()
-		)
-		self.mWin.after_idle(self.altstream)
-		if sysplatform != "win32": self.mWin.after_idle(lambda: self.mWin.attributes('-type', "normal"))
-		self.wTk_top(True)
-		self.mWin.mainloop()
-
-
 if __name__ == "__main__": 
 	app = App()
-	app.init()
