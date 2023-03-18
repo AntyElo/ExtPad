@@ -314,7 +314,7 @@ CW6LT1O/VSFHWYlpIugIZuL3hukEtjLW2ZLCJwUAOw==""")
 		else:
 			self.srcStyle = ttk.Style()
 		if "deftc" not in self.srcStyle.theme_names():
-			print("[src] create theme 'deftc' ... ", end="")
+			print("[src] Add theme 'deftc' ... ", end="")
 			self.srcStyle.theme_create("deftc", parent="clam", settings=self.deftc_presets)
 			self.srcStyle.theme_use("deftc")
 			self.srcStyle.element_create("Horizontal.Scrollbar.trough", "image", self.sbHT, border=2, sticky="ew")
@@ -332,7 +332,7 @@ CW6LT1O/VSFHWYlpIugIZuL3hukEtjLW2ZLCJwUAOw==""")
 		else: print("[src] deftc done")
 
 		if "deft" not in self.srcStyle.theme_names():
-			print("[src] create theme 'deft' ... ", end="")
+			print("[src] Add theme 'deft' ... ", end="")
 			self.srcStyle.theme_create("deft", parent="alt", settings=self.deft_presets)
 			self.srcStyle.theme_use("deft")
 			self.srcStyle.element_create("Horizontal.Scrollbar.trough", "image", self.sbHT, border=2, sticky="ew")
@@ -379,7 +379,7 @@ CW6LT1O/VSFHWYlpIugIZuL3hukEtjLW2ZLCJwUAOw==""")
 			else: return tk.Image(**img)
 
 if __name__ == "__main__":
-	print("[slib] test: Source")
+	print("[slib] Test: Source")
 	s = Source()
-	print(f"[slib] test: Source.Fimg: {s.img_save('blue')}")
-	print(f"[slib] test done")
+	print(f"[slib] Test: Source.Fimg: {s.img_save('blue')}")
+	print(f"[slib] Test done")

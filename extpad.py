@@ -8,23 +8,20 @@ from widgetlib import *
 
 #TODO: sys.argv - open files by `extpad.bin '%f'`
 #TODO: kill, to_title, to_helpbar - func on IFrame-side
-
+print(f"[extpad] Run with: {sys.argv[1:]}")
 class App():
 	# Sourse
+	IFrame = IFrame
+	vkw = {
+		"codename": "crypton", # Arch
+		"build": 9, # Every update
+		"path": 2, # Is path of version
+		"channel": "b (beta)", # e(edge/alpha)/b(beta)/c(rc/release-candidate)/r(release)
+	}
 	def grc(main, row, column, *args): return {"row": row, "column": column}
 	def __init__(self):
-		grc = self.grc
-		self.IFrame = IFrame
-		self.vkw = {
-			"codename": "crypton", # Arch
-			"build": 9, # Every update
-			"path": 1, # Is path of version
-			"channel": "b (beta)", # e(edge/alpha)/b(beta)/c(rc/release-candidate)/r(release)
-		}
-		verpath = self.vkw.setdefault("path")
-		if not verpath: verpath = ""
+		self.version = f'{self.vkw["build"]}{self.vkw["channel"][0:1]}{self.vkw.setdefault("path", "")}'
 		self.vsm = "Version kw: " + "".join((f"\n    {str(k)}: {str(w)}" for k, w in self.vkw.items()))
-		self.version = f'{self.vkw["build"]}{self.vkw["channel"][0:1]}{verpath}'
 		# ~~
 		# 1e -> [2e]                 [1e]--> 2e
 		#    \--> 1b -> 1c0 -> 1c1 -> 1r -/
@@ -42,7 +39,8 @@ TODO:
  
 FIXME:
    - Nuitka3
-"""
+	"""
+		grc = self.grc
 		self.source = Source()
 		self.mWin = self.source.srcWin
 		self.mWin.title(f"ExtPad {self.version}")
@@ -50,11 +48,10 @@ FIXME:
 		self.is_topTk = tk.BooleanVar(value=True)
 		self.isCSD = tk.BooleanVar(value=True)
 		self.is_hotbar = tk.BooleanVar(value=True)
-		self.is_floatinit = False
+		self.is_floatinit, self.is_mNBinit = False, False
 		self.wTk_float()
 		self.style = self.source.srcStyle
 		self.text_shared = SharedConf(tabs="0.5c", bd=0, highlightthickness=0, wrap="none")
-		self.nBuffer = ""
 		for clri in ["tw", "gw", "sb", "dsb", "lsb"]:
 			exec(f"self.clr_{clri} = self.source.clr_{clri}", locals())
 		self.clr_bg, self.clr_ts = self.clr_tw, self.clr_lsb
@@ -63,11 +60,11 @@ FIXME:
 """WM: <C/S>SD = <Client/Server>-Side Decorartion
 Use <Alt-B1> to move window
 Use <Button-2> to call uMenu
-Use <Control-Button-1> to find selecton in text
-(On CSD mode) Move window to take focus;;"""
+Move window to take focus (On CSD mode)
+"""
 		self.imgd = tk.BooleanVar(value=True)
-		self.imgst = ["save", "saveas", "new", "open", "note", "min", "max", "normal", "close", "run", "win", "file"]
 		self.imgstmb = ["file", "note", "run"]
+		self.imgst = self.imgstmb + ["save", "saveas", "new", "open", "min", "max", "normal", "close", "win"]
 		#TODO: make (?) self.imgpool[imgi] = self.source.imgspool[imgi](self.color)
 		for imgi in self.imgst:
 			exec(f"self.img_{imgi} = self.source.img_{imgi}(self.clr_gw)", locals())
@@ -87,12 +84,11 @@ Use <Control-Button-1> to find selecton in text
 		self.mMG = tk.Frame(self.tBar, bg=self.clr_sb, highlightthickness=0, height=0)
 		self.mMGL = tk.Label(self.mMG, text=f"ExtPad {self.version}", bg=self.clr_sb, fg=self.clr_gw, height=0, width=0)
 		self.mMGL.pack(fill="y", expand=1)
-		self.mMG.bind('<Button-1>', self.wTk_point)
-		self.mMG.bind('<B1-Motion>', self.wTk_move)
-		self.mMG.bind('<Double-Button-1>', lambda ev: self.withDB1())
-		self.mMGL.bind('<Button-1>', self.wTk_point)
-		self.mMGL.bind('<B1-Motion>', self.wTk_move)
-		self.mMGL.bind('<Double-Button-1>', lambda ev: self.withDB1())
+		for subel in [self.mMG, self.mMGL]:
+			subel.bind('<Button-1>', self.wTk_point)
+			subel.bind('<B1-Motion>', self.wTk_move)
+			subel.bind('<Button-3>', lambda ev: self.pop_menu(ev, self.uMenu))
+			subel.bind('<Double-Button-1>', lambda ev: self.withDB1())
 		self.mWin.bind("<Alt-Button-1>", self.wTk_point)
 		self.mWin.bind("<Alt-B1-Motion>", self.wTk_move)
 		self.mMinBtn     = ttk.Button(self.tBar, style="Title.TButton", image=self.img_min,    command=self.withMin)
@@ -103,40 +99,53 @@ Use <Control-Button-1> to find selecton in text
 				# Bind this
 		self.wmBtn.bind('<Button-1>', lambda ev: self.pop_menu(ev, self.uMenu, self.wmBtn))
 				# Menus
-		self.uMenu = tk.Menu(self.mWin, tearoff=0) # Union(Wm also)
+		self.uMenu = tk.Menu(self.mWin) # Union(Wm also)
 		self.wMenu = tk.Menu(self.mWin, tearoff=0)
 		self.fMenu = tk.Menu(self.mWin, tearoff=0)
 		self.eMenu = tk.Menu(self.mWin, tearoff=0)
 		self.vMenu = tk.Menu(self.mWin, tearoff=0)
 
-		self.uMenu.add_cascade(label="Window", menu=self.wMenu)
-		self.uMenu.add_cascade(label="File", menu=self.fMenu)
-		self.uMenu.add_cascade(label="Edit", menu=self.eMenu)
-		self.uMenu.add_cascade(label="View", menu=self.vMenu)
-
-		self.wMenu.add_checkbutton(label="CSD/SSD", variable=self.isCSD, offvalue=False, onvalue=True, command=self.wTk_float)
-		self.wMenu.add_command(label="Normal window", command=self.withNormal)
-		self.wMenu.add_command(label="Zoom window", command=self.withMax)
-		self.wMenu.add_command(label="Minimise window", command=self.withMin)
-		self.wMenu.add_checkbutton(label="Window at top", variable=self.is_topTk, offvalue=False, onvalue=True, command=self.wTk_top)
-
-		self.fMenu.add_command(label="Save", accelerator="Ctrl-S", command=self.nSave)
-		self.fMenu.add_command(label="Save as...", accelerator="Ctrl-Shift-S", command=self.nSaveas)
-		self.fMenu.add_command(label="Open", accelerator="Ctrl-O", command=self.nOpen)
-		self.fMenu.add_command(label="New", accelerator="Ctrl-N", command=self.nNew)
-		self.fMenu.add_command(label="New note", accelerator="Ctrl-Shift-N", command=self.nNewnote)
-		self.fMenu.add_command(label="Close", accelerator="Ctrl-Shift-D", command=self.nClose)
-		self.fMenu.add_command(label="Exec ext-on", accelerator="Ctrl-E", command=self.nExec)
-		self.fMenu.add_command(label="Quit", accelerator="Ctrl-Q", command=self.withQuit)
-
-		self.eMenu.add_command(label="Copy", accelerator="Ctrl-C", command=self.eCopy)
-		self.eMenu.add_command(label="Paste", accelerator="Ctrl-V", command=self.ePaste)
-		self.eMenu.add_command(label="Cut", accelerator="Ctrl-X", command=self.eCut)
-		self.eMenu.add_command(label="Find", accelerator="Ctrl-B1", command=self.eFind)
-
-		self.vMenu.add_command(label="About", accelerator="F1", command=self.vInfo)
-		self.vMenu.add_command(label="Themes", accelerator="F2", command=self.vThemes)
-		self.vMenu.add_checkbutton(label="Hotbar", variable=self.is_hotbar, offvalue=False, onvalue=True, command=self.vHotbar)
+		self.mMTree = {
+			self.uMenu: [
+			["Window", self.wMenu],
+			["File", self.fMenu],
+			["Edit", self.eMenu],
+			["View", self.vMenu],
+		], self.wMenu: [
+			["CSD/SSD",         "",    self.isCSD,    self.wTk_float], 
+			["Normal window",   "[8]", self.withNormal], 
+			["Zoom window",     "[0]", self.withMin], 
+			["Minimise window", "[_]", self.withMax], 
+			["Window at top",   "",    self.is_topTk, self.wTk_top], 
+		], self.fMenu: [
+			["Save",        "Ctrl-S",       self.nSave],
+			["Save as...",  "Ctrl-Shift-S", self.nSaveas], 
+			["Open",        "Ctrl-O",       self.nOpen],
+			["New",         "Ctrl-N",       self.nNew], 
+			["New note",    "Ctrl-Shift-N", self.nNewnote], 
+			["Close",       "Ctrl-Shift-D", self.nClose], 
+			["Exec ext-on", "Ctrl-E",       self.nExec], 
+			["Quit",        "Ctrl-Q, [X]",  self.withQuit], 
+		], self.eMenu: [
+			["Cut",   "Ctrl-X",  self.eCut], 
+			["Copy",  "Ctrl-C",  self.eCopy], 
+			["Paste", "Ctrl-V",  self.ePaste], 
+			["Find",  "Ctrl-B1", self.eFind],
+		], self.vMenu: [
+			["About",         "F1",     self.vInfo], 
+			["Themes",        "F2",     self.vThemes], 
+			["Hotbar",        "",       self.is_hotbar, self.vHotbar], 
+			["Swith pages >", "Ctrl->", self.mergeTab_left], 
+			["Swith pages <", "Ctrl-<", self.mergeTab_right], 
+		]}
+		
+		for mmenu, mmenu_casc in self.mMTree.items():
+			for mma in mmenu_casc:
+				match len(mma):
+					case 0: mmenu.add_separator()
+					case 2: mmenu.add_cascade(label=mma[0], menu=mma[1])
+					case 3: mmenu.add_command(label=mma[0], accelerator=mma[1], command=mma[2])
+					case 4: mmenu.add_checkbutton(label=mma[0], accelerator=mma[1], variable=mma[2], offvalue=False, onvalue=True, command=mma[3])
 
 			# Pack this
 		self.mQuitBtn.pack(fill="both", side="right")
@@ -150,7 +159,9 @@ Use <Control-Button-1> to find selecton in text
 		self.api_pane = ttk.Frame(self.mWin)
 		self.hBar = ttk.Frame(self.mWin)
 		self.mSG = ttk.Sizegrip(self.hBar)
-		self.mLbl = ttk.Label(self.hBar, text=f"Hello in ExtPad {self.version}")
+		self.mLbl = ttk.Label(self.hBar, text=\
+f'''Hello in first tab of ExtPad {self.version}; 
+Take help/hints with F1-key press e.g. `Use Control->< to move tab (title)`''')
 			# Pack this
 		self.mSG.pack(fill="both", side="right")
 		self.mLbl.pack(fill="both", expand=True)
@@ -169,16 +180,18 @@ Use <Control-Button-1> to find selecton in text
 		]
 		for i in list(range(len(self.hotBtns))):
 			self.hotBtns[i].append(ttk.Button(self.hotBar, image=self.hotBtns[i][0], command=self.hotBtns[i][1]))
-			Hovertip(self.hotBtns[i][3], self.hotBtns[i][2])
+			Hovertip(self.hotBtns[i][3], self.hotBtns[i][2], hover_delay=80)
 			self.hotBtns[i][3].pack(fill="both", side="top", padx=2, pady=1)
 		self.hotBar.grid(**grc(1, 0), sticky="nswe")
 
 		# mainNoteBook
 		self.mNB = CNotebook(self.mWin, height=0)
-		self.nNewnote()
+		if not sys.argv[1:]: self.nNewnote()
+		else: print("ENV!")
 		self.mNB.bind("<<NotebookTabChanged>>", self.nSel)
 		self.mNB.bind("<<NotebookTabClosed>>", lambda ev: self.nClose(k=ev.x))
 		self.mNB.grid(**grc(1, 1), sticky="nswe")
+		self.is_mNBinit = True
 		self.mWin.grid_rowconfigure(1, weight=1)
 		self.mWin.grid_columnconfigure(1, weight=1)
 
@@ -228,6 +241,8 @@ Use <Control-Button-1> to find selecton in text
 		self.mWin.wm_protocol("WM_DELETE_WINDOW", self.withQuit)
 		self.mWin.bind("<Button-2>", lambda ev: self.pop_menu(ev, self.uMenu))
 		self.mWin.bind("<Control-q>", lambda ev: self.withQuit())
+		self.mWin.bind("<Control-greater>", lambda ev: self.mergeTab_left())# ^>
+		self.mWin.bind("<Control-less>", lambda ev: self.mergeTab_right())# ^<
 		self.mWin.bind("<Control-Button-1>", lambda ev: self.eFind())
 		self.mWin.bind("<Control-o>", lambda ev: self.nOpen())
 		self.mWin.bind("<Control-s>", lambda ev: self.nSave())
@@ -297,10 +312,15 @@ Use <Control-Button-1> to find selecton in text
 		if bl: self.hotBar.grid()
 		else: self.hotBar.grid_remove()
 	def theme_path_gw(self):
+		is_customst = self.style.theme_use() in ["deft", "deftc"]
 		self.style.map("ghost.TLabel", background = [("", self.clr_bg)])
 		self.style.map("ghost.TFrame", background = [("", self.clr_bg)])
 		self.style.map("ghost.TSizegrip", background = [("", self.clr_bg)])
-		if self.style.theme_use() in ["deft", "deftc"]:
+		self.style.map("CNotebook", background=[("selected", self.clr_bg)])
+		self.style.map("CNotebook.Tab", background=[("selected", self.clr_bg)])
+		if self.is_mNBinit:
+			self.mNB.style.theme_use(self.style.theme_use())
+		if is_customst:
 			self.style.map("TScrollbar", background = [("", self.clr_bg)])
 	def wTk_force(self, *args): 
 		self.mWin.focus_force()
@@ -311,6 +331,18 @@ Use <Control-Button-1> to find selecton in text
 	def retitle(self, s):
 		self.mMGL["text"] = s
 		self.mWin.title(s)
+	def mergeTab_left(self):
+		c = self.mNB.index("current")
+		l = self.mNB.index("end")
+		w = self.mWin.nametowidget(self.mNB.select())
+		if c >= l-1: return
+		self.mNB.insert(c+1, w)
+	def mergeTab_right(self):
+		c = self.mNB.index("current")
+		l = self.mNB.index("end")
+		w = self.mWin.nametowidget(self.mNB.select())
+		if not c: return
+		self.mNB.insert(c-1, w)
 	def wTk_float(self, bl=None): 
 		if bl == None: bl = self.isCSD.get()
 		if sys.platform == "win32": self.mWin.overrideredirect(bl)
@@ -406,18 +438,18 @@ Use <Control-Button-1> to find selecton in text
 	def pop_menu(self, ev, menu, button=None):
 		try:
 			menu.tk_popup(ev.x_root, ev.y_root, 0)
-			if button: button["state"] = ""
+			menu.bind("<FocusOut>", lambda ev: menu.unpost())
 		finally:
 			menu.grab_release()
-	def get_nText(self): return self.mWin.nametowidget(self.mNB.select()).text
-	def get_pfid(self, i): return self.mWin.nametowidget(self.mNB.select()).id[i]
+		if button: button["state"] = "!selected"
+	def get_nPage(self): return self.mWin.nametowidget(self.mNB.select())
 	def nSel(self, *args):
 		if   self.mNB.tabs() == ():
 			self.mLbl["text"] = f"Hello in ExtPad {self.version}"
 			self.mLblCheck = -1
-		elif self.source.dbg.get() == True:
-			self.mLbl["text"] = f'Selected "{str(self.mNB.select())}" tab: {self.mNB.tab(self.mNB.select())}'
-			self.mLblCheck = 30
+		#elif self.mWin.nametowidget(self.mNB.select()).id == ["note", 0]:
+		#	self.mLbl["text"] = " ... "
+		#	self.mLblCheck = 100
 		else: self.mLblCheck = 0
 	def nOpen(self, path=None):
 		# Input path, text
@@ -438,7 +470,8 @@ Use <Control-Button-1> to find selecton in text
 		self.mNB.add(nPage, image=self.img_mbfile, text=ospath.split(path)[-1], compound="left")
 	def nSaveas(self):
 		if self.mNB.tabs() == (): return "cancel:notabs"
-		ntype = self.get_pfid(0)
+		nPage = self.get_nPage()
+		ntype = nPage.id[0]
 		if ntype in ("file", "note"):
 			path = tkfd.asksaveasfilename(
 				title="Save as",
@@ -448,7 +481,7 @@ Use <Control-Button-1> to find selecton in text
 			self.wTk_force()
 			if not path: return "cancel:nopath"
 			try:
-				nText = self.get_nText()
+				nText = nPage.text
 				nText.edit_reset()
 				nText.edit_modified(0)
 				nfile = open(path, "w")
@@ -456,21 +489,21 @@ Use <Control-Button-1> to find selecton in text
 				nfile.close()
 			except: print("[app][nSaveas] Can't save file")
 		if ntype == "note":
-			ifr = self.mWin.nametowidget(self.mNB.select())
-			ifr.id = ["file", path]
-			self.mNB.add(ifr, image=self.img_mbfile, text=ospath.split(path)[-1], compound="left")
+			nPage.id = ["file", path]
+			self.mNB.add(nPage, image=self.img_mbfile, text=ospath.split(path)[-1], compound="left")
 	def nSave(self):
 		if self.mNB.tabs() == (): return
-		ntype = self.get_pfid(0)
+		nPage = self.get_nPage()
+		ntype = nPage.id[0]
 		if ntype == "file":
-			path = self.get_pfid(1)
-			nText = self.get_nText()
+			path = nPage.id[1]
+			nText = nPage.text
 			nText.edit_modified(0)
 			nfile = open(path, "w")
 			nfile.write(nText.get("1.0", "end").rstrip("\n"))
 			nfile.close()
 			self.mLblCheck = 10
-			self.mLbl["text"] = "[File] All of file saved"
+			self.mLbl["text"] = "[File] File saved"
 		elif ntype == "note": self.nSaveas()
 	def nNew(self):
 		path = tkfd.asksaveasfilename(
@@ -501,7 +534,7 @@ Use <Control-Button-1> to find selecton in text
 		tab = self.mWin.nametowidget(self.mNB.tabs()[tabid])
 		fail = None
 		if tab.id[0] == "file":
-			nText = self.get_nText()
+			nText = self.get_nPage().text
 			if nText.edit_modified():
 				tmp = self.mNB.select().split(":")[1].strip('"').replace("%2E", ".")
 				save = tkmb.askyesnocancel(
@@ -511,7 +544,7 @@ Use <Control-Button-1> to find selecton in text
 				if save: fail = self.nSave()
 				elif save == None: return "break"
 		elif tab.id[0] == "note":
-			nText = self.get_nText()
+			nText = self.get_nPage().text
 			if nText.edit_modified():
 				save = tkmb.askyesnocancel(
 					f"Save note",
@@ -529,20 +562,24 @@ Use <Control-Button-1> to find selecton in text
 		if not fail: self.mNB.forget(tabid)
 	def eCopy(self): 
 		try: 
-			nText = self.get_nText()
+			nText = self.get_nPage().text
+			if nText.index(tk.SEL_FIRST) == nText.index(tk.SEL_LAST): return "break:seleq"
 			s = nText.selection_get()
 			nText.clipboard_clear()
 			nText.clipboard_append(s)
 		except Exception as exc: print(f"[app][eCopy] Can't copy: {exc}")
 	def ePaste(self): 
 		try: 
-			nText = self.get_nText()
+			nText = self.get_nPage().text
 			s = nText.clipboard_get()
-			self.get_nText().insert("insert", s)
+			self.get_nPage().text.insert("insert", s)
+			if nText.index(tk.SEL_FIRST) != nText.index(tk.SEL_LAST):
+				nText.delete(tk.SEL_FIRST, tk.SEL_LAST)
 		except Exception as exc: print(f"[app][ePaste] Can't paste: {exc}")
 	def eCut(self):
 		try:
-			nText = self.get_nText()
+			nText = self.get_nPage().text
+			if nText.index(tk.SEL_FIRST) == nText.index(tk.SEL_LAST): return "break:seleq"
 			s = nText.selection_get()
 			nText.clipboard_clear()
 			nText.clipboard_append(s)
@@ -561,7 +598,7 @@ Use <Control-Button-1> to find selecton in text
 				rs.append([i+1, f])
 		return rs
 	def eFind(self):
-		nText = self.get_nText()
+		nText = self.get_nPage().text
 		if not nText: return
 		nText.tag_remove("search", "1.0", "end")
 		try: word = nText.selection_get()
@@ -578,30 +615,34 @@ Use <Control-Button-1> to find selecton in text
 		# Etc
 	def altstream(self):
 		self.mWin.after(100, self.altstream)
-		self.mLblCheck = round(self.mLblCheck)
+		self.mLblCheck = int(self.mLblCheck)
 		if self.mNB.tabs() != ():
-			if self.get_pfid(0) == "conf": nText = None
-			else: nText = self.mWin.nametowidget(self.mNB.select()+".!text")
+			nPage = self.get_nPage()
+			if nPage.id[0] == "conf": nText = None
+			else: nText = nPage.text
 			if self.mLblCheck == 0:
 				if nText:
 					insLine, insCol = str.split(nText.index("insert"), ".")
 					endLine = str(int(str.split(nText.index("end"), ".")[0]) - 1)
 					endCol = str.split(nText.index(f"{insLine}.end"), ".")[1]
 				else: insLine, insCol, endLine, endCol = [0 for i in " "*4]
-				if self.get_pfid(0) == "file":
-					self.mLbl["text"] = f"[File] Line: {insLine}/{endLine}  Col: {insCol}/{endCol}  Path: {self.get_pfid(1)}"
-				elif self.get_pfid(0) == "note":
+				if nPage.id[0] == "file":
+					self.mLbl["text"] = f"[File] Line: {insLine}/{endLine}  Col: {insCol}/{endCol}  Path: {nPage.id[1]}"
+				elif nPage.id[0] == "note":
 					self.mLbl["text"] = f"[Note] Line: {insLine}/{endLine}  Col: {insCol}/{endCol}"
-				elif self.get_pfid(0) == "conf":
-					self.mLbl["text"] = f"[Config] Name: {self.get_pfid(1)}"
+				elif nPage.id[0] == "conf":
+					self.mLbl["text"] = f"[Config] Name: {nPage.id[1]}"
 				else:
 					self.mLbl["text"] = f"[Err] undifined type"
 			elif self.mLblCheck > 0:
 				self.mLblCheck -= 1
-			if self.get_pfid(0) == "file":
-				path = self.get_pfid(1)
-				if sys.platform == "win32": tmp = path.split("\\")[-1]
-				else: tmp = path.split("/")[-1]
+			if nPage.id[0] in ["file", "note"]:
+				path = nPage.id[1]
+				if nPage.id[0] == "note":
+					tmp = f"New{['', f' ({path})'][bool(path)]}"
+				else:
+					if sys.platform == "win32": tmp = path.split("\\")[-1]
+					else: tmp = path.split("/")[-1]
 				if nText.edit_modified() == True: self.mNB.tab(self.mNB.select(), text=tmp+"*")
 				else: self.mNB.tab(self.mNB.select(), text=tmp.rstrip("*"))
 
