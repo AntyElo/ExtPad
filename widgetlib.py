@@ -91,6 +91,72 @@ static unsigned char open16_bits[] = {
 			border=8, sticky=""
 		)
 
+class TextLN(tk.Canvas):
+	def __init__(self, *args, **kwargs):
+		tk.Canvas.__init__(self, *args, **kwargs)
+		self.page = None
+		self.i2 = 3
+
+	def _powerp(self, i):
+		m = 0
+		while True:
+			r = i // 10**m
+			if r == 0: break
+			m += 1
+		return m
+
+	def _asmin(self, i, m):
+		return [m, i][i > m]
+
+	def attach(self, page):
+		self.page = page
+
+	def redraw(self, *args):
+		'''redraw line numbers'''
+		self.delete("all")
+		if not self.page.text: return
+		i = self.page.text.index("@0,0")
+		clr = self.page.ikw.setdefault("clr_ln")
+		if clr: self.__setitem__("bg", clr)
+		w = int(self.cget("width"))-2
+		f = self.page.text["font"]
+		while True:
+			dline = self.page.text.dlineinfo(i)
+			if dline is None: break
+			t = str(i).split(".")[0]
+			self.create_text(w, dline[1], anchor="ne", font=f, text=t)
+			i = self.page.text.index(f"{i}+1line")
+		self.i2 = self._asmin(self._powerp(int(str(i).split(".")[0])-1)+1, 3)
+		self.__setitem__("width", self.i2*10)
+
+class CText(tk.Text):
+	def __init__(self, *args, **kwargs):
+		tk.Text.__init__(self, *args, **kwargs)
+
+		# create a proxy for the underlying widget
+		self._orig = self._w + "_orig"
+		self.tk.call("rename", self._w, self._orig)
+		self.tk.createcommand(self._w, self._proxy)
+
+	def _proxy(self, *args):
+		# let the actual widget perform the requested action
+		cmd = (self._orig,) + args
+		result = self.tk.call(cmd)
+
+		# generate an event if something was added or deleted,
+		# or the cursor position changed
+		if (args[0] in ("insert", "replace", "delete") or 
+			args[0:3] == ("mark", "set", "insert") or
+			args[0:2] == ("xview", "moveto") or
+			args[0:2] == ("xview", "scroll") or
+			args[0:2] == ("yview", "moveto") or
+			args[0:2] == ("yview", "scroll")
+		):
+			self.event_generate("<<Change>>", when="tail")
+
+		# return what the actual widget returned
+		return result
+
 class InfoFrame(ttk.Frame): # Frame to info`rmation
 	def __init__(self, ikw, *args, **kwargs):
 		self.style = ttk.Style()
@@ -120,24 +186,31 @@ class NBFrame(ttk.Frame): # nFrame back-end
 	def __init__(self, ikw, *args, **kwargs):
 		self.style = ttk.Style()
 		self.ikw = ikw
+		self.ikw["clr_ln"] = self.ikw.setdefault("clr_ln") or "gray95"
 		self.id = self.ikw.setdefault("fid", ["note", -1])
 		super().__init__(*args, **kwargs)
 
-		self.text = tk.Text(self, undo=True)
+		self.text_frame = self
+		self.text = CText(self, undo=True)
 		self.SBX = ttk.Scrollbar(self, command=self.text.xview, orient="horizontal")
 		self.SBY = ttk.Scrollbar(self, command=self.text.yview, orient="vertical")
 		self.text.config(xscrollcommand=self.SBX.set, yscrollcommand=self.SBY.set)
 		self.text.insert("1.0", self.ikw.setdefault("text", ""))
 		self.text.edit_reset()
 		self.text.edit_modified(0)
+		self.lnw = TextLN(self, width=30, highlightthickness=0)
+		self.lnw.attach(self)
 		b3bind = self.ikw.setdefault('b3bind')
 		if b3bind: self.text.bind("<Button-3>", b3bind)
+		self.text.bind("<<Change>>", lambda ev: self.lnw.redraw())
+		self.text.bind("<Configure>", lambda ev: self.lnw.redraw())
 		# Grid controls
-		self.SBX.grid(column=0, row=1, sticky="nsew")
-		self.SBY.grid(column=1, row=0, sticky="nsew")
-		self.text.grid(column=0, row=0, sticky="nsew")
+		self.lnw.grid(column=0, row=0, rowspan=2, sticky="nsew")
+		self.SBX.grid(column=1, row=1, sticky="nsew")
+		self.SBY.grid(column=2, row=0, sticky="nsew")
+		self.text.grid(column=1, row=0, sticky="nsew")
 		self.rowconfigure(0, weight=1)
-		self.columnconfigure(0, weight=1)
+		self.columnconfigure(1, weight=1)
 
 class EntryField(ttk.Frame): # nFrame back-end
 	def __init__(self, ikw, *args, **kwargs):

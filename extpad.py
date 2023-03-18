@@ -15,7 +15,7 @@ class App():
 	vkw = {
 		"codename": "crypton", # Arch
 		"build": 9, # Every update
-		"path": 2, # Is path of version
+		"path": 3, # Is path of version
 		"channel": "b (beta)", # e(edge/alpha)/b(beta)/c(rc/release-candidate)/r(release)
 	}
 	def grc(main, row, column, *args): return {"row": row, "column": column}
@@ -47,8 +47,9 @@ FIXME:
 		self.mWin.geometry("400x300")
 		self.is_topTk = tk.BooleanVar(value=True)
 		self.isCSD = tk.BooleanVar(value=True)
+		self.is_menubar = tk.BooleanVar(value=False)
 		self.is_hotbar = tk.BooleanVar(value=True)
-		self.is_floatinit, self.is_mNBinit = False, False
+		self.is_floatinit, self.is_mNBinit = [False for i in " "*2]
 		self.wTk_float()
 		self.style = self.source.srcStyle
 		self.text_shared = SharedConf(tabs="0.5c", bd=0, highlightthickness=0, wrap="none")
@@ -107,16 +108,17 @@ Move window to take focus (On CSD mode)
 
 		self.mMTree = {
 			self.uMenu: [
+			["File",   self.fMenu],
+			["Edit",   self.eMenu],
+			["View",   self.vMenu],
 			["Window", self.wMenu],
-			["File", self.fMenu],
-			["Edit", self.eMenu],
-			["View", self.vMenu],
 		], self.wMenu: [
 			["CSD/SSD",         "",    self.isCSD,    self.wTk_float], 
 			["Normal window",   "[8]", self.withNormal], 
 			["Zoom window",     "[0]", self.withMin], 
 			["Minimise window", "[_]", self.withMax], 
 			["Window at top",   "",    self.is_topTk, self.wTk_top], 
+			["Menubar",         "",    self.is_menubar, self.wTk_menubar], 
 		], self.fMenu: [
 			["Save",        "Ctrl-S",       self.nSave],
 			["Save as...",  "Ctrl-Shift-S", self.nSaveas], 
@@ -127,10 +129,12 @@ Move window to take focus (On CSD mode)
 			["Exec ext-on", "Ctrl-E",       self.nExec], 
 			["Quit",        "Ctrl-Q, [X]",  self.withQuit], 
 		], self.eMenu: [
-			["Cut",   "Ctrl-X",  self.eCut], 
-			["Copy",  "Ctrl-C",  self.eCopy], 
-			["Paste", "Ctrl-V",  self.ePaste], 
-			["Find",  "Ctrl-B1", self.eFind],
+			["Undo",  "Ctrl-Z",        self.eUndo], 
+			["Redo",  "Ctrl-Shift-Z",  self.eRedo], 
+			["Cut",   "Ctrl-X",        self.eCut], 
+			["Copy",  "Ctrl-C",        self.eCopy], 
+			["Paste", "Ctrl-V",        self.ePaste], 
+			["Find",  "Ctrl-B1",       self.eFind],
 		], self.vMenu: [
 			["About",         "F1",     self.vInfo], 
 			["Themes",        "F2",     self.vThemes], 
@@ -354,6 +358,10 @@ Take help/hints with F1-key press e.g. `Use Control->< to move tab (title)`''')
 		self.mWin.wm_state("withdraw")
 		self.mWin.wm_state("normal")
 		self.mWin["takefocus"] = True
+	def wTk_menubar(self, bl=None): 
+		if bl == None: bl = self.is_menubar.get()
+		if bl: self.mWin["menu"] = self.uMenu
+		else:  self.mWin["menu"] = False
 	def wTk_point(self, event):
 		win_position = [int(coord) for coord in self.mWin.wm_geometry().split('+')[1:]]
 		self.source.xTk, self.source.yTk = win_position[0] - event.x_root, win_position[1] - event.y_root
@@ -437,8 +445,8 @@ Take help/hints with F1-key press e.g. `Use Control->< to move tab (title)`''')
 		# Menu
 	def pop_menu(self, ev, menu, button=None):
 		try:
-			menu.tk_popup(ev.x_root, ev.y_root, 0)
-			menu.bind("<FocusOut>", lambda ev: menu.unpost())
+			menu.tk_popup(ev.x_root, ev.y_root, "none")
+			if not button: menu.bind("<FocusOut>", lambda ev: menu.unpost())
 		finally:
 			menu.grab_release()
 		if button: button["state"] = "!selected"
@@ -560,6 +568,14 @@ Take help/hints with F1-key press e.g. `Use Control->< to move tab (title)`''')
 		elif not isinstance(tid, list | tuple): self.text_shared.rmw(tid)
 		elif isinstance(tid, list | tuple): [self.text_shared.rmw(i) for i in tid]
 		if not fail: self.mNB.forget(tabid)
+	def eUndo(self): 
+		try: 
+			self.get_nPage().text.edit_undo()
+		except tk.TclError as exc: print(f"[app][eUndo] Can't undo: {exc}")
+	def eRedo(self): 
+		try: 
+			self.get_nPage().text.edit_redo()
+		except tk.TclError as exc: print(f"[app][eRedo] Can't redo: {exc}")
 	def eCopy(self): 
 		try: 
 			nText = self.get_nPage().text
@@ -567,15 +583,15 @@ Take help/hints with F1-key press e.g. `Use Control->< to move tab (title)`''')
 			s = nText.selection_get()
 			nText.clipboard_clear()
 			nText.clipboard_append(s)
-		except Exception as exc: print(f"[app][eCopy] Can't copy: {exc}")
+		except tk.TclError as exc: print(f"[app][eCopy] Can't copy: {exc}")
 	def ePaste(self): 
 		try: 
 			nText = self.get_nPage().text
 			s = nText.clipboard_get()
 			self.get_nPage().text.insert("insert", s)
-			if nText.index(tk.SEL_FIRST) != nText.index(tk.SEL_LAST):
-				nText.delete(tk.SEL_FIRST, tk.SEL_LAST)
-		except Exception as exc: print(f"[app][ePaste] Can't paste: {exc}")
+			if nText.index(tk.SEL_FIRST) == nText.index(tk.SEL_LAST): return "seleq" 
+			nText.selection_clear()
+		except tk.TclError as exc: print(f"[app][ePaste] Can't paste: {exc}")
 	def eCut(self):
 		try:
 			nText = self.get_nPage().text
@@ -584,7 +600,7 @@ Take help/hints with F1-key press e.g. `Use Control->< to move tab (title)`''')
 			nText.clipboard_clear()
 			nText.clipboard_append(s)
 			nText.delete(tk.SEL_FIRST, tk.SEL_LAST)
-		except Exception as exc: print(f"[app][eCut] Can't cut: {exc}")
+		except tk.TclError as exc: print(f"[app][eCut] Can't cut: {exc}")
 	def eFind_engene(self, s: str, w: str) -> list:
 		fill = "".join([" ", "Z"][i == " "] for i in w)
 		if w == "" or s == "": return
