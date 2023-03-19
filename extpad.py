@@ -15,7 +15,7 @@ class App():
 	vkw = {
 		"codename": "crypton", # Arch
 		"build": 9, # Every update
-		"path": 3, # Is path of version
+		"path": 4, # Is path of version
 		"channel": "b (beta)", # e(edge/alpha)/b(beta)/c(rc/release-candidate)/r(release)
 	}
 	def grc(main, row, column, *args): return {"row": row, "column": column}
@@ -62,6 +62,7 @@ FIXME:
 Use <Alt-B1> to move window
 Use <Button-2> to call uMenu
 Move window to take focus (On CSD mode)
+Use <Button-2> on TextLN to take goto-hover
 """
 		self.imgd = tk.BooleanVar(value=True)
 		self.imgstmb = ["file", "note", "run"]
@@ -640,7 +641,7 @@ Take help/hints with F1-key press e.g. `Use Control->< to move tab (title)`''')
 				if nText:
 					insLine, insCol = str.split(nText.index("insert"), ".")
 					endLine = str(int(str.split(nText.index("end"), ".")[0]) - 1)
-					endCol = str.split(nText.index(f"{insLine}.end"), ".")[1]
+					endCol = (str.split(nText.index(f"{insLine}.end"), ".")[1])
 				else: insLine, insCol, endLine, endCol = [0 for i in " "*4]
 				if nPage.id[0] == "file":
 					self.mLbl["text"] = f"[File] Line: {insLine}/{endLine}  Col: {insCol}/{endCol}  Path: {nPage.id[1]}"

@@ -95,7 +95,47 @@ class TextLN(tk.Canvas):
 	def __init__(self, *args, **kwargs):
 		tk.Canvas.__init__(self, *args, **kwargs)
 		self.page = None
+		self.top = None
 		self.i2 = 3
+		self.bind("<Button-3>", self.popup)
+
+	def popup(self, ev):
+		if self.top: return
+		self.top = tk.Toplevel(self)
+		if sys.platform == "win32": self.top.overrideredirect(1)
+		else: self.top.attributes('-type', "dock")
+		self.top.attributes("-topmost", 1)
+		self.top.geometry(f"+{ev.x_root}+{ev.y_root}")
+		self.top["takefocus"] = True
+		self.top["bg"] = self.cget("bg")
+		entry = tk.Entry(self.top, width=4)
+		entry.focus()
+		entry.bind("<Return>", lambda ev: self.popup_close(entry.get()))
+		self.top.bind("<FocusOut>", lambda ev: self.popup_close("break"))
+		tk.Label(self.top, text="goto: ", bg=self.cget("bg"))\
+		.pack(fill="x", side="left")
+		entry.pack(expand=1, fill="both", side="left")
+
+	def popup_close(self, get):
+		self.top.destroy()
+		self.top = None
+		get = get.strip()
+		print(get)
+		if   get.isnumeric():
+			get = int(get)
+			if get < int(self.page.text.index("end").split(".")[0]):
+				self.page.text.see(f"{get}.0")
+				self.redraw()
+				return
+		elif get.replace(".", "9").isnumeric():
+			l = int(get.split(".")[0]) if get.split(".")[0] != "" else 1
+			c = int(get.split(".")[1]) if get.split(".")[1] != "" else 0
+			it = str.split(self.page.text.index("insert"), ".")
+			el = int(self.page.text.index("end").split(".")[0])
+			ec = int(str.split(self.page.text.index(f"{it[0]}.end"), ".")[1])
+			if l < el and c <= ec:
+				self.page.text.see(f"{l}.{c}")
+				self.redraw()
 
 	def _powerp(self, i):
 		m = 0
