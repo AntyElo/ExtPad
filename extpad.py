@@ -16,15 +16,11 @@ class App():
 		"codename": "crypton", # Arch
 		"build": 10, # Every update
 		"path": 0, # Is path of version
-		"channel": "e-dge", # Edge aka alpha / Beta / Candidate4Release aka rc / Release
+		"channel": "beta", # Edge aka alpha / Beta / Candidate4Release aka rc / Release
 	}
 	def grc(main, row, column, *args): return {"row": row, "column": column}
-	def ifnotfalse(main, v): 
-		if v: 
-			return v
-		return ""
 	def __init__(self):
-		self.version = f'{self.vkw["build"]}{self.vkw["channel"][0:1]}{self.ifnotfalse(self.vkw.get("path", ""))}'
+		self.version = f'{self.vkw["build"]}{self.vkw["channel"][0:1]}{["", self.vkw.get("path", "")][bool(self.vkw.get("path", ""))]}'
 		self.vsm = "Version kw: " + "".join((f"\n    {str(k)}: {str(w)}" for k, w in self.vkw.items()))
 		# ~~
 		# 1e -> [2e]                 [1e]--> 2e
@@ -53,6 +49,7 @@ FIXME:
 		self.isCSD = tk.BooleanVar(value=True)
 		self.is_menubar = tk.BooleanVar(value=False)
 		self.is_hotbar = tk.BooleanVar(value=True)
+		self.is_apibar = tk.BooleanVar(value=True)
 		self.is_floatinit, self.is_mNBinit = [False for i in " "*2]
 		self.wTk_float()
 		self.style = self.source.srcStyle
@@ -124,7 +121,6 @@ Use <Button-2> on TextLN to take goto-hover
 			["Zoom window",     "[0]", self.withMin], 
 			["Minimise window", "[_]", self.withMax], 
 			["Window at top",   "",    self.is_topTk, self.wTk_top], 
-			["Menubar",         "",    self.is_menubar, self.wTk_menubar], 
 		], self.fnMenu: [
 			["New file",         "Ctrl-N",       self.nNew], 
 			["New note",         "Ctrl-Shift-N", self.nNewnote], 
@@ -147,15 +143,21 @@ Use <Button-2> on TextLN to take goto-hover
 		], self.vMenu: [
 			["About",         "F1",     self.vInfo], 
 			["Themes",        "F2",     self.vThemes], 
-			["Hotbar",        "",       self.is_hotbar, self.vHotbar], 
+			["Hotbar",        "",       self.is_hotbar,  lambda: self.iGrid(self.is_hotbar, self.hotBar)], 
+			["Bottombar",     "",       self.is_apibar,  lambda: self.iGrid(self.is_apibar, self.apiBar)], 
+			["Menubar",       "",       self.is_menubar, self.wTk_menubar], 
 			["Swith pages >", "Ctrl->", self.mergeTab_left], 
-			["Swith pages <", "Ctrl-<", self.mergeTab_right], 
+			["Swith pages <", "Ctrl-<", self.mergeTab_right],
 		]}
 		
 		for mmenu, mmenu_casc in self.mMTree.items():
 			for mma in mmenu_casc:
 				match len(mma):
 					case 0: mmenu.add_separator()
+					case 1: 
+						t = mma[0] + " "
+						if t[0] == " ": mmenu.add_command(accelerator=mma[0])
+						else: mmenu.add_command(label=mma[0])
 					case 2: mmenu.add_cascade(label=mma[0], menu=mma[1])
 					case 3: mmenu.add_command(label=mma[0], accelerator=mma[1], command=mma[2])
 					case 4: mmenu.add_checkbutton(label=mma[0], accelerator=mma[1], \
@@ -183,17 +185,26 @@ Use <Button-2> on TextLN to take goto-hover
 			self.hotBtns[i].append(ttk.Button(self.hotBar, image=self.hotBtns[i][0], command=self.hotBtns[i][1]))
 			Hovertip(self.hotBtns[i][3], self.hotBtns[i][2], hover_delay=80)
 			self.hotBtns[i][3].pack(fill="both", side="top", padx=2, pady=1)
-		self.hotBar.grid(**grc(1, 0), sticky="nswe")
+		self.hotBar.grid(**grc(1, 0), rowspan=2, sticky="nswe")
+
+		# api-Bar: -> mods
+		self.apiBar = ttk.Frame(self.mWin)
+		self.gotofr = ttk.Frame(self.apiBar, style="Hotbar.TFrame")
+		self.gotoe = tk.Entry(self.gotofr, width=4)
+		self.gotoe.bind("<Return>", lambda ev: self.vGoto(self.gotoe.get()))
+		tk.Label(self.gotofr, text="goto: ")\
+		.pack(fill="x", side="left")
+		self.gotoe.pack(expand=1, fill="both", side="left")
+		self.gotofr.pack(fill="y", side="left")
+		self.apiBar.grid(**grc(2, 1), sticky="nswe")
 
 		# Help-Bar: mainSizegrip, tkhelpButton, mainLabel
-		self.api_pane = ttk.Frame(self.mWin)
 		self.hBar = ttk.Frame(self.mWin)
 		self.mSG = ttk.Sizegrip(self.hBar)
 		self.mLbl = ttk.Label(self.hBar, text=f"Hello in ExtPad {self.version}")
 			# Pack this
 		self.mSG.pack(fill="both", side="right")
 		self.mLbl.pack(fill="both", expand=True)
-		self.api_pane.grid(**grc(2, 0), columnspan=2, sticky="nswe")
 		self.hBar.grid(**grc(3, 0), columnspan=2, sticky="nswe")
 
 		# mainNoteBook
@@ -318,6 +329,25 @@ Use <Button-2> on TextLN to take goto-hover
 		req = self.iTheme_tsfield.text.get().strip()
 		if req == "": return
 		self.clr_ts = req
+	def vGoto(self, get):
+		if self.mNB.tabs() == (): return
+		tab = self.get_nPage()
+		if tab.id[0] not in ["file", "note"]: return
+		if   get.isnumeric():
+			get = int(get)
+			if get < int(tab.text.index("end").split(".")[0]):
+				tab.text.see(f"{get}.0")
+				tab.lnw.redraw()
+				return
+		elif get.replace(".", "9").isnumeric():
+			l = int(get.split(".")[0]) if get.split(".")[0] != "" else 1
+			c = int(get.split(".")[1]) if get.split(".")[1] != "" else 0
+			it = str.split(tab.text.index("insert"), ".")
+			el = int(tab.text.index("end").split(".")[0])
+			ec = int(str.split(tab.text.index(f"{it[0]}.end"), ".")[1])
+			if l < el and c <= ec:
+				tab.text.see(f"{l}.{c}")
+				tab.lnw.redraw()
 	def vThemes(self): self.mNB_addc(self.config_frames["root.theme"], text=f"Themes")
 	def vInfo_text(self):
 		self.config_frames["root.info"].text = self.mWin.nametowidget(self.infoNB.select()).text
@@ -329,10 +359,9 @@ Use <Button-2> on TextLN to take goto-hover
 		tc.pack(fill="both", expand="True")
 		frame.ikw["tid"] = self.text_shared.addw(tc)
 		self.mNB_addc(frame, text=f"Python shell")
-	def vHotbar(self, bl=None):
-		if bl == None: bl = self.is_hotbar.get()
-		if bl: self.hotBar.grid()
-		else: self.hotBar.grid_remove()
+	def iGrid(self, var, w):
+		if var.get(): w.grid()
+		else: w.grid_remove()
 	def theme_path_gw(self):
 		is_customst = self.style.theme_use() in ["deft", "deftc"]
 		self.style.map("ghost.TLabel", background = [("", self.clr_bg)])
@@ -474,10 +503,7 @@ Use <Button-2> on TextLN to take goto-hover
 			self.mLbl["text"] = f" . . . "
 			self.mLblCheck = -1
 		elif self.mWin.nametowidget(self.mNB.select()).id == ["note", 0]:
-			self.mLbl["text"] = \
-f'''Hello! You sew first note tab on ExtPad {self.version}
-You can take help/hints-window with press F1 key
-Hint exemple: `Use Control->< to move tab (title)`'''
+			self.mLbl["text"] = f'Hello! You can sew first note tab on ExtPad {self.version}; press F1 key to take help/hints-pane'
 			self.mLblCheck = -1
 		else: self.mLblCheck = 0
 	def nOpen(self, path=None):
@@ -567,7 +593,9 @@ Hint exemple: `Use Control->< to move tab (title)`'''
 		tabid = kw.setdefault("k", self.mNB.index("current"))
 		tab = self.mWin.nametowidget(self.mNB.tabs()[tabid])
 		fail = None
-		if tab.id[0] == "file":
+		method = tab.__dict__.get("ikill")
+		if method: method()
+		elif tab.id[0] == "file":
 			nText = self.get_nPage().text
 			if nText.edit_modified():
 				tmp = self.mNB.select().split(":")[1].strip('"').replace("%2E", ".")
@@ -674,6 +702,10 @@ Hint exemple: `Use Control->< to move tab (title)`'''
 					self.mLbl["text"] = f"[Note] Line: {insLine}/{endLine}  Col: {insCol}/{endCol}"
 				elif nPage.id[0] == "conf":
 					self.mLbl["text"] = f"[Config] Name: {nPage.id[1]}"
+				elif nPage.id[0] == "term" and len(nPage.id) == 2:
+					self.mLbl["text"] = f"[Terminal] Type: {nPage.id[1]}"
+				elif nPage.id[0] == "term" and len(nPage.id) > 2:
+					self.mLbl["text"] = f"[Terminal] Type: {nPage.id[1]}, {nPage.id[2]}"
 				else:
 					self.mLbl["text"] = f"[Err] undifined type"
 			elif self.mLblCheck > 0:
