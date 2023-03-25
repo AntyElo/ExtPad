@@ -7,6 +7,5 @@ import tkinter.simpledialog as tksd
 import tkinter.messagebox as tkmb
 from idlelib.tooltip import Hovertip
 import os
-import os.path as ospath
-from random import randint as rint
+from random import randint #rint
 import sys

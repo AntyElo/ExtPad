@@ -96,8 +96,33 @@ class TextLN(tk.Canvas):
 		tk.Canvas.__init__(self, *args, **kwargs)
 		self.page = None
 		self.top = None
-		self.i2 = 3
-		self.bind("<Button-3>", self.popup)
+		self.breakpoints = [-1]
+		self.menu = tk.Menu(self.page)
+		self.menu.add_command(command=self.popup)
+		self.bind("<Button-1>", self.bpa)
+		self.bind("<Button-3>", lambda ev: self.menu.tk_popup(ev.x_root, ev.y_root))
+
+	def bpa(self, ev):
+		if not self.page: return
+		elm = int(self.itemcget(self.find_closest(ev.x, ev.y), 'text')[:-1])
+		if elm in self.breakpoints:
+			self.breakpoints.remove(elm)
+		else: self.breakpoints.append(elm)
+		self.redraw()
+
+	def on_return(self, ev):
+		if not self.page: return
+		c = int(self.page.text.index("current").split(".")[0])
+		self.breakpoints = [[elm, elm+1][elm > c] for elm in self.breakpoints]
+		self.redraw()
+
+	def on_bs(self, ev):
+		if not self.page: return
+		c = int(self.page.text.index("current").split(".")[0])
+		self.page.text.see("current")
+		if self.page.text.get("insert-1c") == "\n":
+			self.breakpoints = [[elm, elm-1][elm > c] for elm in self.breakpoints]
+		self.redraw()
 
 	def popup(self, ev):
 		if self.top: return
@@ -120,7 +145,6 @@ class TextLN(tk.Canvas):
 		self.top.destroy()
 		self.top = None
 		get = get.strip()
-		print(get)
 		if   get.isnumeric():
 			get = int(get)
 			if get < int(self.page.text.index("end").split(".")[0]):
@@ -137,37 +161,32 @@ class TextLN(tk.Canvas):
 				self.page.text.see(f"{l}.{c}")
 				self.redraw()
 
-	def _powerp(self, i):
-		m = 0
-		while True:
-			r = i // 10**m
-			if r == 0: break
-			m += 1
-		return m
-
-	def _asmin(self, i, m):
+	def _as_min(self, i, m):
 		return [m, i][i > m]
 
 	def attach(self, page):
 		self.page = page
+		self.page.text.bind("<Return>", self.on_return)
+		self.page.text.bind("<BackSpace>", self.on_bs)
 
 	def redraw(self, *args):
 		'''redraw line numbers'''
 		self.delete("all")
 		if not self.page.text: return
 		i = self.page.text.index("@0,0")
-		clr = self.page.ikw.setdefault("clr_ln")
+		clr = self.page.ikw.get("clr_ln")
 		if clr: self.__setitem__("bg", clr)
-		w = int(self.cget("width"))-2
+		w = int(self.cget("width"))-3
 		f = self.page.text["font"]
+		mi = len(self.page.text.index("end-1c").split(".")[0]+" ")
 		while True:
 			dline = self.page.text.dlineinfo(i)
 			if dline is None: break
 			t = str(i).split(".")[0]
-			self.create_text(w, dline[1], anchor="ne", font=f, text=t)
+			t2 = t+[" ", "+"][int(t) in self.breakpoints]
+			self.create_text(w, dline[1], anchor="ne", font=f, text=t2)
 			i = self.page.text.index(f"{i}+1line")
-		self.i2 = self._asmin(self._powerp(int(str(i).split(".")[0])-1)+1, 3)
-		self.__setitem__("width", self.i2*10)
+		self.__setitem__("width", self._as_min(mi, 3)*10)
 
 class CText(tk.Text):
 	def __init__(self, *args, **kwargs):
@@ -181,18 +200,16 @@ class CText(tk.Text):
 	def _proxy(self, *args):
 		# let the actual widget perform the requested action
 		cmd = (self._orig,) + args
-		result = self.tk.call(cmd)
+		try: result = self.tk.call(cmd) # Undo/Redo fail
+		except tk.TclError as err: print(f"[wlib.CText] Fail: {err}"); return
 
 		# generate an event if something was added or deleted,
 		# or the cursor position changed
 		if (args[0] in ("insert", "replace", "delete") or 
-			args[0:3] == ("mark", "set", "insert") or
-			args[0:2] == ("xview", "moveto") or
-			args[0:2] == ("xview", "scroll") or
-			args[0:2] == ("yview", "moveto") or
-			args[0:2] == ("yview", "scroll")
-		):
-			self.event_generate("<<Change>>", when="tail")
+			args[0:2] in [("xview", "moveto"), ("xview", "scroll"),
+			("yview", "moveto"), ("yview", "scroll")] or
+			args[0:3] == ("mark", "set", "insert")):
+			self.event_generate("<<CTChange>>", when="tail")
 
 		# return what the actual widget returned
 		return result
@@ -242,7 +259,7 @@ class NBFrame(ttk.Frame): # nFrame back-end
 		self.lnw.attach(self)
 		b3bind = self.ikw.setdefault('b3bind')
 		if b3bind: self.text.bind("<Button-3>", b3bind)
-		self.text.bind("<<Change>>", lambda ev: self.lnw.redraw())
+		self.text.bind("<<CTChange>>", lambda ev: self.lnw.redraw())
 		self.text.bind("<Configure>", lambda ev: self.lnw.redraw())
 		# Grid controls
 		self.lnw.grid(column=0, row=0, rowspan=2, sticky="nsew")

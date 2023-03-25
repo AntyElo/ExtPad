@@ -6,16 +6,16 @@ from sourcelib import Source
 from widgetlib import *
 # Source and widgets merged on new files
 
-#TODO: sys.argv - open files by `extpad.bin '%f'`
+#TODO: sys.argv - open files by `extpad.bin '%f'` - params
 #TODO: kill, to_title, to_helpbar - func on IFrame-side
-print(f"[extpad] Run with: {sys.argv[1:]}")
+print(f"[extpad] Run {sys.argv[0]} with: {sys.argv[1:]}")
 class App():
 	# Sourse
 	IFrame = IFrame
 	vkw = {
 		"codename": "crypton", # Arch
 		"build": 9, # Every update
-		"path": 4, # Is path of version
+		"path": 5, # Is path of version
 		"channel": "b (beta)", # e(edge/alpha)/b(beta)/c(rc/release-candidate)/r(release)
 	}
 	def grc(main, row, column, *args): return {"row": row, "column": column}
@@ -150,7 +150,8 @@ Use <Button-2> on TextLN to take goto-hover
 					case 0: mmenu.add_separator()
 					case 2: mmenu.add_cascade(label=mma[0], menu=mma[1])
 					case 3: mmenu.add_command(label=mma[0], accelerator=mma[1], command=mma[2])
-					case 4: mmenu.add_checkbutton(label=mma[0], accelerator=mma[1], variable=mma[2], offvalue=False, onvalue=True, command=mma[3])
+					case 4: mmenu.add_checkbutton(label=mma[0], accelerator=mma[1], \
+						variable=mma[2], offvalue=False, onvalue=True, command=mma[3])
 
 			# Pack this
 		self.mQuitBtn.pack(fill="both", side="right")
@@ -159,19 +160,6 @@ Use <Button-2> on TextLN to take goto-hover
 		self.wmBtn.pack(fill="both", side="left")
 		self.mMG.pack(fill="both", expand=True)
 		self.tBar.grid(**grc(0, 0), columnspan=2, sticky="nswe")
-
-		# Help-Bar: mainSizegrip, tkhelpButton, mainLabel
-		self.api_pane = ttk.Frame(self.mWin)
-		self.hBar = ttk.Frame(self.mWin)
-		self.mSG = ttk.Sizegrip(self.hBar)
-		self.mLbl = ttk.Label(self.hBar, text=\
-f'''Hello in first tab of ExtPad {self.version}; 
-Take help/hints with F1-key press e.g. `Use Control->< to move tab (title)`''')
-			# Pack this
-		self.mSG.pack(fill="both", side="right")
-		self.mLbl.pack(fill="both", expand=True)
-		self.api_pane.grid(**grc(2, 0), columnspan=2, sticky="nswe")
-		self.hBar.grid(**grc(3, 0), columnspan=2, sticky="nswe")
 
 		# Hot-Bar
 		self.hotBar = ttk.Frame(self.mWin, style="Hotbar.TFrame")
@@ -189,10 +177,23 @@ Take help/hints with F1-key press e.g. `Use Control->< to move tab (title)`''')
 			self.hotBtns[i][3].pack(fill="both", side="top", padx=2, pady=1)
 		self.hotBar.grid(**grc(1, 0), sticky="nswe")
 
+		# Help-Bar: mainSizegrip, tkhelpButton, mainLabel
+		self.api_pane = ttk.Frame(self.mWin)
+		self.hBar = ttk.Frame(self.mWin)
+		self.mSG = ttk.Sizegrip(self.hBar)
+		self.mLbl = ttk.Label(self.hBar, text=f"Hello in ExtPad {self.version}")
+			# Pack this
+		self.mSG.pack(fill="both", side="right")
+		self.mLbl.pack(fill="both", expand=True)
+		self.api_pane.grid(**grc(2, 0), columnspan=2, sticky="nswe")
+		self.hBar.grid(**grc(3, 0), columnspan=2, sticky="nswe")
+
 		# mainNoteBook
 		self.mNB = CNotebook(self.mWin, height=0)
 		if not sys.argv[1:]: self.nNewnote()
-		else: print("ENV!")
+		else:
+			for elm in sys.argv[1:]:
+				self.nOpen(elm)
 		self.mNB.bind("<<NotebookTabChanged>>", self.nSel)
 		self.mNB.bind("<<NotebookTabClosed>>", lambda ev: self.nClose(k=ev.x))
 		self.mNB.grid(**grc(1, 1), sticky="nswe")
@@ -454,11 +455,14 @@ Take help/hints with F1-key press e.g. `Use Control->< to move tab (title)`''')
 	def get_nPage(self): return self.mWin.nametowidget(self.mNB.select())
 	def nSel(self, *args):
 		if   self.mNB.tabs() == ():
-			self.mLbl["text"] = f"Hello in ExtPad {self.version}"
+			self.mLbl["text"] = f" . . . "
 			self.mLblCheck = -1
-		#elif self.mWin.nametowidget(self.mNB.select()).id == ["note", 0]:
-		#	self.mLbl["text"] = " ... "
-		#	self.mLblCheck = 100
+		elif self.mWin.nametowidget(self.mNB.select()).id == ["note", 0]:
+			self.mLbl["text"] = \
+f'''Hello! You sew first note tab on ExtPad {self.version}
+You can take help/hints-window with press F1 key
+Hint exemple: `Use Control->< to move tab (title)`'''
+			self.mLblCheck = -1
 		else: self.mLblCheck = 0
 	def nOpen(self, path=None):
 		# Input path, text
@@ -469,6 +473,11 @@ Take help/hints with F1-key press e.g. `Use Control->< to move tab (title)`''')
 			)
 			self.wTk_force()
 			if not path: return
+		elif path == "-n":
+			self.nNewnote()
+			return
+		elif not os.path.isfile(path):
+			return
 		with open(str(path)) as nfile: text = nfile.read()
 		# Controls
 		nPage = NBFrame(
@@ -476,7 +485,7 @@ Take help/hints with F1-key press e.g. `Use Control->< to move tab (title)`''')
 			self.mNB, style="ghost.TFrame", name=f'file:"{path.replace(".", "%2E")}"'
 		)
 		nPage.ikw["tid"] = self.text_shared.addw(nPage.text)
-		self.mNB.add(nPage, image=self.img_mbfile, text=ospath.split(path)[-1], compound="left")
+		self.mNB.add(nPage, image=self.img_mbfile, text=os.path.split(path)[-1], compound="left")
 	def nSaveas(self):
 		if self.mNB.tabs() == (): return "cancel:notabs"
 		nPage = self.get_nPage()
@@ -499,7 +508,7 @@ Take help/hints with F1-key press e.g. `Use Control->< to move tab (title)`''')
 			except: print("[app][nSaveas] Can't save file")
 		if ntype == "note":
 			nPage.id = ["file", path]
-			self.mNB.add(nPage, image=self.img_mbfile, text=ospath.split(path)[-1], compound="left")
+			self.mNB.add(nPage, image=self.img_mbfile, text=os.path.split(path)[-1], compound="left")
 	def nSave(self):
 		if self.mNB.tabs() == (): return
 		nPage = self.get_nPage()
@@ -528,7 +537,7 @@ Take help/hints with F1-key press e.g. `Use Control->< to move tab (title)`''')
 			self.mNB, style="ghost.TFrame", name=f'file:"{path.replace(".", "%2E")}"'
 		)
 		nPage.ikw["tid"] = self.text_shared.addw(nPage.text)
-		self.mNB.add(nPage, image=self.img_mbfile, text=ospath.split(path)[-1], compound="left")
+		self.mNB.add(nPage, image=self.img_mbfile, text=os.path.split(path)[-1], compound="left")
 	def nNewnote(self):
 		nPage = NBFrame(
 			dict(b3bind=lambda ev: self.pop_menu(ev, self.eMenu), fid=["note", self.notec]), 
@@ -632,7 +641,7 @@ Take help/hints with F1-key press e.g. `Use Control->< to move tab (title)`''')
 		# Etc
 	def altstream(self):
 		self.mWin.after(100, self.altstream)
-		self.mLblCheck = int(self.mLblCheck)
+		#self.mLblCheck = int(self.mLblCheck)
 		if self.mNB.tabs() != ():
 			nPage = self.get_nPage()
 			if nPage.id[0] == "conf": nText = None
@@ -641,7 +650,7 @@ Take help/hints with F1-key press e.g. `Use Control->< to move tab (title)`''')
 				if nText:
 					insLine, insCol = str.split(nText.index("insert"), ".")
 					endLine = str(int(str.split(nText.index("end"), ".")[0]) - 1)
-					endCol = (str.split(nText.index(f"{insLine}.end"), ".")[1])
+					endCol = str.split(nText.index(f"{insLine}.end"), ".")[1]
 				else: insLine, insCol, endLine, endCol = [0 for i in " "*4]
 				if nPage.id[0] == "file":
 					self.mLbl["text"] = f"[File] Line: {insLine}/{endLine}  Col: {insCol}/{endCol}  Path: {nPage.id[1]}"
