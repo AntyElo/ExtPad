@@ -15,7 +15,7 @@ class App():
 	vkw = {
 		"codename": "crypton", # Arch
 		"build": 9, # Every update
-		"path": 5, # Is path of version
+		"path": 6, # Is path of version
 		"channel": "b (beta)", # e(edge/alpha)/b(beta)/c(rc/release-candidate)/r(release)
 	}
 	def grc(main, row, column, *args): return {"row": row, "column": column}
@@ -101,11 +101,12 @@ Use <Button-2> on TextLN to take goto-hover
 				# Bind this
 		self.wmBtn.bind('<Button-1>', lambda ev: self.pop_menu(ev, self.uMenu, self.wmBtn))
 				# Menus
-		self.uMenu = tk.Menu(self.mWin) # Union(Wm also)
-		self.wMenu = tk.Menu(self.mWin, tearoff=0)
-		self.fMenu = tk.Menu(self.mWin, tearoff=0)
-		self.eMenu = tk.Menu(self.mWin, tearoff=0)
-		self.vMenu = tk.Menu(self.mWin, tearoff=0)
+		self.uMenu =  tk.Menu(self.mWin) # Union(Wm also)
+		self.wMenu =  tk.Menu(self.mWin, tearoff=0)
+		self.fMenu =  tk.Menu(self.mWin, tearoff=0)
+		self.fnMenu = tk.Menu(self.mWin, tearoff=0)
+		self.eMenu =  tk.Menu(self.mWin, tearoff=0)
+		self.vMenu =  tk.Menu(self.mWin, tearoff=0)
 
 		self.mMTree = {
 			self.uMenu: [
@@ -120,13 +121,16 @@ Use <Button-2> on TextLN to take goto-hover
 			["Minimise window", "[_]", self.withMax], 
 			["Window at top",   "",    self.is_topTk, self.wTk_top], 
 			["Menubar",         "",    self.is_menubar, self.wTk_menubar], 
+		], self.fnMenu: [
+			["New file",         "Ctrl-N",       self.nNew], 
+			["New note",         "Ctrl-Shift-N", self.nNewnote], 
+			["New python shell", "F3",     self.vPyshell],
 		], self.fMenu: [
-			["Save",        "Ctrl-S",       self.nSave],
+			["Save file",   "Ctrl-S",       self.nSave],
 			["Save as...",  "Ctrl-Shift-S", self.nSaveas], 
-			["Open",        "Ctrl-O",       self.nOpen],
-			["New",         "Ctrl-N",       self.nNew], 
-			["New note",    "Ctrl-Shift-N", self.nNewnote], 
-			["Close",       "Ctrl-Shift-D", self.nClose], 
+			["Open file",   "Ctrl-O",       self.nOpen],
+			["New ...",                     self.fnMenu],
+			["Close tab",   "Ctrl-Shift-D", self.nClose], 
 			["Exec ext-on", "Ctrl-E",       self.nExec], 
 			["Quit",        "Ctrl-Q, [X]",  self.withQuit], 
 		], self.eMenu: [
@@ -257,8 +261,9 @@ Use <Button-2> on TextLN to take goto-hover
 		self.mWin.bind("<Control-N>", lambda ev: self.nNewnote())
 		self.mWin.bind("<Control-D>", lambda ev: self.nClose())
 		self.mWin.bind("<Control-e>", lambda ev: self.nExec())
-		self.mWin.bind("<F2>", lambda ev: self.vThemes())
 		self.mWin.bind("<F1>", lambda ev: self.vInfo())
+		self.mWin.bind("<F2>", lambda ev: self.vThemes())
+		self.mWin.bind("<F3>", lambda ev: self.vPyshell())
 		self.mWin.update()
 		self.mWin.after_idle(self.altstream)
 		if sys.platform != "win32": self.mWin.after_idle(lambda: self.mWin.attributes('-type', "normal"))
@@ -313,6 +318,12 @@ Use <Button-2> on TextLN to take goto-hover
 	def vInfo_text(self):
 		self.config_frames["root.info"].text = self.mWin.nametowidget(self.infoNB.select()).text
 	def vInfo(self): self.mNB_addc(self.config_frames["root.info"], text=f"Info")
+	def vPyshell(self):
+		from pyshell import TextConsole
+		frame = self.IFrame(dict(fid=["term", "pyshell"]), master=self.mNB)
+		tc = TextConsole(frame)
+		tc.pack(fill="both", expand="True")
+		self.mNB_addc(frame, text=f"Python shell")
 	def vHotbar(self, bl=None):
 		if bl == None: bl = self.is_hotbar.get()
 		if bl: self.hotBar.grid()
@@ -617,7 +628,7 @@ Hint exemple: `Use Control->< to move tab (title)`'''
 		ss = s.split("\n")
 		rs = []
 		for i, e in enumerate(ss):
-			while 1:
+			while 1: 
 				f = e.find(w)
 				if f < 0: break
 				e = e[0:f]+fill+e[f+len(w):]
