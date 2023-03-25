@@ -14,13 +14,17 @@ class App():
 	IFrame = IFrame
 	vkw = {
 		"codename": "crypton", # Arch
-		"build": 9, # Every update
-		"path": 6, # Is path of version
-		"channel": "b (beta)", # e(edge/alpha)/b(beta)/c(rc/release-candidate)/r(release)
+		"build": 10, # Every update
+		"path": 0, # Is path of version
+		"channel": "e-dge", # Edge aka alpha / Beta / Candidate4Release aka rc / Release
 	}
 	def grc(main, row, column, *args): return {"row": row, "column": column}
+	def ifnotfalse(main, v): 
+		if v: 
+			return v
+		return ""
 	def __init__(self):
-		self.version = f'{self.vkw["build"]}{self.vkw["channel"][0:1]}{self.vkw.setdefault("path", "")}'
+		self.version = f'{self.vkw["build"]}{self.vkw["channel"][0:1]}{self.ifnotfalse(self.vkw.get("path", ""))}'
 		self.vsm = "Version kw: " + "".join((f"\n    {str(k)}: {str(w)}" for k, w in self.vkw.items()))
 		# ~~
 		# 1e -> [2e]                 [1e]--> 2e
@@ -321,8 +325,9 @@ Use <Button-2> on TextLN to take goto-hover
 	def vPyshell(self):
 		from pyshell import TextConsole
 		frame = self.IFrame(dict(fid=["term", "pyshell"]), master=self.mNB)
-		tc = TextConsole(frame)
+		tc = TextConsole(frame, highlightthickness=0, bd=0)
 		tc.pack(fill="both", expand="True")
+		frame.ikw["tid"] = self.text_shared.addw(tc)
 		self.mNB_addc(frame, text=f"Python shell")
 	def vHotbar(self, bl=None):
 		if bl == None: bl = self.is_hotbar.get()
