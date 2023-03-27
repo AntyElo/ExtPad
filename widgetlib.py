@@ -5,7 +5,27 @@ from deps import *
 class CNotebook(ttk.Notebook): # With "CustomNotebook" and TNotebook
 	__initialized = False
 	def __init__(self, *args, **kwargs):
-		self.style = ttk.Style()
+		self.img_close_raw = \
+"""#define tmp1_width 16
+#define tmp1_height 16
+static unsigned char tmp1_bits[] = {
+   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x08, 0x38, 0x1c, 0x70, 0x0e,
+   0xe0, 0x06, 0xc0, 0x01, 0x80, 0x03, 0x60, 0x07, 0x70, 0x0e, 0x38, 0x1c,
+   0x10, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };"""
+		self.img_file_raw = \
+"""#define open16_width 16
+#define open16_height 16
+static unsigned char open16_bits[] = {
+   0x00, 0x00, 0x00, 0x00, 0xf8, 0x0f, 0x04, 0x1c, 0x04, 0x3c, 0xf4, 0x3c,
+   0x04, 0x20, 0xf4, 0x27, 0x04, 0x20, 0xf4, 0x27, 0x04, 0x20, 0xf4, 0x27,
+   0x04, 0x20, 0xf8, 0x1f, 0x00, 0x00, 0x00, 0x00 };"""
+		self.img_close = tk.Image("bitmap", "img_close", data = self.img_close_raw, foreground = "steelblue")
+		self.img_close_act = tk.Image("bitmap", "img_close_act", data=self.img_close_raw, foreground="lightsteelblue")
+		self.img_close_pr = tk.Image("bitmap", "img_close_pr", data=self.img_close_raw, foreground="darkslateblue")
+
+		self.style = kwargs.setdefault("cstyle")
+		if not self.style: self.style=ttk.Style()
+		kwargs.pop("cstyle")
 		self.clr_bg = "#b7b7b7"
 		self.clr_tw = "#ffffff"
 		if not self.__initialized:
@@ -19,6 +39,7 @@ class CNotebook(ttk.Notebook): # With "CustomNotebook" and TNotebook
 
 		self.bind("<ButtonPress-1>", self.on_close_press, True)
 		self.bind("<ButtonRelease-1>", self.on_close_release)
+		self.bind("<<ThemeChanged>>", lambda ev: self.__initialize_custom_style())
 
 	def on_close_press(self, event):
 		element = self.identify(event.x, event.y)
@@ -47,26 +68,7 @@ class CNotebook(ttk.Notebook): # With "CustomNotebook" and TNotebook
 		self._active = None
 
 	def __initialize_custom_style(self):
-		style = self.style
-		self.img_close_raw = \
-"""#define tmp1_width 16
-#define tmp1_height 16
-static unsigned char tmp1_bits[] = {
-   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x10, 0x08, 0x38, 0x1c, 0x70, 0x0e,
-   0xe0, 0x06, 0xc0, 0x01, 0x80, 0x03, 0x60, 0x07, 0x70, 0x0e, 0x38, 0x1c,
-   0x10, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };"""
-		self.img_file_raw = \
-"""#define open16_width 16
-#define open16_height 16
-static unsigned char open16_bits[] = {
-   0x00, 0x00, 0x00, 0x00, 0xf8, 0x0f, 0x04, 0x1c, 0x04, 0x3c, 0xf4, 0x3c,
-   0x04, 0x20, 0xf4, 0x27, 0x04, 0x20, 0xf4, 0x27, 0x04, 0x20, 0xf4, 0x27,
-   0x04, 0x20, 0xf8, 0x1f, 0x00, 0x00, 0x00, 0x00 };"""
-		self.img_close = tk.Image("bitmap", "img_close", data = self.img_close_raw, foreground = "steelblue")
-		self.img_close_act = tk.Image("bitmap", "img_close_act", data=self.img_close_raw, foreground="lightsteelblue")
-		self.img_close_pr = tk.Image("bitmap", "img_close_pr", data=self.img_close_raw, foreground="darkslateblue")
-
-		style.theme_settings(style.theme_use(), {
+		self.style.theme_settings(self.style.theme_use(), {
 			   "CNotebook": {
 				"layout": [
 					("CNotebook.client", {"sticky": "nswe"})
@@ -84,7 +86,8 @@ static unsigned char open16_bits[] = {
 				]
 			}
 		})
-		style.element_create(
+		if "close" in self.style.element_names(): return
+		self.style.element_create(
 			"close", "image", "img_close",
 			("active", "pressed", "!disabled", "img_close_pr"),
 			("active", "!disabled", "img_close_act"), 
@@ -182,7 +185,7 @@ class InfoFrame(ttk.Frame): # Frame to info`rmation
 		super().__init__(*args, **kwargs)
 
 		self.text = tk.Text(master=self)
-		self.text.insert("end", self.ikw.setdefault("text_ph"))
+		self.text.insert("end", self.ikw.get("text_ph"))
 		self.SCY = ttk.Scrollbar(master=self, orient="vertical", command=self.text.yview)
 		self.SCX = ttk.Scrollbar(master=self, orient="horizontal", command=self.text.xview)
 		self.text.config(yscrollcommand=self.SCY.set, xscrollcommand=self.SCX.set)
@@ -269,3 +272,10 @@ class SharedConf(object):
 		return self.c
 	def rmw(self, i):
 		return self.ws.pop(i, None)
+
+if __name__ == "__main__":
+	win = tk.Tk()
+	nb=CNotebook(win)
+	
+	nb.pack()
+	win.mainloop()

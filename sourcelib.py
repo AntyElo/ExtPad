@@ -162,7 +162,11 @@ CW6LT1O/VSFHWYlpIugIZuL3hukEtjLW2ZLCJwUAOw==""")
 			]
 		}
 		self.all_presets = {
-			   "CNotebook": {
+			   "Tool.TFrame": {
+				   "configure": {
+					"relief": "raised"
+				}
+			}, "CNotebook": {
 				   "configure": {
 					"borderwidth": 0, 
 					"tabmargins": [3, 4, 2, 0], 

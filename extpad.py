@@ -52,12 +52,6 @@ FIXME:
 		self.is_apibar = tk.BooleanVar(value=True)
 		self.is_floatinit, self.is_mNBinit = [False for i in " "*2]
 		self.wTk_float()
-		self.style = self.source.srcStyle
-		self.text_shared = SharedConf(tabs="0.5c", bd=0, highlightthickness=0, wrap="none")
-		for clri in ["tw", "gw", "sb", "dsb", "lsb"]:
-			exec(f"self.clr_{clri} = self.source.clr_{clri}", locals())
-		self.clr_bg, self.clr_ts = self.clr_tw, self.clr_lsb
-		self.fform = self.source.fileforms
 		self.vInfo_hints = \
 """WM: <C/S>SD = <Client/Server>-Side Decorartion
 Use <Alt-B1> to move window
@@ -65,6 +59,12 @@ Use <Button-2> to call uMenu
 Move window to take focus (On CSD mode)
 Use <Button-2> on TextLN to take goto-hover
 """
+		self.fform = self.source.fileforms
+		self.style = self.source.srcStyle
+		self.text_shared = SharedConf(tabs="0.5c", bd=0, highlightthickness=0, wrap="none")
+		for clri in ["tw", "gw", "sb", "dsb", "lsb", "tkbg"]:
+			exec(f"self.clr_{clri} = self.source.clr_{clri}", locals())
+		self.clr_bg, self.clr_ts = self.clr_tw, self.clr_lsb
 		self.imgd = tk.BooleanVar(value=True)
 		self.imgstmb = ["file", "note", "run"]
 		self.imgst = self.imgstmb + ["save", "saveas", "new", "open", "min", "max", "normal", "close", "win"]
@@ -189,13 +189,13 @@ Use <Button-2> on TextLN to take goto-hover
 
 		# api-Bar: -> mods
 		self.apiBar = ttk.Frame(self.mWin)
-		self.gotofr = ttk.Frame(self.apiBar, style="Hotbar.TFrame")
-		self.gotoe = tk.Entry(self.gotofr, width=4)
+		self.gotofr = ttk.Frame(self.apiBar, style="Tool.TFrame")
+		self.gotoe = ttk.Entry(self.gotofr, width=4)
 		self.gotoe.bind("<Return>", lambda ev: self.vGoto(self.gotoe.get()))
-		tk.Label(self.gotofr, text="goto: ")\
-		.pack(fill="x", side="left")
-		self.gotoe.pack(expand=1, fill="both", side="left")
-		self.gotofr.pack(fill="y", side="left")
+		self.gotol = ttk.Label(self.gotofr, text="goto:")
+		self.gotol.grid(row=0, column=0, padx=2, pady=2)
+		self.gotoe.grid(row=0, column=1, padx=2, pady=2)
+		self.gotofr.pack(fill="y", side="left", padx=1)
 		self.apiBar.grid(**grc(2, 1), sticky="nswe")
 
 		# Help-Bar: mainSizegrip, tkhelpButton, mainLabel
@@ -208,7 +208,7 @@ Use <Button-2> on TextLN to take goto-hover
 		self.hBar.grid(**grc(3, 0), columnspan=2, sticky="nswe")
 
 		# mainNoteBook
-		self.mNB = CNotebook(self.mWin, height=0)
+		self.mNB = CNotebook(self.mWin, height=0, cstyle=self.style)
 		if not sys.argv[1:]: self.nNewnote()
 		else:
 			for elm in sys.argv[1:]:
@@ -362,15 +362,22 @@ Use <Button-2> on TextLN to take goto-hover
 	def iGrid(self, var, w):
 		if var.get(): w.grid()
 		else: w.grid_remove()
+	def iGrid_raw(self, var, w):
+		if var: w.grid()
+		else: w.grid_remove()
+		return (not var)
 	def theme_path_gw(self):
 		is_customst = self.style.theme_use() in ["deft", "deftc"]
+		if self.is_mNBinit:
+			self.mNB.style.configure("CNotebook", background=self.mWin.cget("bg"))
+			self.mNB.style.map("CNotebook", background = [("", self.mWin.cget("bg")), ("selected", self.clr_bg)])
 		self.style.map("ghost.TLabel", background = [("", self.clr_bg)])
 		self.style.map("ghost.TFrame", background = [("", self.clr_bg)])
 		self.style.map("ghost.TSizegrip", background = [("", self.clr_bg)])
 		self.style.map("CNotebook", background=[("selected", self.clr_bg)])
 		self.style.map("CNotebook.Tab", background=[("selected", self.clr_bg)])
-		if self.is_mNBinit:
-			self.mNB.style.theme_use(self.style.theme_use())
+		self.style.map("TNotebook", background=[("selected", self.clr_bg)])
+		self.style.map("TNotebook.Tab", background=[("selected", self.clr_bg)])
 		if is_customst:
 			self.style.map("TScrollbar", background = [("", self.clr_bg)])
 	def wTk_force(self, *args): 
@@ -596,8 +603,7 @@ Use <Button-2> on TextLN to take goto-hover
 		method = tab.__dict__.get("ikill")
 		if method: method()
 		elif tab.id[0] == "file":
-			nText = self.get_nPage().text
-			if nText.edit_modified():
+			if tab.text.edit_modified():
 				tmp = self.mNB.select().split(":")[1].strip('"').replace("%2E", ".")
 				save = tkmb.askyesnocancel(
 					f"Save file {tmp}",
@@ -606,8 +612,7 @@ Use <Button-2> on TextLN to take goto-hover
 				if save: fail = self.nSave()
 				elif save == None: return "break"
 		elif tab.id[0] == "note":
-			nText = self.get_nPage().text
-			if nText.edit_modified():
+			if tab.text.edit_modified():
 				save = tkmb.askyesnocancel(
 					f"Save note",
 					"You have unsaved changes.\nDo you want to save before closing?",
