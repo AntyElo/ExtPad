@@ -103,6 +103,11 @@ class TextLN(tk.Canvas):
 		self.bind("<Button-1>", self.bpa)
 		self.bind("<Button-3>", lambda ev: self.menu.tk_popup(ev.x_root, ev.y_root))
 
+	def bpc(self):
+		if not self.page: return
+		m = int(self.page.text.index("end-1c").split(".")[0])
+		self.breakpoints = [i for i in self.breakpoints if 0 < i <= m]
+
 	def bpa(self, ev):
 		if not self.page: return
 		elm = int(self.itemcget(self.find_closest(ev.x, ev.y), 'text')[:-1])
@@ -113,14 +118,16 @@ class TextLN(tk.Canvas):
 
 	def on_return(self, ev):
 		if not self.page: return
-		c = int(self.page.text.index("current").split(".")[0])
+		self.bpc()
+		c = int(self.page.text.index("insert-1c").split(".")[0])
 		self.breakpoints = [[elm, elm+1][elm > c] for elm in self.breakpoints]
 		self.redraw()
 
 	def on_bs(self, ev):
 		if not self.page: return
-		c = int(self.page.text.index("current").split(".")[0])
-		self.page.text.see("current")
+		self.bpc()
+		c = int(self.page.text.index("insert-1c").split(".")[0])
+		self.page.text.see("insert-1c")
 		if self.page.text.get("insert-1c") == "\n":
 			self.breakpoints = [[elm, elm-1][elm > c] for elm in self.breakpoints]
 		self.redraw()
@@ -276,6 +283,7 @@ class SharedConf(object):
 if __name__ == "__main__":
 	win = tk.Tk()
 	nb=CNotebook(win)
-	
-	nb.pack()
+	nb.pack(expand=1, fill="both")
+	fr = NBFrame(dict(text="Hello! I'm widgetlib test! \nPlease test me"), nb)
+	nb.add(fr, text="Frame1")
 	win.mainloop()

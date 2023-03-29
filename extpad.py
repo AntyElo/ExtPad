@@ -5,9 +5,13 @@ imgCont = 0
 from sourcelib import Source 
 from widgetlib import *
 # Source and widgets merged on new files
+""" - EXTernal notePAD (main file)
 
-#TODO: sys.argv - open files by `extpad.bin '%f'` - params
-#TODO: kill, to_title, to_helpbar - func on IFrame-side
+TODO: sys.argv - open files by `extpad.bin '%f'` - params
+TODO: ikill(), titlestr(), helpbarstr() - built-in of Frame (with `if X.__dict__.get(Y):`)
+TODO: pick-color tool (apiBar)
+TODO: json/woof configuration
+"""
 print(f"[extpad] Run {sys.argv[0]} with: {sys.argv[1:]}")
 class App():
 	# Sourse
@@ -15,7 +19,7 @@ class App():
 	vkw = {
 		"codename": "crypton", # Arch
 		"build": 10, # Every update
-		"path": 0, # Is path of version
+		"path": 2, # Is path of version
 		"channel": "beta", # Edge aka alpha / Beta / Candidate4Release aka rc / Release
 	}
 	def grc(main, row, column, *args): return {"row": row, "column": column}
@@ -50,7 +54,6 @@ FIXME:
 		self.is_menubar = tk.BooleanVar(value=False)
 		self.is_hotbar = tk.BooleanVar(value=True)
 		self.is_apibar = tk.BooleanVar(value=True)
-		self.is_floatinit, self.is_mNBinit = [False for i in " "*2]
 		self.wTk_float()
 		self.vInfo_hints = \
 """WM: <C/S>SD = <Client/Server>-Side Decorartion
@@ -216,7 +219,6 @@ Use <Button-2> on TextLN to take goto-hover
 		self.mNB.bind("<<NotebookTabChanged>>", self.nSel)
 		self.mNB.bind("<<NotebookTabClosed>>", lambda ev: self.nClose(k=ev.x))
 		self.mNB.grid(**grc(1, 1), sticky="nswe")
-		self.is_mNBinit = True
 		self.mWin.grid_rowconfigure(1, weight=1)
 		self.mWin.grid_columnconfigure(1, weight=1)
 
@@ -307,6 +309,7 @@ Use <Button-2> on TextLN to take goto-hover
 		req = self.iTheme_tcombox.get()
 		if req.strip() == "": return
 		self.style.theme_use(req)
+		self.themeChanged()
 		self.iTheme_tcombox["value"] = sorted(self.style.theme_names(), key=str.lower)
 	def vThemes_textbg(self, *a, **kw):
 		req = self.iTheme_bgfield.text.get().strip()
@@ -368,7 +371,7 @@ Use <Button-2> on TextLN to take goto-hover
 		return (not var)
 	def theme_path_gw(self):
 		is_customst = self.style.theme_use() in ["deft", "deftc"]
-		if self.is_mNBinit:
+		if self.__dict__.get("mNB"):
 			self.mNB.style.configure("CNotebook", background=self.mWin.cget("bg"))
 			self.mNB.style.map("CNotebook", background = [("", self.mWin.cget("bg")), ("selected", self.clr_bg)])
 		self.style.map("ghost.TLabel", background = [("", self.clr_bg)])
@@ -405,10 +408,9 @@ Use <Button-2> on TextLN to take goto-hover
 		if bl == None: bl = self.isCSD.get()
 		if sys.platform == "win32": self.mWin.overrideredirect(bl)
 		else: self.mWin.attributes('-type', ["normal", "dock"][bl])
-		if self.is_floatinit:
+		if self.__dict__.get("tBar"):
 			if bl: self.tBar.grid()
 			else: self.tBar.grid_remove()
-		else: self.is_floatinit = True
 		self.mWin.wm_state("withdraw")
 		self.mWin.wm_state("normal")
 		self.mWin["takefocus"] = True
