@@ -7,4 +7,5 @@ import tkinter.ttk as ttk
 import tkinter.filedialog as tkfd
 import tkinter.simpledialog as tksd
 import tkinter.messagebox as tkmb
+import tkinter.colorchooser as tkcc
 from idlelib.tooltip import Hovertip

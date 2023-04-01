@@ -204,16 +204,39 @@ class InfoFrame(ttk.Frame): # Frame to info`rmation
 		self.columnconfigure(0, weight=1)
 
 class EntryToolFrame(ttk.Frame):
-	def __init__(self, master, text: str, catchf, *args, **kwargs):
+	def __init__(self, master, text: str, catchf, tabf, *args, **kwargs):
 		self.style = ttk.Style()
 		kwargs["style"] = "Tool.TFrame"
+		self.tabf = tabf
 		super().__init__(master, *args, **kwargs)
 		self.catchf = catchf
 		self.text = ttk.Entry(self, width=4)
-		self.text.bind("<Return>", lambda ev: self.catchf(self.text.get()))
 		self.lbl = ttk.Label(self, text=text)
+		self.text.bind("<Return>", lambda ev: self.catchfx())
+		self.lbl.bind("<Button-1>", lambda ev: self.catchfx())
 		self.lbl.grid(row=0, column=0, padx=2, pady=2)
 		self.text.grid(row=0, column=1, padx=2, pady=2)
+	def catchfx(self):
+		self.catchf(self.text.get())
+		tab = self.tabf()
+		if tab: tab.text.focus_force()
+
+class ColorToolFrame(ttk.Frame):
+	def __init__(self, master, *args, **kwargs):
+		self.style = ttk.Style()
+		kwargs["style"] = "Tool.TFrame"
+		super().__init__(master, *args, **kwargs)
+		self.text = ttk.Entry(self, width=4)
+		self.lbl = ttk.Label(self, text="color:")
+		self.text.bind("<Return>", lambda ev: self.colored())
+		self.lbl.bind("<Button-1>", lambda ev: self.colored())
+		self.lbl.grid(row=0, column=0, padx=2, pady=2)
+		self.text.grid(row=0, column=1, padx=2, pady=2)
+	def colored(self):
+		try: end = str(tkcc.askcolor(self.text.get())[1])
+		except tk.TclError: end = str(tkcc.askcolor()[1])
+		self.text.delete(0, "end")
+		self.text.insert(0,  end )
 
 class IFrame(ttk.Frame):
 	def __init__(self, ikw, *args, **kwargs):
@@ -252,6 +275,64 @@ class NBFrame(ttk.Frame): # nFrame back-end
 		self.text.grid(column=1, row=0, sticky="nsew")
 		self.rowconfigure(0, weight=1)
 		self.columnconfigure(1, weight=1)
+
+class NBFrame_Note(NBFrame):
+	def __init__(self, api, *args, **kwargs):
+		ikw = kwargs.setdefault("ikw", {}); kwargs.pop("ikw")
+		self.api = api
+		self.noted()
+		nclose = self.api_nclose
+		super().__init__(ikw, *args, **kwargs)
+		if self.ikw.get("tid") == None:
+			self.ikw["tid"] = api.text_shared.addw(self.text)
+	def filed(self):
+		self.api_nsave = self.api_nsave_file
+		self.api_nsaveas = self.api_nsaveas_file
+	def noted(self):
+		self.api_nsave = self.api_nsave_note
+		self.api_nsaveas = self.api_nsaveas_note
+	def api_nclose(self, tabid):
+		if self.text.edit_modified():
+			tmp = ["", f" {self.id[1]}"][bool(self.id[1])]
+			save = tkmb.askyesnocancel(
+				f"Save f{self.id[0]}{tmp}",
+				"You have unsaved changes.\nDo you want to save before closing?",
+			)
+			if save: fail = self.api_nsave()
+			elif save == None: return "break"
+		self.api.text_shared.rmw(self.ikw.get("tid"))
+		self.api.mNB.forget(tabid)
+	def api_nsave_file(self):
+		self.text.edit_modified(0)
+		nfile = open(self.id[1], "w")
+		nfile.write(self.text.get("1.0", "end").rstrip("\n"))
+		nfile.close()
+		self.api.mLblCheck = 10
+		self.api.mLbl["text"] = "[File] File saved"
+	def api_nsaveas_file(self):
+		path = tkfd.asksaveasfilename(
+			title="Save as",
+			defaultextension=".txt", 
+			filetypes=self.api.fform
+		)
+		self.api.wTk_force()
+		if not path: return path, "cancel:nopath"
+		try:
+			self.text.edit_reset()
+			self.text.edit_modified(0)
+			nfile = open(path, "w")
+			nfile.write(self.text.get("1.0", "end").rstrip("\n"))
+			nfile.close()
+		except: print("[NBFrame_Note] Can't save file"); return path, "cancel:nofile"
+		return path, None
+	def api_nsave_note(self):
+		self.api_nsaveas_note()
+	def api_nsaveas_note(self):
+		path, exc = self.api_nsaveas_file()
+		if exc: return
+		self.id = ["file", path]
+		self.api.mNB.add(self, image=self.api.img_mbfile, text=self.id[1], compound="left")
+		self.filed()
 
 class EntryField(ttk.Frame): # nFrame back-end
 	def __init__(self, ikw, *args, **kwargs):

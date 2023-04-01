@@ -8,8 +8,8 @@ from widgetlib import *
 """ - EXTernal notePAD (main file)
 
 TODO: sys.argv - open files by `extpad.bin '%f'` - params
-TODO: ikill(), titlestr(), helpbarstr() - built-in of Frame (with `if X.__dict__.get(Y):`)
-TODO: pick-color tool (apiBar)
+~TODO: ikill(), titlestr(), helpbarstr() - built-in of Frame (with `if X.__dict__.get(Y):`)~
+~TODO: pick-color tool (apiBar)~
 TODO: json/woof configuration
 """
 print(f"[extpad] Run {sys.argv[0]} with: {sys.argv[1:]}")
@@ -18,8 +18,8 @@ class App():
 	IFrame = IFrame
 	vkw = {
 		"codename": "crypton", # Arch
-		"build": 10, # Every update
-		"path": 3, # Is path of version
+		"build": 11, # Every update
+		"path": 0, # Is path of version
 		"channel": "beta", # Edge aka alpha / Beta / Candidate4Release aka rc / Release
 	}
 	def grc(main, row, column, *args): return {"row": row, "column": column}
@@ -191,11 +191,15 @@ Use <Button-2> on TextLN to take goto-hover
 		self.hotBar.grid(**grc(1, 0), rowspan=2, sticky="nswe")
 
 		# api-Bar: -> mods
-		self.apiBar = ttk.Frame(self.mWin)
-		self.gotofr = EntryToolFrame(self.apiBar, "goto:", self.tGoto)
-		self.findfr = EntryToolFrame(self.apiBar, "find:", self.eFind)
+		self.apiBar  = ttk.Frame(self.mWin)
+		self.apiBar_ = ttk.Frame(self.apiBar)
+		self.gotofr = EntryToolFrame(self.apiBar_, "goto:", self.tGoto, self.get_nPage)
+		self.findfr = EntryToolFrame(self.apiBar_, "find:", self.eFind, self.get_nPage)
+		self.colorfr = ColorToolFrame(self.apiBar_)
 		self.gotofr.pack(fill="y", side="left", padx=1)
 		self.findfr.pack(fill="y", side="left", padx=1)
+		self.colorfr.pack(fill="y", side="left", padx=1)
+		self.apiBar_.pack(fill="y", side="left")
 		self.apiBar.grid(**grc(2, 1), sticky="nswe")
 
 		# Help-Bar: mainSizegrip, tkhelpButton, mainLabel
@@ -288,10 +292,14 @@ Use <Button-2> on TextLN to take goto-hover
 		# Tk
 	def mWin_min_geth(self, w):
 		return w.winfo_height()*w.winfo_ismapped()
+	def mWin_min_getw(self, w):
+		return w.winfo_width()*w.winfo_ismapped()
 	def mWin_min(self, i=None):
-		s0 = self.wmBtn.winfo_width()*4+self.mMGL.winfo_width()
-		max_little0 = self.wmBtn.winfo_width()*10
-		out = [[max_little0, s0][s0 <= max_little0], sum(map(self.mWin_min_geth, (self.tBar, self.hBar, self.apiBar)))]
+		tBarw = self.wmBtn.winfo_width()*4+self.mMGL.winfo_width()
+		max_littlew = self.wmBtn.winfo_width()*10
+		tBarcw = [max_littlew, tBarw][tBarw <= max_littlew]
+		apiBarw = sum(map(self.mWin_min_getw, (self.hotBar, self.apiBar_)))*bool(self.mWin_min_getw(self.apiBar))
+		out = [[tBarcw, apiBarw][tBarcw < apiBarw], sum(map(self.mWin_min_geth, (self.tBar, self.hBar, self.apiBar)))]
 		if i != None: return out[i]
 		return out
 	def mNB_addc(self, frame, text):
@@ -335,12 +343,10 @@ Use <Button-2> on TextLN to take goto-hover
 		tab = self.get_nPage()
 		if tab.id[0] not in ["file", "note"]: return
 		if   get.isnumeric():
-			print("0")
 			get = int(get)
 			if get < int(tab.text.index("end").split(".")[0]):
 				tab.text.see(f"{get}.0")
 		elif get.replace(".", "9").isnumeric():
-			print(".")
 			l = int(get.split(".")[0]) if get.split(".")[0] != "" else 1
 			c = int(get.split(".")[1]) if get.split(".")[1] != "" else 0
 			it = str.split(tab.text.index("insert"), ".")
@@ -349,7 +355,6 @@ Use <Button-2> on TextLN to take goto-hover
 			if l < el and c <= ec:
 				tab.text.see(f"{l}.{c}")
 		tab.lnw.redraw()
-		tab.text.focus_force()
 	def vThemes(self): self.mNB_addc(self.config_frames["root.theme"], text=f"Themes")
 	def vInfo_text(self):
 		self.config_frames["root.info"].text = self.mWin.nametowidget(self.infoNB.select()).text
@@ -388,7 +393,8 @@ Use <Button-2> on TextLN to take goto-hover
 	def wTk_top(self, bl=None, **kw): 
 		if bl == None: bl = self.is_topTk.get()
 		kw.setdefault("win", self.mWin).attributes("-topmost", bl)
-	def retitle(self, s):
+	def retitle(self, s=None):
+		if not s: s = f"ExtPad {self.version}"
 		self.mMGL["text"] = s
 		self.mWin.title(s)
 	def mergeTab_left(self):
@@ -428,6 +434,7 @@ Use <Button-2> on TextLN to take goto-hover
 		self.mWin.wm_geometry(f"+{str(event.x_root+self.source.xTk)}+{str(event.y_root+self.source.yTk)}")
 	def withNormal(self):
 		if self.source.Tk == "normal": return
+		self.iGrid(self.is_apibar, self.apiBar)
 		self.mWin.minsize(*self.mWin_min())
 		self.mNormalBtn.pack_forget()
 		self.mMaxBtn.pack_forget()
@@ -470,6 +477,7 @@ Use <Button-2> on TextLN to take goto-hover
 		if   self.source.Tk in ["min", "max"]:
 			self.withNormal()
 			return
+		self.iGrid_raw(False, self.apiBar)
 		self.mNormalBtn.pack_forget()
 		self.mMaxBtn.pack_forget()
 		self.mMinBtn.pack_forget()
@@ -505,7 +513,9 @@ Use <Button-2> on TextLN to take goto-hover
 		finally:
 			menu.grab_release()
 		if button: button["state"] = "!selected"
-	def get_nPage(self): return self.mWin.nametowidget(self.mNB.select())
+	def get_nPage(self): 
+		if self.mNB.tabs() == (): return
+		return self.mWin.nametowidget(self.mNB.select())
 	def nSel(self, *args):
 		if   self.mNB.tabs() == ():
 			self.mLbl["text"] = f" . . . "
@@ -523,56 +533,26 @@ Use <Button-2> on TextLN to take goto-hover
 			)
 			self.wTk_force()
 			if not path: return
-		elif path == "-n":
-			self.nNewnote()
-			return
-		elif not os.path.isfile(path):
-			return
+		elif path == "-n": self.nNewnote(); return
+		elif not os.path.isfile(path): return
 		with open(str(path)) as nfile: text = nfile.read()
 		# Controls
-		nPage = NBFrame(
-			dict(b3bind=lambda ev: self.pop_menu(ev, self.eMenu), fid=["file", path], text=text),
-			self.mNB, style="ghost.TFrame", name=f'file:"{path.replace(".", "%2E")}"'
-		)
-		nPage.ikw["tid"] = self.text_shared.addw(nPage.text)
-		self.mNB.add(nPage, image=self.img_mbfile, text=os.path.split(path)[-1], compound="left")
+		ikw = dict(b3bind=lambda ev: self.pop_menu(ev, self.eMenu), fid=["file", path], text=text)
+		tab = NBFrame_Note(self, self.mNB, ikw=ikw, style="ghost.TFrame", name=f'file:"{path.replace(".", "%2E")}"+{id(ikw)}')
+		tab.filed()
+		self.mNB.add(tab, image=self.img_mbfile, text=os.path.split(path)[-1], compound="left")
 	def nSaveas(self):
-		if self.mNB.tabs() == (): return "cancel:notabs"
-		nPage = self.get_nPage()
-		ntype = nPage.id[0]
-		if ntype in ("file", "note"):
-			path = tkfd.asksaveasfilename(
-				title="Save as",
-				defaultextension=".txt", 
-				filetypes=self.fform
-			)
-			self.wTk_force()
-			if not path: return "cancel:nopath"
-			try:
-				nText = nPage.text
-				nText.edit_reset()
-				nText.edit_modified(0)
-				nfile = open(path, "w")
-				nfile.write(nText.get("1.0", "end").rstrip("\n"))
-				nfile.close()
-			except: print("[app][nSaveas] Can't save file")
-		if ntype == "note":
-			nPage.id = ["file", path]
-			self.mNB.add(nPage, image=self.img_mbfile, text=os.path.split(path)[-1], compound="left")
+		tab = self.get_nPage()
+		if not tab: return "cancel:notabs"
+		method = tab.__dict__.get("api_nsaveas")
+		if method: method()
+		else: print("[App][nSaveas] Action undefined")
 	def nSave(self):
-		if self.mNB.tabs() == (): return
-		nPage = self.get_nPage()
-		ntype = nPage.id[0]
-		if ntype == "file":
-			path = nPage.id[1]
-			nText = nPage.text
-			nText.edit_modified(0)
-			nfile = open(path, "w")
-			nfile.write(nText.get("1.0", "end").rstrip("\n"))
-			nfile.close()
-			self.mLblCheck = 10
-			self.mLbl["text"] = "[File] File saved"
-		elif ntype == "note": self.nSaveas()
+		tab = self.get_nPage()
+		if not tab: return
+		method = tab.__dict__.get("api_nsave")
+		if method: method()
+		else: print("[App][nSave] Action undefined")
 	def nNew(self):
 		path = tkfd.asksaveasfilename(
 			title="New file",
@@ -582,52 +562,29 @@ Use <Button-2> on TextLN to take goto-hover
 		self.wTk_force()
 		if not path: return
 		# Controls
-		nPage = NBFrame(
-			dict(b3bind=lambda ev: self.pop_menu(ev, self.eMenu), fid=["file", path]),
-			self.mNB, style="ghost.TFrame", name=f'file:"{path.replace(".", "%2E")}"'
-		)
-		nPage.ikw["tid"] = self.text_shared.addw(nPage.text)
-		self.mNB.add(nPage, image=self.img_mbfile, text=os.path.split(path)[-1], compound="left")
+		ikw = dict(b3bind=lambda ev: self.pop_menu(ev, self.eMenu), fid=["file", path])
+		tab = NBFrame_Note(self, self.mNB, ikw=ikw, style="ghost.TFrame", name=f'file:"{path.replace(".", "%2E")}"')
+		self.mNB.add(tab, image=self.img_mbfile, text=os.path.split(path)[-1], compound="left")
 	def nNewnote(self):
-		nPage = NBFrame(
-			dict(b3bind=lambda ev: self.pop_menu(ev, self.eMenu), fid=["note", self.notec]), 
-			self.mNB, style="ghost.TFrame", name=f'note:"{self.notec}"'
-		)
-		nPage.ikw["tid"] = self.text_shared.addw(nPage.text)
-		self.mNB.add(nPage, image=self.img_mbnote, text=f"New{['', f' ({self.notec})'][bool(self.notec)]}", compound="left")
+		ikw = dict(b3bind=lambda ev: self.pop_menu(ev, self.eMenu), fid=["note", self.notec])
+		tab = NBFrame_Note(self, self.mNB, ikw=ikw, style="ghost.TFrame", name=f'note:"{self.notec}"')
+		self.mNB.add(tab, image=self.img_mbnote, text=f"New{['', f' ({self.notec})'][bool(self.notec)]}", compound="left")
 		self.notec += 1
 	def nClose(self, **kw):
 		if self.mNB.tabs() == (): return
-		tabid = kw.setdefault("k", self.mNB.index("current"))
+		tabid = kw.get("k", self.mNB.index("current"))
 		tab = self.mWin.nametowidget(self.mNB.tabs()[tabid])
-		fail = None
-		method = tab.__dict__.get("ikill")
-		if method: method()
-		elif tab.id[0] == "file":
-			if tab.text.edit_modified():
-				tmp = self.mNB.select().split(":")[1].strip('"').replace("%2E", ".")
-				save = tkmb.askyesnocancel(
-					f"Save file {tmp}",
-					"You have unsaved changes.\nDo you want to save before closing?",
-				)
-				if save: fail = self.nSave()
-				elif save == None: return "break"
-		elif tab.id[0] == "note":
-			if tab.text.edit_modified():
-				save = tkmb.askyesnocancel(
-					f"Save note",
-					"You have unsaved changes.\nDo you want to save before closing?",
-				)
-				if save: fail = self.nSave()
-				elif save == None: return "break"
-		elif tab.id[0] == "conf":
+		try: return tab.api_nclose(tabid) # __dict__ not work
+		except: pass
+		if tab.id[0] == "conf":
 			print(f"[app][nClose] Closing config: {tab.id[1]}")
 		else: print("[app][nClose] Unknown type (fail)")
-		tid = tab.ikw.setdefault("tid")
-		if   isinstance(tid, dict): pass
-		elif not isinstance(tid, list | tuple): self.text_shared.rmw(tid)
+		tid = tab.ikw.get("tid")
+		if   isinstance(tid, dict | type(None)): pass
+		elif isinstance(tid, int): self.text_shared.rmw(tid)
 		elif isinstance(tid, list | tuple): [self.text_shared.rmw(i) for i in tid]
-		if not fail: self.mNB.forget(tabid)
+		else: self.text_shared.rmw(int(tid))
+		self.mNB.forget(tabid)
 	def eUndo(self): 
 		try: 
 			self.get_nPage().text.edit_undo()
@@ -674,58 +631,60 @@ Use <Button-2> on TextLN to take goto-hover
 				rs.append([i+1, f])
 		return rs
 	def eFind(self, word=None):
-		nText = self.get_nPage().text
-		if not nText: return
-		nText.tag_remove("search", "1.0", "end")
+		tab = self.get_nPage()
+		if not tab: return
+		tab.text.tag_remove("search", "1.0", "end")
 		if not word:
-			try: word = nText.selection_get()
+			try: word = tab.text.selection_get()
 			except tk.TclError: word = ""
-		text = nText.get("1.0", "end")
+		text = tab.text.get("1.0", "end")
 		self.eFind_str.set(None)
 		poss = self.eFind_engene(text, word)
 		if poss:
 			for i, f in poss:
 				pos = f"{i}.{f}"
-				nText.tag_add(f"search", pos, f"{pos} + {len(word)}c")
-				nText.tag_configure(f"search", background=self.clr_ts, relief='raised')
-
+				tab.text.tag_add(f"search", pos, f"{pos} + {len(word)}c")
+				tab.text.tag_configure(f"search", background=self.clr_ts, relief='raised')
 		# Etc
 	def altstream(self):
 		self.mWin.after(100, self.altstream)
 		self.mWin.minsize(*self.mWin_min())
 		if self.mNB.tabs() != ():
-			nPage = self.get_nPage()
-			if nPage.id[0] == "conf": nText = None
-			else: nText = nPage.text
+			tab = self.get_nPage()
+			if tab.id[0] == "conf": nText = None
+			else: nText = tab.text
 			if self.mLblCheck == 0:
 				if nText:
 					insLine, insCol = str.split(nText.index("insert"), ".")
 					endLine = str(int(str.split(nText.index("end"), ".")[0]) - 1)
 					endCol = str.split(nText.index(f"{insLine}.end"), ".")[1]
 				else: insLine, insCol, endLine, endCol = [0 for i in " "*4]
-				if nPage.id[0] == "file":
-					self.mLbl["text"] = f"[File] Line: {insLine}/{endLine}  Col: {insCol}/{endCol}  Path: {nPage.id[1]}"
-				elif nPage.id[0] == "note":
+				if "on_hbar" in tab.__dict__.keys():
+					self.mLbl["text"] = tab.on_hbar
+				elif tab.id[0] == "file":
+					self.mLbl["text"] = f"[File] Line: {insLine}/{endLine}  Col: {insCol}/{endCol}  Path: {tab.id[1]}"
+				elif tab.id[0] == "note":
 					self.mLbl["text"] = f"[Note] Line: {insLine}/{endLine}  Col: {insCol}/{endCol}"
-				elif nPage.id[0] == "conf":
-					self.mLbl["text"] = f"[Config] Name: {nPage.id[1]}"
-				elif nPage.id[0] == "term" and len(nPage.id) == 2:
-					self.mLbl["text"] = f"[Terminal] Type: {nPage.id[1]}"
-				elif nPage.id[0] == "term" and len(nPage.id) > 2:
-					self.mLbl["text"] = f"[Terminal] Type: {nPage.id[1]}, {nPage.id[2]}"
+				elif tab.id[0] == "conf":
+					self.mLbl["text"] = f"[Config] Name: {tab.id[1]}"
+				elif tab.id[0] == "term" and len(tab.id) == 2:
+					self.mLbl["text"] = f"[Terminal] Type: {tab.id[1]}"
+				elif tab.id[0] == "term" and len(tab.id) > 2:
+					self.mLbl["text"] = f"[Terminal] Type: {tab.id[1]}, shell args: {tab.id[2:]}"
 				else:
 					self.mLbl["text"] = f"[Err] undifined type"
 			elif self.mLblCheck > 0:
 				self.mLblCheck -= 1
-			if nPage.id[0] in ["file", "note"]:
-				path = nPage.id[1]
-				if nPage.id[0] == "note":
-					tmp = f"New{['', f' ({path})'][bool(path)]}"
+			if tab.id[0] in ["file", "note"]:
+				if tab.id[0] == "note":
+					tmp = f"New{['', f' ({tab.id[1]})'][bool(tab.id[1])]}"
 				else:
-					if sys.platform == "win32": tmp = path.split("\\")[-1]
-					else: tmp = path.split("/")[-1]
+					if sys.platform == "win32": tmp = tab.id[1].split("\\")[-1]
+					else: tmp = tab.id[1].split("/")[-1]
 				if nText.edit_modified() == True: self.mNB.tab(self.mNB.select(), text=tmp+"*")
 				else: self.mNB.tab(self.mNB.select(), text=tmp.rstrip("*"))
+		if "on_tbar" in tab.__dict__.keys():
+			self.retitle(tab.on_tbar)
 
 	def nExec(api, path=None):
 		if not path:

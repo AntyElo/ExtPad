@@ -16,7 +16,7 @@ class History(list):
 		self.match = ''
 		super().__init__(*args, **kw)
 	def __getitem__(self, index):
-		if index >= super().__len__(): return
+		if index >= super().__len__() or not super().__len__(): return
 		return super().__getitem__(index)
 
 
@@ -55,19 +55,18 @@ class TextConsole(tk.Text):
 
 	def on_ctrl_c(self, event):
 		"""Copy selected code, removing prompts first"""
-		sel = self.tag_ranges('sel')
-		if sel:
-			txt = self.get('sel.first', 'sel.last').splitlines()
-			lines = []
-			for i, line in enumerate(txt):
-				if line.startswith(self._prompt1):
-					lines.append(line[len(self._prompt1):])
-				elif line.startswith(self._prompt2):
-					lines.append(line[len(self._prompt2):])
-				else:
-					lines.append(line)
-			self.clipboard_clear()
-			self.clipboard_append('\n'.join(lines))
+		if not self.tag_ranges('sel'): return 'break'
+		txt = self.get('sel.first', 'sel.last').splitlines()
+		lines = []
+		for i, line in enumerate(txt):
+			if line.startswith(self._prompt1):
+				lines.append(line[len(self._prompt1):])
+			elif line.startswith(self._prompt2):
+				lines.append(line[len(self._prompt2):])
+			else:
+				lines.append(line)
+		self.clipboard_clear()
+		self.clipboard_append('\n'.join(lines))
 		return 'break'
 
 	def on_paste(self, event):
@@ -156,8 +155,7 @@ class TextConsole(tk.Text):
 			self.mark_set('insert', 'input lineend')
 			return "break"
 		# indent code
-		sel = self.tag_ranges('sel')
-		if sel:
+		if self.tag_ranges('sel'):
 			start = str(self.index('sel.first'))
 			end = str(self.index('sel.last'))
 			start_line = int(start.split('.')[0])
@@ -201,8 +199,7 @@ class TextConsole(tk.Text):
 		if self.compare('insert', '<=', 'input'):
 			self.mark_set('insert', 'input lineend')
 			return 'break'
-		sel = self.tag_ranges('sel')
-		if sel:
+		if self.tag_ranges('sel'):
 			self.delete('sel.first', 'sel.last')
 		else:
 			linestart = self.get('insert linestart', 'insert')
