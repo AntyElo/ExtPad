@@ -11,11 +11,13 @@ This code is not mine , i am just sharing it to you for educational purpose.
 
 
 class History(list):
+	def __init__(self, *args, **kw):
+		self.item = 0
+		self.match = ''
+		super().__init__(*args, **kw)
 	def __getitem__(self, index):
-		try:
-			return list.__getitem__(self, index)
-		except IndexError:
-			return
+		if index >= super().__len__(): return
+		return super().__getitem__(index)
 
 
 class TextConsole(tk.Text):
@@ -30,8 +32,6 @@ class TextConsole(tk.Text):
 		tk.Text.__init__(self, master, **kw)
 		# --- history
 		self.history = History()
-		self._hist_item = 0
-		self._hist_match = ''
 
 		# --- initialization
 		self._console = InteractiveConsole() # python console to execute commands
@@ -74,8 +74,7 @@ class TextConsole(tk.Text):
 		"""Paste commands"""
 		if self.compare('insert', '<', 'input'):
 			return "break"
-		sel = self.tag_ranges('sel')
-		if sel:
+		if self.tag_ranges('sel'):
 			self.delete('sel.first', 'sel.last')
 		txt = self.clipboard_get()
 		self.insert("insert", txt)
@@ -93,7 +92,7 @@ class TextConsole(tk.Text):
 	def on_key_press(self, event):
 		"""Prevent text insertion in command history"""
 		if self.compare('insert', '<', 'input') and event.keysym not in ['Left', 'Right']:
-			self._hist_item = len(self.history)
+			self.history.item = len(self.history)
 			self.mark_set('insert', 'input lineend')
 			if not event.char.isalnum():
 				return 'break'
@@ -101,7 +100,7 @@ class TextConsole(tk.Text):
 	def on_key_release(self, event):
 		"""Reset history scrolling"""
 		if self.compare('insert', '<', 'input') and event.keysym not in ['Left', 'Right']:
-			self._hist_item = len(self.history)
+			self.history.item = len(self.history)
 			return 'break'
 
 	def on_up(self, event):
@@ -112,19 +111,20 @@ class TextConsole(tk.Text):
 		elif self.index('input linestart') == self.index('insert linestart'):
 			# navigate history
 			line = self.get('input', 'insert')
-			self._hist_match = line
-			hist_item = self._hist_item
-			self._hist_item -= 1
-			item = self.history[self._hist_item]
-			while self._hist_item >= 0 and not item.startswith(line):
-				self._hist_item -= 1
-				item = self.history[self._hist_item]
-			if self._hist_item >= 0:
+			self.history.match = line
+			hist_item = self.history.item
+			while self.history.item >= 0:
+				self.history.item -= 1
+				item = self.history[self.history.item]
+				if isinstance(item, type(None)): break
+				if isinstance(item, list): item = "".join(item)
+				if item.startswith(line): break
+			if self.history.item >= 0:
 				index = self.index('insert')
 				self.insert_cmd(item)
 				self.mark_set('insert', index)
 			else:
-				self._hist_item = hist_item
+				self.history.item = hist_item
 			return 'break'
 
 	def on_down(self, event):
@@ -134,17 +134,18 @@ class TextConsole(tk.Text):
 			return 'break'
 		elif self.compare('insert lineend', '==', 'end-1c'):
 			# navigate history
-			line = self._hist_match
-			self._hist_item += 1
-			item = self.history[self._hist_item]
-			while item is not None and not item.startswith(line):
-				self._hist_item += 1
-				item = self.history[self._hist_item]
+			line = self.history.match
+			while True:
+				self.history.item += 1
+				item = self.history[self.history.item]
+				if isinstance(item, type(None)): break
+				if isinstance(item, list): item = "".join(item)
+				if item.startswith(line): break
 			if item is not None:
 				self.insert_cmd(item)
-				self.mark_set('insert', 'input+%ic' % len(self._hist_match))
+				self.mark_set('insert', 'input+%ic' % len(self.history.match))
 			else:
-				self._hist_item = len(self.history)
+				self.history.item = len(self.history)
 				self.delete('input', 'end')
 				self.insert('insert', line)
 			return 'break'
@@ -275,7 +276,7 @@ class TextConsole(tk.Text):
 					self._console.resetbuffer()  # clear buffer since the whole command will be retrieved from the text widget
 				elif lines:
 					self.history.append(lines)  # add commands to history
-					self._hist_item = len(self.history)
+					self.history.item = len(self.history)
 			out.close()
 			err.close()
 		else:

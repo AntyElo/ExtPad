@@ -19,7 +19,7 @@ class App():
 	vkw = {
 		"codename": "crypton", # Arch
 		"build": 10, # Every update
-		"path": 2, # Is path of version
+		"path": 3, # Is path of version
 		"channel": "beta", # Edge aka alpha / Beta / Candidate4Release aka rc / Release
 	}
 	def grc(main, row, column, *args): return {"row": row, "column": column}
@@ -49,7 +49,7 @@ FIXME:
 		self.mWin = self.source.srcWin
 		self.mWin.title(f"ExtPad {self.version}")
 		self.mWin.geometry("400x300")
-		self.is_topTk = tk.BooleanVar(value=True)
+		self.is_topTk = tk.BooleanVar(value=False)
 		self.isCSD = tk.BooleanVar(value=True)
 		self.is_menubar = tk.BooleanVar(value=False)
 		self.is_hotbar = tk.BooleanVar(value=True)
@@ -192,13 +192,10 @@ Use <Button-2> on TextLN to take goto-hover
 
 		# api-Bar: -> mods
 		self.apiBar = ttk.Frame(self.mWin)
-		self.gotofr = ttk.Frame(self.apiBar, style="Tool.TFrame")
-		self.gotoe = ttk.Entry(self.gotofr, width=4)
-		self.gotoe.bind("<Return>", lambda ev: self.vGoto(self.gotoe.get()))
-		self.gotol = ttk.Label(self.gotofr, text="goto:")
-		self.gotol.grid(row=0, column=0, padx=2, pady=2)
-		self.gotoe.grid(row=0, column=1, padx=2, pady=2)
+		self.gotofr = EntryToolFrame(self.apiBar, "goto:", self.tGoto)
+		self.findfr = EntryToolFrame(self.apiBar, "find:", self.eFind)
 		self.gotofr.pack(fill="y", side="left", padx=1)
+		self.findfr.pack(fill="y", side="left", padx=1)
 		self.apiBar.grid(**grc(2, 1), sticky="nswe")
 
 		# Help-Bar: mainSizegrip, tkhelpButton, mainLabel
@@ -284,16 +281,17 @@ Use <Button-2> on TextLN to take goto-hover
 		self.mWin.update()
 		self.mWin.after_idle(self.altstream)
 		if sys.platform != "win32": self.mWin.after_idle(lambda: self.mWin.attributes('-type', "normal"))
-		self.wTk_top(True)
 		self.mWin.minsize(*self.mWin_min())
 		self.mWin.mainloop()
 
 	# Funcions
 		# Tk
+	def mWin_min_geth(self, w):
+		return w.winfo_height()*w.winfo_ismapped()
 	def mWin_min(self, i=None):
 		s0 = self.wmBtn.winfo_width()*4+self.mMGL.winfo_width()
 		max_little0 = self.wmBtn.winfo_width()*10
-		out = [[max_little0, s0][s0 <= max_little0], (self.tBar.winfo_height()+self.hBar.winfo_height())]
+		out = [[max_little0, s0][s0 <= max_little0], sum(map(self.mWin_min_geth, (self.tBar, self.hBar, self.apiBar)))]
 		if i != None: return out[i]
 		return out
 	def mNB_addc(self, frame, text):
@@ -309,8 +307,8 @@ Use <Button-2> on TextLN to take goto-hover
 		req = self.iTheme_tcombox.get()
 		if req.strip() == "": return
 		self.style.theme_use(req)
-		self.themeChanged()
 		self.iTheme_tcombox["value"] = sorted(self.style.theme_names(), key=str.lower)
+		self.themeChanged()
 	def vThemes_textbg(self, *a, **kw):
 		req = self.iTheme_bgfield.text.get().strip()
 		if req == "": return
@@ -332,17 +330,17 @@ Use <Button-2> on TextLN to take goto-hover
 		req = self.iTheme_tsfield.text.get().strip()
 		if req == "": return
 		self.clr_ts = req
-	def vGoto(self, get):
+	def tGoto(self, get):
 		if self.mNB.tabs() == (): return
 		tab = self.get_nPage()
 		if tab.id[0] not in ["file", "note"]: return
 		if   get.isnumeric():
+			print("0")
 			get = int(get)
 			if get < int(tab.text.index("end").split(".")[0]):
 				tab.text.see(f"{get}.0")
-				tab.lnw.redraw()
-				return
 		elif get.replace(".", "9").isnumeric():
+			print(".")
 			l = int(get.split(".")[0]) if get.split(".")[0] != "" else 1
 			c = int(get.split(".")[1]) if get.split(".")[1] != "" else 0
 			it = str.split(tab.text.index("insert"), ".")
@@ -350,7 +348,8 @@ Use <Button-2> on TextLN to take goto-hover
 			ec = int(str.split(tab.text.index(f"{it[0]}.end"), ".")[1])
 			if l < el and c <= ec:
 				tab.text.see(f"{l}.{c}")
-				tab.lnw.redraw()
+		tab.lnw.redraw()
+		tab.text.focus_force()
 	def vThemes(self): self.mNB_addc(self.config_frames["root.theme"], text=f"Themes")
 	def vInfo_text(self):
 		self.config_frames["root.info"].text = self.mWin.nametowidget(self.infoNB.select()).text
@@ -417,7 +416,7 @@ Use <Button-2> on TextLN to take goto-hover
 	def wTk_menubar(self, bl=None): 
 		if bl == None: bl = self.is_menubar.get()
 		if bl: self.mWin["menu"] = self.uMenu
-		else:  self.mWin["menu"] = False
+		else:  self.mWin["menu"] = ["M", "E", "N", "U"]
 	def wTk_point(self, event):
 		win_position = [int(coord) for coord in self.mWin.wm_geometry().split('+')[1:]]
 		self.source.xTk, self.source.yTk = win_position[0] - event.x_root, win_position[1] - event.y_root
@@ -674,12 +673,13 @@ Use <Button-2> on TextLN to take goto-hover
 				e = e[0:f]+fill+e[f+len(w):]
 				rs.append([i+1, f])
 		return rs
-	def eFind(self):
+	def eFind(self, word=None):
 		nText = self.get_nPage().text
 		if not nText: return
 		nText.tag_remove("search", "1.0", "end")
-		try: word = nText.selection_get()
-		except tk.TclError: word = ""
+		if not word:
+			try: word = nText.selection_get()
+			except tk.TclError: word = ""
 		text = nText.get("1.0", "end")
 		self.eFind_str.set(None)
 		poss = self.eFind_engene(text, word)
@@ -692,7 +692,7 @@ Use <Button-2> on TextLN to take goto-hover
 		# Etc
 	def altstream(self):
 		self.mWin.after(100, self.altstream)
-		#self.mLblCheck = int(self.mLblCheck)
+		self.mWin.minsize(*self.mWin_min())
 		if self.mNB.tabs() != ():
 			nPage = self.get_nPage()
 			if nPage.id[0] == "conf": nText = None

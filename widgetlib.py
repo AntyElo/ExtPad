@@ -103,10 +103,13 @@ class TextLN(tk.Canvas):
 		self.bind("<Button-1>", self.bpa)
 		self.bind("<Button-3>", lambda ev: self.menu.tk_popup(ev.x_root, ev.y_root))
 
+	def _textindex(self, seq, i=0):
+		if not self.page: return
+		return int(self.page.text.index(seq).split(".")[i])
+
 	def bpc(self):
 		if not self.page: return
-		m = int(self.page.text.index("end-1c").split(".")[0])
-		self.breakpoints = [i for i in self.breakpoints if 0 < i <= m]
+		self.breakpoints = [i for i in self.breakpoints if 0 < i <= self._textindex("end-1c")]
 
 	def bpa(self, ev):
 		if not self.page: return
@@ -119,17 +122,15 @@ class TextLN(tk.Canvas):
 	def on_return(self, ev):
 		if not self.page: return
 		self.bpc()
-		c = int(self.page.text.index("insert-1c").split(".")[0])
-		self.breakpoints = [[elm, elm+1][elm > c] for elm in self.breakpoints]
+		self.breakpoints = [[elm, elm+1][elm > self._textindex("insert-1c")] for elm in self.breakpoints]
 		self.redraw()
 
 	def on_bs(self, ev):
 		if not self.page: return
 		self.bpc()
-		c = int(self.page.text.index("insert-1c").split(".")[0])
 		self.page.text.see("insert-1c")
 		if self.page.text.get("insert-1c") == "\n":
-			self.breakpoints = [[elm, elm-1][elm > c] for elm in self.breakpoints]
+			self.breakpoints = [[elm, elm-1][elm > self._textindex("insert-1c")] for elm in self.breakpoints]
 		self.redraw()
 
 	def _as_min(self, i, m):
@@ -201,6 +202,18 @@ class InfoFrame(ttk.Frame): # Frame to info`rmation
 		self.text.grid(sticky="nswe", row=0)
 		self.rowconfigure(0, weight=1)
 		self.columnconfigure(0, weight=1)
+
+class EntryToolFrame(ttk.Frame):
+	def __init__(self, master, text: str, catchf, *args, **kwargs):
+		self.style = ttk.Style()
+		kwargs["style"] = "Tool.TFrame"
+		super().__init__(master, *args, **kwargs)
+		self.catchf = catchf
+		self.text = ttk.Entry(self, width=4)
+		self.text.bind("<Return>", lambda ev: self.catchf(self.text.get()))
+		self.lbl = ttk.Label(self, text=text)
+		self.lbl.grid(row=0, column=0, padx=2, pady=2)
+		self.text.grid(row=0, column=1, padx=2, pady=2)
 
 class IFrame(ttk.Frame):
 	def __init__(self, ikw, *args, **kwargs):
