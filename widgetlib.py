@@ -245,6 +245,10 @@ class IFrame(ttk.Frame):
 		self.id = self.ikw.setdefault("fid", ["note", -1])
 		super().__init__(*args, **kwargs)
 		self.text = None
+	def api_on_tbar(self):
+		return f"{self.id[0].title()}: {', '.join(self.id[1:])}"
+	def api_on_hbar(self):
+		return f"[{self.id[0].title()}+] hbar-on"
 
 class NBFrame(ttk.Frame): # nFrame back-end
 	def __init__(self, ikw, *args, **kwargs):
@@ -291,6 +295,13 @@ class NBFrame_Note(NBFrame):
 	def noted(self):
 		self.api_nsave = self.api_nsave_note
 		self.api_nsaveas = self.api_nsaveas_note
+	def api_on_tbar(self):
+		return f"0{self.id[1]}" if self.id[0] == "file" else f"New{f' ({self.id[1]})' if self.id[1] else ''}"
+	def api_on_hbar(self):
+		il, ic = self.text.index("insert").split('.')
+		el = self.text.index("end-1c").split(".")[0]
+		ec = self.text.index(f"{il}.end").split(".")[1]
+		return f"[{self.id[0].title()}]  Line: {il}/{el}  Col: {ic}/{ec}  {'Path' if self.id[0] == 'file' else 'Note'}: {self.id[1]}"
 	def api_nclose(self, tabid):
 		if self.text.edit_modified():
 			tmp = ["", f" {self.id[1]}"][bool(self.id[1])]

@@ -19,7 +19,7 @@ class App():
 	vkw = {
 		"codename": "crypton", # Arch
 		"build": 11, # Every update
-		"path": 0, # Is path of version
+		"path": 1, # Is path of version
 		"channel": "beta", # Edge aka alpha / Beta / Candidate4Release aka rc / Release
 	}
 	def grc(main, row, column, *args): return {"row": row, "column": column}
@@ -55,6 +55,9 @@ FIXME:
 		self.is_hotbar = tk.BooleanVar(value=True)
 		self.is_apibar = tk.BooleanVar(value=True)
 		self.wTk_float()
+		self.titlem = 1 #Mod0: "%s"; Mod1: "ExtPad {V} - %s"; Mod1: "%s - ExtPad {V}"
+		self.titler = ["", "", f" - ExtPad {self.version}"]
+		self.titlel = ["", f"ExtPad {self.version} - ", ""]
 		self.vInfo_hints = \
 """WM: <C/S>SD = <Client/Server>-Side Decorartion
 Use <Alt-B1> to move window
@@ -192,14 +195,12 @@ Use <Button-2> on TextLN to take goto-hover
 
 		# api-Bar: -> mods
 		self.apiBar  = ttk.Frame(self.mWin)
-		self.apiBar_ = ttk.Frame(self.apiBar)
-		self.gotofr = EntryToolFrame(self.apiBar_, "goto:", self.tGoto, self.get_nPage)
-		self.findfr = EntryToolFrame(self.apiBar_, "find:", self.eFind, self.get_nPage)
-		self.colorfr = ColorToolFrame(self.apiBar_)
+		self.gotofr = EntryToolFrame(self.apiBar, "goto:", self.tGoto, self.get_nPage)
+		self.findfr = EntryToolFrame(self.apiBar, "find:", self.eFind, self.get_nPage)
+		self.colorfr = ColorToolFrame(self.apiBar)
 		self.gotofr.pack(fill="y", side="left", padx=1)
 		self.findfr.pack(fill="y", side="left", padx=1)
 		self.colorfr.pack(fill="y", side="left", padx=1)
-		self.apiBar_.pack(fill="y", side="left")
 		self.apiBar.grid(**grc(2, 1), sticky="nswe")
 
 		# Help-Bar: mainSizegrip, tkhelpButton, mainLabel
@@ -298,8 +299,7 @@ Use <Button-2> on TextLN to take goto-hover
 		tBarw = self.wmBtn.winfo_width()*4+self.mMGL.winfo_width()
 		max_littlew = self.wmBtn.winfo_width()*10
 		tBarcw = [max_littlew, tBarw][tBarw <= max_littlew]
-		apiBarw = sum(map(self.mWin_min_getw, (self.hotBar, self.apiBar_)))*bool(self.mWin_min_getw(self.apiBar))
-		out = [[tBarcw, apiBarw][tBarcw < apiBarw], sum(map(self.mWin_min_geth, (self.tBar, self.hBar, self.apiBar)))]
+		out = [tBarcw, sum(map(self.mWin_min_geth, (self.tBar, self.hBar, self.apiBar)))]
 		if i != None: return out[i]
 		return out
 	def mNB_addc(self, frame, text):
@@ -394,9 +394,19 @@ Use <Button-2> on TextLN to take goto-hover
 		if bl == None: bl = self.is_topTk.get()
 		kw.setdefault("win", self.mWin).attributes("-topmost", bl)
 	def retitle(self, s=None):
-		if not s: s = f"ExtPad {self.version}"
-		self.mMGL["text"] = s
-		self.mWin.title(s)
+		if not isinstance(self.titlem, int | bool): self.titlem = 1 # Is int!
+		if not (0 <= self.titlem < 3): self.titlem = 1 # Is 0, 1, 2
+		if not s: sx = f"ExtPad {self.version}"
+		else: 
+			s = str(s)
+			if s[0].isdecimal(): 
+				i = int(s[0]) # "2Title" -> [2, "Title"] format
+				if i > 2: i = self.titlem
+				s = s[1:]
+			else: i = self.titlem
+			sx = f"{self.titlel[i]}{s}{self.titler[i]}"
+		self.mMGL["text"] = sx
+		self.mWin.title(sx)
 	def mergeTab_left(self):
 		c = self.mNB.index("current")
 		l = self.mNB.index("end")
@@ -649,42 +659,42 @@ Use <Button-2> on TextLN to take goto-hover
 	def altstream(self):
 		self.mWin.after(100, self.altstream)
 		self.mWin.minsize(*self.mWin_min())
-		if self.mNB.tabs() != ():
-			tab = self.get_nPage()
-			if tab.id[0] == "conf": nText = None
-			else: nText = tab.text
-			if self.mLblCheck == 0:
-				if nText:
-					insLine, insCol = str.split(nText.index("insert"), ".")
-					endLine = str(int(str.split(nText.index("end"), ".")[0]) - 1)
-					endCol = str.split(nText.index(f"{insLine}.end"), ".")[1]
-				else: insLine, insCol, endLine, endCol = [0 for i in " "*4]
-				if "on_hbar" in tab.__dict__.keys():
-					self.mLbl["text"] = tab.on_hbar
-				elif tab.id[0] == "file":
-					self.mLbl["text"] = f"[File] Line: {insLine}/{endLine}  Col: {insCol}/{endCol}  Path: {tab.id[1]}"
-				elif tab.id[0] == "note":
-					self.mLbl["text"] = f"[Note] Line: {insLine}/{endLine}  Col: {insCol}/{endCol}"
-				elif tab.id[0] == "conf":
-					self.mLbl["text"] = f"[Config] Name: {tab.id[1]}"
-				elif tab.id[0] == "term" and len(tab.id) == 2:
-					self.mLbl["text"] = f"[Terminal] Type: {tab.id[1]}"
-				elif tab.id[0] == "term" and len(tab.id) > 2:
-					self.mLbl["text"] = f"[Terminal] Type: {tab.id[1]}, shell args: {tab.id[2:]}"
-				else:
-					self.mLbl["text"] = f"[Err] undifined type"
-			elif self.mLblCheck > 0:
-				self.mLblCheck -= 1
-			if tab.id[0] in ["file", "note"]:
-				if tab.id[0] == "note":
-					tmp = f"New{['', f' ({tab.id[1]})'][bool(tab.id[1])]}"
-				else:
-					if sys.platform == "win32": tmp = tab.id[1].split("\\")[-1]
-					else: tmp = tab.id[1].split("/")[-1]
-				if nText.edit_modified() == True: self.mNB.tab(self.mNB.select(), text=tmp+"*")
-				else: self.mNB.tab(self.mNB.select(), text=tmp.rstrip("*"))
-		if "on_tbar" in tab.__dict__.keys():
-			self.retitle(tab.on_tbar)
+		if self.mNB.tabs() == (): 
+			self.retitle("")
+			return
+		tab = self.get_nPage()
+		if tab.id[0] == "conf": nText = None
+		else: nText = tab.text
+		if self.mLblCheck == 0:
+			if nText:
+				insLine, insCol = str.split(nText.index("insert"), ".")
+				endLine = str(int(str.split(nText.index("end"), ".")[0]) - 1)
+				endCol = str.split(nText.index(f"{insLine}.end"), ".")[1]
+			else: insLine, insCol, endLine, endCol = [0 for i in " "*4]
+			self.mLbl["text"] = tab.api_on_hbar()
+			#else:
+			#	match tab.id[0]:
+			#		case "file": self.mLbl["text"] = f"0[File] Line: {insLine}/{endLine}  Col: {insCol}/{endCol}  Path: {tab.id[1]}"
+			#		case "note": self.mLbl["text"] = f"0[Note] Line: {insLine}/{endLine}  Col: {insCol}/{endCol}"
+			#		case "conf": self.mLbl["text"] = f"0[Config] Name: {tab.id[1]}"
+			#		case "term": 
+			#			mLblout = f"0[Terminal] Type: {tab.id[1]}"
+			#			mLblout += f", shell args: {tab.id[2:]}" if len(tab.id)>2 else ""
+			#			self.mLbl["text"] = mLblout
+			#		case _: self.mLbl["text"] = f"0[Err] undifined type"
+		elif self.mLblCheck > 0:
+			self.mLblCheck -= 1
+		if tab.id[0] in ["file", "note"]:
+			if tab.id[0] == "note":
+				tmp = f"New{['', f' ({tab.id[1]})'][bool(tab.id[1])]}"
+			else:
+				if sys.platform == "win32": tmp = tab.id[1].split("\\")[-1]
+				else: tmp = tab.id[1].split("/")[-1]
+			if nText.edit_modified() == True: self.mNB.tab(self.mNB.select(), text=tmp+"*")
+			else: self.mNB.tab(self.mNB.select(), text=tmp.rstrip("*"))
+		try: self.retitle(tab.api_on_tbar())
+		except Exception as err:
+			self.retitle("")
 
 	def nExec(api, path=None):
 		if not path:
