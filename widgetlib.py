@@ -210,7 +210,7 @@ class EntryToolFrame(ttk.Frame):
 		self.tabf = tabf
 		super().__init__(master, *args, **kwargs)
 		self.catchf = catchf
-		self.text = ttk.Entry(self, width=4)
+		self.text = ttk.Entry(self, width=5)
 		self.lbl = ttk.Label(self, text=text)
 		self.text.bind("<Return>", lambda ev: self.catchfx())
 		self.lbl.bind("<Button-1>", lambda ev: self.catchfx())
@@ -226,7 +226,7 @@ class ColorToolFrame(ttk.Frame):
 		self.style = ttk.Style()
 		kwargs["style"] = "Tool.TFrame"
 		super().__init__(master, *args, **kwargs)
-		self.text = ttk.Entry(self, width=4)
+		self.text = ttk.Entry(self, width=5)
 		self.lbl = ttk.Label(self, text="color:")
 		self.text.bind("<Return>", lambda ev: self.colored())
 		self.lbl.bind("<Button-1>", lambda ev: self.colored())

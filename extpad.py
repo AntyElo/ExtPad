@@ -11,19 +11,34 @@ TODO: sys.argv - open files by `extpad.bin '%f'` - params
 ~TODO: ikill(), titlestr(), helpbarstr() - built-in of Frame (with `if X.__dict__.get(Y):`)~
 ~TODO: pick-color tool (apiBar)~
 TODO: json/woof configuration
+
+You can build application: ``` 
+	nuitka3 --include-module={"deps","sourcelib","widgetlib","pyshell"} extpad.py 
+```
 """
+gopt = "nc:w" #Global OPTion (eXternal)
+goptx = [
+	"note",
+	"config:",
+	"nocsd"
+]
+getopted = getopt.getopt(sys.argv[1:], gopt, goptx)
 print(f"[extpad] Run {sys.argv[0]} with: {sys.argv[1:]}")
+print(f"[extpad] Getopt: {getopted}")
+#print(f"[extpad] Getopt on gnu impl: {getopt.gnu_getopt(sys.argv[1:], gopt, goptx)}")
 class App():
 	# Sourse
 	IFrame = IFrame
 	vkw = {
 		"codename": "crypton", # Arch
 		"build": 11, # Every update
-		"path": 1, # Is path of version
+		"path": 2, # Is path of version
 		"channel": "beta", # Edge aka alpha / Beta / Candidate4Release aka rc / Release
 	}
 	def grc(main, row, column, *args): return {"row": row, "column": column}
 	def __init__(self):
+		global getopted
+		self.getopted = getopted
 		self.version = f'{self.vkw["build"]}{self.vkw["channel"][0:1]}{["", self.vkw.get("path", "")][bool(self.vkw.get("path", ""))]}'
 		self.vsm = "Version kw: " + "".join((f"\n    {str(k)}: {str(w)}" for k, w in self.vkw.items()))
 		# ~~
@@ -187,10 +202,12 @@ Use <Button-2> on TextLN to take goto-hover
 			[self.img_new, self.nNew, "New file"], 
 			[self.img_run, self.nExec, "Exec ext-on"], 
 		]
-		for i in list(range(len(self.hotBtns))):
-			self.hotBtns[i].append(ttk.Button(self.hotBar, image=self.hotBtns[i][0], command=self.hotBtns[i][1]))
-			Hovertip(self.hotBtns[i][3], self.hotBtns[i][2], hover_delay=80)
-			self.hotBtns[i][3].pack(fill="both", side="top", padx=2, pady=1)
+		for i, hbe in enumerate(self.hotBtns):
+			self.hotBtns[i].append(ttk.Button(self.hotBar, image=hbe[0], command=hbe[1]))
+			hbe = self.hotBtns[i]
+			hbe[3].bind("<Enter>", lambda ev, t=hbe[2]: self.hBar_tip_new(t))
+			hbe[3].bind("<Leave>", lambda ev: self.hBar_tip_dispose())
+			hbe[3].pack(fill="both", side="top", padx=2, pady=1)
 		self.hotBar.grid(**grc(1, 0), rowspan=2, sticky="nswe")
 
 		# api-Bar: -> mods
@@ -216,9 +233,21 @@ Use <Button-2> on TextLN to take goto-hover
 		self.mNB = CNotebook(self.mWin, height=0, cstyle=self.style)
 		if not sys.argv[1:]: self.nNewnote()
 		else:
-			for elm in sys.argv[1:]:
+			ropt, rargs = self.getopted
+			for elm in ropt:
+				key, word = elm
+				match key:
+					case "-n": self.nNewnote()
+					case "--note": self.nNewnote()
+					case "-w":
+						self.isCSD.set(False)
+						self.wTk_float()
+					case "--nocsd": 
+						self.isCSD.set(False)
+						self.wTk_float()
+			for elm in rargs:
 				self.nOpen(elm)
-		self.mNB.bind("<<NotebookTabChanged>>", self.nSel)
+		self.mNB.bind("<<NotebookTabChanged>>", lambda ev: self.hBar_tip_dispose())
 		self.mNB.bind("<<NotebookTabClosed>>", lambda ev: self.nClose(k=ev.x))
 		self.mNB.grid(**grc(1, 1), sticky="nswe")
 		self.mWin.grid_rowconfigure(1, weight=1)
@@ -387,13 +416,16 @@ Use <Button-2> on TextLN to take goto-hover
 		self.style.map("TNotebook.Tab", background=[("selected", self.clr_bg)])
 		if is_customst:
 			self.style.map("TScrollbar", background = [("", self.clr_bg)])
-	def wTk_force(self, *args): 
+	def wTk_force(self, *args):
+		"Focus force"
 		self.mWin.focus_force()
 		self.mWin.grab_release()
 	def wTk_top(self, bl=None, **kw): 
+		"On top mode (is_topTk handler) (Use bl to override)"
 		if bl == None: bl = self.is_topTk.get()
 		kw.setdefault("win", self.mWin).attributes("-topmost", bl)
-	def retitle(self, s=None):
+	def retitle(self, s=None): 
+		""
 		if not isinstance(self.titlem, int | bool): self.titlem = 1 # Is int!
 		if not (0 <= self.titlem < 3): self.titlem = 1 # Is 0, 1, 2
 		if not s: sx = f"ExtPad {self.version}"
@@ -420,6 +452,7 @@ Use <Button-2> on TextLN to take goto-hover
 		if not c: return
 		self.mNB.insert(c-1, w)
 	def wTk_float(self, bl=None): 
+		"CSD/SSD mode (isCSD handler) (Use bl to override)"
 		if bl == None: bl = self.isCSD.get()
 		if sys.platform == "win32": self.mWin.overrideredirect(bl)
 		else: self.mWin.attributes('-type', ["normal", "dock"][bl])
@@ -430,19 +463,23 @@ Use <Button-2> on TextLN to take goto-hover
 		self.mWin.wm_state("normal")
 		self.mWin["takefocus"] = True
 	def wTk_menubar(self, bl=None): 
+		"Show menubar (is_menubar handler) (Use bl to override)"
 		if bl == None: bl = self.is_menubar.get()
 		if bl: self.mWin["menu"] = self.uMenu
-		else:  self.mWin["menu"] = ["M", "E", "N", "U"]
-	def wTk_point(self, event):
+		else:  self.mWin["menu"] = ["M", "E", "N", "U"] #Trash-data
+	def wTk_point(self, event): 
+		"Mouse handler on title - point"
 		win_position = [int(coord) for coord in self.mWin.wm_geometry().split('+')[1:]]
 		self.source.xTk, self.source.yTk = win_position[0] - event.x_root, win_position[1] - event.y_root
 		self.wTk_force() # Take focus
 	def wTk_move(self, event): 
+		"Mouse handler on title - move"
 		if self.source.Tk == "max": 
 			self.withNormal()
 			return
 		self.mWin.wm_geometry(f"+{str(event.x_root+self.source.xTk)}+{str(event.y_root+self.source.yTk)}")
-	def withNormal(self):
+	def withNormal(self): 
+		"[Normal]-button handler"
 		if self.source.Tk == "normal": return
 		self.iGrid(self.is_apibar, self.apiBar)
 		self.mWin.minsize(*self.mWin_min())
@@ -459,7 +496,8 @@ Use <Button-2> on TextLN to take goto-hover
 		self.hBar.grid()
 		self.mMG.pack(fill="both", expand=True)
 		self.source.Tk = "normal"
-	def withMax(self):
+	def withMax(self): 
+		"[Max]-button handler"
 		if   self.source.Tk == "max": return
 		elif self.source.Tk == "min": 
 			self.withNormal()
@@ -480,7 +518,8 @@ Use <Button-2> on TextLN to take goto-hover
 		self.mMinBtn.pack(fill="both", side="right")
 		self.mMG.pack(fill="both", expand=True)
 		self.source.Tk = "max"
-	def withMin(self):
+	def withMin(self): 
+		"[Min]-button handler"
 		if   not self.isCSD.get():
 			self.mWin.state("icon")
 			return
@@ -506,17 +545,20 @@ Use <Button-2> on TextLN to take goto-hover
 		self.mMinBtn.pack(fill="both", side="right")
 		self.mMG.pack(fill="both", expand=True)
 		self.source.Tk = "min"
-	def withDB1(self):
+	def withDB1(self): 
+		"<Double-Button-1> handler"
 		if   self.source.Tk in ["max", "min"]: self.withNormal()
 		elif self.source.Tk == "normal": self.withMax()
-	def withQuit(self):
+	def withQuit(self): 
+		"[Quit]-button handler"
 		if self.mNB.tabs() != () and self.source.future_fast_quit:
 			if not tkmb.askokcancel("You sure?", "You may have unsaved changes"): return
 		for i in range(len(self.mNB.tabs())): 
 			if self.nClose(): return
 		self.source.quit()
 		# Menu
-	def pop_menu(self, ev, menu, button=None):
+	def pop_menu(self, ev, menu, button=None): 
+		"Draw any menu"
 		try:
 			menu.tk_popup(ev.x_root, ev.y_root, "none")
 			if not button: menu.bind("<FocusOut>", lambda ev: menu.unpost())
@@ -524,9 +566,15 @@ Use <Button-2> on TextLN to take goto-hover
 			menu.grab_release()
 		if button: button["state"] = "!selected"
 	def get_nPage(self): 
+		"Simple funcion to get current-tab frame widget"
 		if self.mNB.tabs() == (): return
 		return self.mWin.nametowidget(self.mNB.select())
-	def nSel(self, *args):
+	def hBar_tip_new(self, tip): 
+		"Add tip on Help-Bar"
+		self.mLbl["text"] = tip
+		self.mLblCheck = -1
+	def hBar_tip_dispose(self): 
+		"Remove tip on Help-Bar"
 		if   self.mNB.tabs() == ():
 			self.mLbl["text"] = f" . . . "
 			self.mLblCheck = -1
@@ -534,7 +582,8 @@ Use <Button-2> on TextLN to take goto-hover
 			self.mLbl["text"] = f'Hello! You can sew first note tab on ExtPad {self.version}; press F1 key to take help/hints-pane'
 			self.mLblCheck = -1
 		else: self.mLblCheck = 0
-	def nOpen(self, path=None):
+	def nOpen(self, path=None): 
+		"Open file or add new note; and create tab"
 		# Input path, text
 		if path == None:
 			path = tkfd.askopenfilename(
@@ -551,19 +600,22 @@ Use <Button-2> on TextLN to take goto-hover
 		tab = NBFrame_Note(self, self.mNB, ikw=ikw, style="ghost.TFrame", name=f'file:"{path.replace(".", "%2E")}"+{id(ikw)}')
 		tab.filed()
 		self.mNB.add(tab, image=self.img_mbfile, text=os.path.split(path)[-1], compound="left")
-	def nSaveas(self):
+	def nSaveas(self): 
+		"Save-as tab with tab.api_nsaveas funcion"
 		tab = self.get_nPage()
 		if not tab: return "cancel:notabs"
 		method = tab.__dict__.get("api_nsaveas")
 		if method: method()
 		else: print("[App][nSaveas] Action undefined")
-	def nSave(self):
+	def nSave(self): 
+		"Save tab with tab.api_nsave funcion"
 		tab = self.get_nPage()
 		if not tab: return
 		method = tab.__dict__.get("api_nsave")
 		if method: method()
 		else: print("[App][nSave] Action undefined")
-	def nNew(self):
+	def nNew(self): 
+		"New file tab"
 		path = tkfd.asksaveasfilename(
 			title="New file",
 			defaultextension=".txt", 
@@ -575,12 +627,14 @@ Use <Button-2> on TextLN to take goto-hover
 		ikw = dict(b3bind=lambda ev: self.pop_menu(ev, self.eMenu), fid=["file", path])
 		tab = NBFrame_Note(self, self.mNB, ikw=ikw, style="ghost.TFrame", name=f'file:"{path.replace(".", "%2E")}"')
 		self.mNB.add(tab, image=self.img_mbfile, text=os.path.split(path)[-1], compound="left")
-	def nNewnote(self):
+	def nNewnote(self): 
+		"New note tab"
 		ikw = dict(b3bind=lambda ev: self.pop_menu(ev, self.eMenu), fid=["note", self.notec])
 		tab = NBFrame_Note(self, self.mNB, ikw=ikw, style="ghost.TFrame", name=f'note:"{self.notec}"')
 		self.mNB.add(tab, image=self.img_mbnote, text=f"New{['', f' ({self.notec})'][bool(self.notec)]}", compound="left")
 		self.notec += 1
-	def nClose(self, **kw):
+	def nClose(self, **kw): 
+		"Close tab with tab.api_nclose funcion"
 		if self.mNB.tabs() == (): return
 		tabid = kw.get("k", self.mNB.index("current"))
 		tab = self.mWin.nametowidget(self.mNB.tabs()[tabid])
@@ -596,14 +650,17 @@ Use <Button-2> on TextLN to take goto-hover
 		else: self.text_shared.rmw(int(tid))
 		self.mNB.forget(tabid)
 	def eUndo(self): 
+		"Undo selected text"
 		try: 
 			self.get_nPage().text.edit_undo()
 		except tk.TclError as exc: print(f"[app][eUndo] Can't undo: {exc}")
 	def eRedo(self): 
+		"Redo selected text"
 		try: 
 			self.get_nPage().text.edit_redo()
 		except tk.TclError as exc: print(f"[app][eRedo] Can't redo: {exc}")
 	def eCopy(self): 
+		"Copy selected text"
 		try: 
 			nText = self.get_nPage().text
 			if nText.index(tk.SEL_FIRST) == nText.index(tk.SEL_LAST): return "break:seleq"
@@ -612,14 +669,15 @@ Use <Button-2> on TextLN to take goto-hover
 			nText.clipboard_append(s)
 		except tk.TclError as exc: print(f"[app][eCopy] Can't copy: {exc}")
 	def ePaste(self): 
-		try: 
-			nText = self.get_nPage().text
-			s = nText.clipboard_get()
-			self.get_nPage().text.insert("insert", s)
-			if nText.index(tk.SEL_FIRST) == nText.index(tk.SEL_LAST): return "seleq" 
-			nText.selection_clear()
-		except tk.TclError as exc: print(f"[app][ePaste] Can't paste: {exc}")
-	def eCut(self):
+		"Paste selected text"
+		tab = self.get_nPage()
+		if not tab: return
+		s = tab.text.clipboard_get()
+		tab.text.insert("insert", s)
+		if not tab.text.tag_ranges('sel'): return "seleq" 
+		tab.text.selection_clear()
+	def eCut(self): 
+		"Cut selected text"
 		try:
 			nText = self.get_nPage().text
 			if nText.index(tk.SEL_FIRST) == nText.index(tk.SEL_LAST): return "break:seleq"
@@ -628,7 +686,8 @@ Use <Button-2> on TextLN to take goto-hover
 			nText.clipboard_append(s)
 			nText.delete(tk.SEL_FIRST, tk.SEL_LAST)
 		except tk.TclError as exc: print(f"[app][eCut] Can't cut: {exc}")
-	def eFind_engene(self, s: str, w: str) -> list:
+	def eFind_engene(self, s: str, w: str) -> list: 
+		"Find engene"
 		fill = "".join([" ", "Z"][i == " "] for i in w)
 		if w == "" or s == "": return
 		ss = s.split("\n")
@@ -640,7 +699,8 @@ Use <Button-2> on TextLN to take goto-hover
 				e = e[0:f]+fill+e[f+len(w):]
 				rs.append([i+1, f])
 		return rs
-	def eFind(self, word=None):
+	def eFind(self, word=None): 
+		"Find text that selected"
 		tab = self.get_nPage()
 		if not tab: return
 		tab.text.tag_remove("search", "1.0", "end")
@@ -666,11 +726,11 @@ Use <Button-2> on TextLN to take goto-hover
 		if tab.id[0] == "conf": nText = None
 		else: nText = tab.text
 		if self.mLblCheck == 0:
-			if nText:
-				insLine, insCol = str.split(nText.index("insert"), ".")
-				endLine = str(int(str.split(nText.index("end"), ".")[0]) - 1)
-				endCol = str.split(nText.index(f"{insLine}.end"), ".")[1]
-			else: insLine, insCol, endLine, endCol = [0 for i in " "*4]
+			#if nText:
+			#	insLine, insCol = str.split(nText.index("insert"), ".")
+			#	endLine = str(int(str.split(nText.index("end"), ".")[0]) - 1)
+			#	endCol = str.split(nText.index(f"{insLine}.end"), ".")[1]
+			#else: insLine, insCol, endLine, endCol = [0 for i in " "*4]
 			self.mLbl["text"] = tab.api_on_hbar()
 			#else:
 			#	match tab.id[0]:
@@ -696,7 +756,8 @@ Use <Button-2> on TextLN to take goto-hover
 		except Exception as err:
 			self.retitle("")
 
-	def nExec(api, path=None):
+	def nExec(api, path=None): 
+		"Exec module"
 		if not path:
 			path = tkfd.askopenfilename(title="Exec ext-on", filetypes=api.fform)
 			if not path: return
