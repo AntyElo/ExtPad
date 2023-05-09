@@ -9,3 +9,15 @@ import tkinter.simpledialog as tksd
 import tkinter.messagebox as tkmb
 import tkinter.colorchooser as tkcc
 import getopt
+functype = type(lambda: "Hello world!")
+OPT = "nc:w" #Global OPTion (eXternal)
+OPTX = [
+	"note",
+	"config:",
+	"nocsd",
+	"tth", "ttkthemes",
+	"notth", "nottkthemes",
+	#"style:",
+	"deftc",
+	"fquit", "fastquit"
+]

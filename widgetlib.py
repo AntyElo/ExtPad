@@ -243,18 +243,17 @@ class IFrame(ttk.Frame):
 		self.style = ttk.Style()
 		self.ikw = ikw
 		self.id = self.ikw.setdefault("fid", ["note", -1])
+		self.name = self.ikw.get("name", self.id[0].title())
 		super().__init__(*args, **kwargs)
 		self.text = None
-	def api_on_tbar(self):
-		return f"{self.id[0].title()}: {', '.join(self.id[1:])}"
-	def api_on_hbar(self):
-		return f"[{self.id[0].title()}+] hbar-on"
+		self.api_on_tbar = lambda: f"{self.name}: {', '.join(self.id[1:])}"
+		self.api_on_hbar = lambda: f"[{self.name}] hbar placeholder"
 
 class NBFrame(ttk.Frame): # nFrame back-end
 	def __init__(self, ikw, *args, **kwargs):
 		self.style = ttk.Style()
 		self.ikw = ikw
-		self.ikw["clr_ln"] = self.ikw.setdefault("clr_ln") or "gray95"
+		self.ikw.setdefault("clr_ln", "gray95")
 		self.id = self.ikw.setdefault("fid", ["note", -1])
 		super().__init__(*args, **kwargs)
 
@@ -299,9 +298,10 @@ class NBFrame_Note(NBFrame):
 		return f"0{self.id[1]}" if self.id[0] == "file" else f"New{f' ({self.id[1]})' if self.id[1] else ''}"
 	def api_on_hbar(self):
 		il, ic = self.text.index("insert").split('.')
+		cl, cc = self.text.index("current").split('.')
 		el = self.text.index("end-1c").split(".")[0]
 		ec = self.text.index(f"{il}.end").split(".")[1]
-		return f"[{self.id[0].title()}]  Line: {il}/{el}  Col: {ic}/{ec}  {'Path' if self.id[0] == 'file' else 'Note'}: {self.id[1]}"
+		return f"[{self.id[0].title()}]  Cur: {cl}.{cc}  Ins: {il}.{ic}  End: {el}.{ec}  {'Path' if self.id[0] == 'file' else 'Note'}: {self.id[1]}"
 	def api_nclose(self, tabid):
 		if self.text.edit_modified():
 			tmp = ["", f" {self.id[1]}"][bool(self.id[1])]

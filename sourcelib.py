@@ -5,12 +5,13 @@ imgCont = 0
 
 class Source():
 	# So, source
-	def __init__(self):
+	def __init__(self, *args, **kw):
 		self.srcWin = tk.Tk()
 		self.Tk = "normal"
-		self.future_tth = False # Toggle to get(1) ttkthemes - future
-		self.future_fast_deftc = False # Toggle to get(1) deftc-first - future
-		self.future_fast_quit = True # Toggle to fast(1) quit - future
+		# <x>_ffuture = fast_<x>_future
+		self.future_tth = kw.get("tth_future", False) # Toggle to get(1) ttkthemes - future
+		self.future_fast_deftc = kw.get("deftc_ffuture", False) # Toggle to get(1) deftc-first - future
+		self.future_fast_quit = kw.get("quit_ffuture", False) # Toggle to fast(1) quit - future
 		self.dbg = tk.BooleanVar(value=False) # App.nSel() req
 		self.xTk, self.yTk, self.wrx, self.wry, self.sizeX, self.sizeY = [0, 0, 0, 0, 0, 0]
 		self.ww, self.wh = [400, 300]
