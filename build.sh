@@ -1,21 +1,32 @@
 #!/bin/sh
-USEDHELP=
 PYC=`which nuitka3`
 test -z "$PYC" && { echo "[error] nuitka3 requited (which: \"$PYC\")"; \
 exit 1; } || echo "[info] bilding extpad with $PYC"
+include_modules() {
+	for i in $@; do
+		echo "--include-module=$i"
+	done
+}
 case $1 in
 	h|he|hel|help)
-		echo "$0 - Nuitka3-based build script"; USEDHELP=y;;
-	r|ru|run)
-		nuitka3 --run --include-module=deps --include-module=sourcelib \
-		--include-module=widgetlib --include-module=pyshell extpad.py;;
+		cat << "===END OF HELP==="
+$0 - Nuitka3-based build script
+
+Usage:
+help - read this note
+full - compile full build (default command)
+rfull - as 'full', and run
+minimal - compile without pyshell.py and ttkthemes
+rminimal - as 'minimal', and run
+===END OF HELP===
+		exit 0;;
+	rmi|rmin|rmini|rminim|rminima|rminimal|run-minimal)
+		nuitka3 --run `include_modules deps sourcelib widgetlib` extpad.py;;
+	rf|rfu|rful|rfull|run-full)
+		nuitka3 --run `include_modules deps sourcelib widgetlib pyshell ttkthemes` extpad.py;;
 	m|mi|min|mini|minim|minima|minimal)
-		nuitka3 --include-module=deps --include-module=sourcelib \
-		--include-module=widgetlib extpad.py;;
+		nuitka3 `include_modules deps sourcelib widgetlib` extpad.py;;
 	f|fu|ful|full|*)
-		nuitka3 --include-module=deps --include-module=sourcelib \
-		--include-module=widgetlib --include-module=pyshell extpad.py;;
+		nuitka3 `include_modules deps sourcelib widgetlib pyshell ttkthemes` extpad.py;;
 esac
-if [ -z "$USEDHELP" ]; then
-	rm -r extpad.build
-fi
+rm -r extpad.build

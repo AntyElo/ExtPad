@@ -8,10 +8,16 @@ from widgetlib import *
 
 __doc__ = """EXTernal notePAD (main file)
 
- You can build application with nuitka:
-    nuitka3 --include-module={deps,sourcelib,widgetlib} extpad.py #Minimal build
-or
-    nuitka3 --include-module={deps,sourcelib,widgetlib,pyshell,ttkthemes} extpad.py #Full build
+ Options:
+
+-n, --note
+ Start with note page (default)
+
+-c <file>, --config=<file>
+ [Not implemented]
+
+-w, --nocsd
+ Start whitout window decorations (CSD)
 
 """
 optargs = getopt.gnu_getopt(sys.argv[1:], OPT, OPTX)
