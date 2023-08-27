@@ -5,42 +5,42 @@ imgCont = 0
 from sourcelib import Source 
 from widgetlib import *
 # Source and widgets merged on new files
-""" - EXTernal notePAD (main file)
+
+__doc__ = """ - EXTernal notePAD (main file)
 
  Options:
 
--n, --note
- Start with note page (default)
-
--c <file>, --config=<file>
- [Not implemented]
-
--w, --nocsd
- Start whitout window decorations (CSD)
 """
-gopt = "nc:w" #Global OPTion (eXternal)
-goptx = [
-	"note",
-	"config:",
-	"nocsd"
-]
-getopted = getopt.getopt(sys.argv[1:], gopt, goptx)
+optargs = getopt.gnu_getopt(sys.argv[1:], OPT, OPTX)
 print(f"[extpad] Run {sys.argv[0]} with: {sys.argv[1:]}")
-print(f"[extpad] Getopt: {getopted}")
-#print(f"[extpad] Getopt on gnu impl: {getopt.gnu_getopt(sys.argv[1:], gopt, goptx)}")
+print(f"[extpad] [ ] Getopt/cmn: {getopt.getopt(sys.argv[1:], OPT, OPTX)}")
+print(f"[extpad] [x] Getopt/gnu: {optargs}")
 class App():
 	# Sourse
 	IFrame = IFrame
 	vkw = {
 		"codename": "crypton", # Arch
 		"build": 11, # Every update
-		"path": 2, # Is path of version
+		"path": 4, # Is path of version
 		"channel": "beta", # Edge aka alpha / Beta / Candidate4Release aka rc / Release
 	}
 	def grc(main, row, column, *args): return {"row": row, "column": column}
 	def __init__(self):
-		global getopted
-		self.getopted = getopted
+		global optargs
+		self.ropt, self.rargs = ropt, rargs = self.optargs = optargs
+		sourcekw = {}
+		for key, word, *_ in ropt:
+			match key:
+				#case "-c" | "--config":
+				#	self.openConfig(word)
+				case "--tth" | "--ttkthemes":
+					sourcekw["tth_future"] = True
+				case "--notth" | "--nottkthemes":
+					sourcekw["tth_future"] = False
+				case "--deftc":
+					sourcekw["deftc_ffuture"] = True
+				case "--fquit" | "--fastquit":
+					sourcekw["quit_ffuture"] = True
 		self.version = f'{self.vkw["build"]}{self.vkw["channel"][0:1]}{["", self.vkw.get("path", "")][bool(self.vkw.get("path", ""))]}'
 		self.vsm = "Version kw: " + "".join((f"\n    {str(k)}: {str(w)}" for k, w in self.vkw.items()))
 		# ~~
@@ -62,7 +62,8 @@ FIXME:
    - Nuitka3
 	"""
 		grc = self.grc
-		self.source = Source()
+		self.source = Source(**sourcekw)
+		del sourcekw
 		self.mWin = self.source.srcWin
 		self.mWin.title(f"ExtPad {self.version}")
 		self.mWin.geometry("400x300")
@@ -100,6 +101,7 @@ Use <Button-2> on TextLN to take goto-hover
 		self.mWin.iconphoto(True, self.source.img_win3)
 		self.config_frames = {}
 		self.mLblCheck = -1
+		self.mLblQ = []
 		self.notec = 0
 		self.eFind_str = tk.StringVar()
 		self.theme_path_gw()
@@ -110,11 +112,11 @@ Use <Button-2> on TextLN to take goto-hover
 		self.mMG = tk.Frame(self.tBar, bg=self.clr_sb, highlightthickness=0, height=0)
 		self.mMGL = tk.Label(self.mMG, text=f"ExtPad {self.version}", bg=self.clr_sb, fg=self.clr_gw, height=0, width=0)
 		self.mMGL.pack(fill="y", expand=1)
-		for subel in [self.mMG, self.mMGL]:
-			subel.bind('<Button-1>', self.wTk_point)
-			subel.bind('<B1-Motion>', self.wTk_move)
-			subel.bind('<Button-3>', lambda ev: self.pop_menu(ev, self.uMenu))
-			subel.bind('<Double-Button-1>', lambda ev: self.withDB1())
+		for subelm in [self.mMG, self.mMGL]:
+			subelm.bind('<Button-1>', self.wTk_point)
+			subelm.bind('<B1-Motion>', self.wTk_move)
+			subelm.bind('<Button-3>', lambda ev: self.pop_menu(ev, self.uMenu))
+			subelm.bind('<Double-Button-1>', lambda ev: self.withDB1())
 		self.mWin.bind("<Alt-Button-1>", self.wTk_point)
 		self.mWin.bind("<Alt-B1-Motion>", self.wTk_move)
 		self.mMinBtn     = ttk.Button(self.tBar, style="Title.TButton", image=self.img_min,    command=self.withMin)
@@ -233,22 +235,16 @@ Use <Button-2> on TextLN to take goto-hover
 
 		# mainNoteBook
 		self.mNB = CNotebook(self.mWin, height=0, cstyle=self.style)
-		if not sys.argv[1:]: self.nNewnote()
-		else:
-			ropt, rargs = self.getopted
-			for elm in ropt:
-				key, word = elm
-				match key:
-					case "-n": self.nNewnote()
-					case "--note": self.nNewnote()
-					case "-w":
-						self.isCSD.set(False)
-						self.wTk_float()
-					case "--nocsd": 
-						self.isCSD.set(False)
-						self.wTk_float()
-			for elm in rargs:
-				self.nOpen(elm)
+		if not rargs: self.nNewnote()
+		for key, word, *_ in ropt:
+			match key:
+				case "-n" | "--note":
+					self.nNewnote()
+				case "-w" | "--nocsd":
+					self.isCSD.set(False)
+					self.wTk_float()
+		for elm in rargs:
+			self.nOpen(elm)
 		self.mNB.bind("<<NotebookTabChanged>>", lambda ev: self.hBar_tip_dispose())
 		self.mNB.bind("<<NotebookTabClosed>>", lambda ev: self.nClose(k=ev.x))
 		self.mNB.grid(**grc(1, 1), sticky="nswe")
@@ -330,7 +326,7 @@ Use <Button-2> on TextLN to take goto-hover
 		tBarw = self.wmBtn.winfo_width()*4+self.mMGL.winfo_width()
 		max_littlew = self.wmBtn.winfo_width()*10
 		tBarcw = [max_littlew, tBarw][tBarw <= max_littlew]
-		out = [tBarcw, sum(map(self.mWin_min_geth, (self.tBar, self.hBar, self.apiBar)))]
+		out = [tBarcw, sum(map(self.mWin_min_geth, (self.tBar, self.apiBar)))+self.hBar.winfo_height()]
 		if i != None: return out[i]
 		return out
 	def mNB_addc(self, frame, text):
@@ -391,11 +387,20 @@ Use <Button-2> on TextLN to take goto-hover
 		self.config_frames["root.info"].text = self.mWin.nametowidget(self.infoNB.select()).text
 	def vInfo(self): self.mNB_addc(self.config_frames["root.info"], text=f"Info")
 	def vPyshell(self):
-		from pyshell import TextConsole
-		frame = self.IFrame(dict(fid=["term", "pyshell"]), master=self.mNB)
-		tc = TextConsole(frame, highlightthickness=0, bd=0)
-		tc.pack(fill="both", expand="True")
-		frame.ikw["tid"] = self.text_shared.addw(tc)
+		try:
+			from pyshell import TextConsole
+		except ImportError:
+			print("[extpad] pyshell unsupported")
+			return
+		frame = self.IFrame(dict(fid=["term", "pyshell"], name="Pyshell"), master=self.mNB)
+		frame.text = TextConsole(frame, highlightthickness=0, bd=0)
+		frame.text.pack(fill="both", expand="True")
+		frame.api_on_hbar = lambda: \
+f"[{frame.name}]  Line: {frame.text.index('current').split('.')[0]}" \
+f"/{frame.text.index('end-1c').split('.')[0]}  " \
+f"Col: {frame.text.index('current').split('.')[1]}" \
+f"/{frame.text.index('{}.end'.format(frame.text.index('current').split('.')[0])).split('.')[1]}"
+		frame.ikw["tid"] = self.text_shared.addw(frame.text)
 		self.mNB_addc(frame, text=f"Python shell")
 	def iGrid(self, var, w):
 		if var.get(): w.grid()
@@ -553,7 +558,7 @@ Use <Button-2> on TextLN to take goto-hover
 		elif self.source.Tk == "normal": self.withMax()
 	def withQuit(self): 
 		"[Quit]-button handler"
-		if self.mNB.tabs() != () and self.source.future_fast_quit:
+		if self.mNB.tabs() != () and not self.source.future_fast_quit:
 			if not tkmb.askokcancel("You sure?", "You may have unsaved changes"): return
 		for i in range(len(self.mNB.tabs())): 
 			if self.nClose(): return
@@ -571,13 +576,16 @@ Use <Button-2> on TextLN to take goto-hover
 		"Simple funcion to get current-tab frame widget"
 		if self.mNB.tabs() == (): return
 		return self.mWin.nametowidget(self.mNB.select())
-	def hBar_tip_new(self, tip): 
-		"Add tip on Help-Bar"
+	def hBar_tip_new(self, tip: str, time=-1):
+		"Add tip on Help-Bar (and queue) <time> tics"
+		self.mLblQ.append([self.mLblCheck, self.mLbl["text"]])
 		self.mLbl["text"] = tip
-		self.mLblCheck = -1
+		self.mLblCheck = time
 	def hBar_tip_dispose(self): 
-		"Remove tip on Help-Bar"
-		if   self.mNB.tabs() == ():
+		"Remove tip on Help-Bar (dispose queue[0])"
+		if   self.mLblQ != []:
+			self.mLblCheck, self.mLbl["text"] = self.mLblQ.pop(0)
+		elif self.mNB.tabs() == ():
 			self.mLbl["text"] = f" . . . "
 			self.mLblCheck = -1
 		elif self.mWin.nametowidget(self.mNB.select()).id == ["note", 0]:
