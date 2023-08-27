@@ -6,23 +6,25 @@ from sourcelib import Source
 from widgetlib import *
 # Source and widgets merged on new files
 
-__doc__ = """ - EXTernal notePAD (main file)
+__doc__ = """EXTernal notePAD (main file)
+
+ You can build application with nuitka:
+    nuitka3 --include-module={deps,sourcelib,widgetlib} extpad.py #Minimal build
+or
+    nuitka3 --include-module={deps,sourcelib,widgetlib,pyshell,ttkthemes} extpad.py #Full build
 
 TODO: sys.argv - open files by `extpad.bin '%f'` - params
 ~TODO: ikill(), titlestr(), helpbarstr() - built-in of Frame (with `if X.__dict__.get(Y):`)~
 ~TODO: pick-color tool (apiBar)~
 TODO: json/woof configuration
 TODO: Frame + getattr/setattr ikw <- IFrame(Frame+ikw), etc
-
-#puref = lambda <lambda>
-#f = getattr(tab, "api_on_Nbar", puref)
-#if not isinstance(f, functype): return
-# ...
-
-You can build application:
-	nuitka3 --include-module={deps,sourcelib,widgetlib} extpad.py #Minimal build
-or
-	nuitka3 --include-module={deps,sourcelib,widgetlib,pyshell,ttkthemes} extpad.py #Full build
+    #puref = lambda <lambda>
+    #f = getattr(tab, "api_on_Nbar", puref)
+  or
+    #f = tab_get(tab, "nbar", puref)
+    #if not isinstance(f, functype): return
+    # ...
+FIXME: [TMP] Cant not open file (terminal)
 """
 optargs = getopt.gnu_getopt(sys.argv[1:], OPT, OPTX)
 print(f"[extpad] Run {sys.argv[0]} with: {sys.argv[1:]}")
@@ -34,7 +36,7 @@ class App():
 	vkw = {
 		"codename": "crypton", # Arch
 		"build": 11, # Every update
-		"path": 3, # Is path of version
+		"path": 4, # Is path of version
 		"channel": "beta", # Edge aka alpha / Beta / Candidate4Release aka rc / Release
 	}
 	def grc(main, row, column, *args): return {"row": row, "column": column}
@@ -44,6 +46,9 @@ class App():
 		sourcekw = {}
 		for key, word, *_ in ropt:
 			match key:
+				case "-h" | "--help":
+					print(__doc__)
+					exit()
 				#case "-c" | "--config":
 				#	self.openConfig(word)
 				case "--tth" | "--ttkthemes":
@@ -53,6 +58,10 @@ class App():
 				case "--deftc":
 					sourcekw["deftc_ffuture"] = True
 				case "--fquit" | "--fastquit":
+					sourcekw["quit_ffuture"] = True
+				case "-d":
+					deps_test()
+					sourcekw["tth_future"] = True
 					sourcekw["quit_ffuture"] = True
 		self.version = f'{self.vkw["build"]}{self.vkw["channel"][0:1]}{["", self.vkw.get("path", "")][bool(self.vkw.get("path", ""))]}'
 		self.vsm = "Version kw: " + "".join((f"\n    {str(k)}: {str(w)}" for k, w in self.vkw.items()))
@@ -332,10 +341,13 @@ Use <Button-2> on TextLN to take goto-hover
 	# Funcions
 		# Tk
 	def mWin_min_geth(self, w):
+		'mWin minimal height'
 		return w.winfo_height()*w.winfo_ismapped()
 	def mWin_min_getw(self, w):
+		'mWin minimal weight'
 		return w.winfo_width()*w.winfo_ismapped()
 	def mWin_min(self, i=None):
+		'mWin minimal [height, weight]'
 		tBarw = self.wmBtn.winfo_width()*4+self.mMGL.winfo_width()
 		max_littlew = self.wmBtn.winfo_width()*10
 		tBarcw = [max_littlew, tBarw][tBarw <= max_littlew]
@@ -343,7 +355,15 @@ Use <Button-2> on TextLN to take goto-hover
 		if i != None: return out[i]
 		return out
 	def mNB_addc(self, frame, text):
+		'Add <frame> at main NoteBook'
 		self.mNB.add(frame, image=self.img_mbrun, text=text, compound="left")
+	def frame_get(self, frame, seq, default=None, prefix="_extpad_"):
+		'''Requite attribute _extpad_<seq> from <frame>
+		
+		Options:
+		<default> - default value (None) 
+		<prefix> - prefix ("_extpad_")'''
+		return getattr(frame, prefix+seq, default)
 	def themeChanged(self, *a, **kw):
 		color1 = ['self.clr_sb', 'self.clr_gw'][self.imgd.get()]
 		color2 = ['self.clr_gw', 'self.clr_sb'][self.imgd.get()]
@@ -608,14 +628,13 @@ f"/{frame.text.index('{}.end'.format(frame.text.index('current').split('.')[0]))
 	def nOpen(self, path=None): 
 		"Open file or add new note; and create tab"
 		# Input path, text
-		if path == None:
+		if not path:
 			path = tkfd.askopenfilename(
 				title="Open file",
 				filetypes=self.fform
 			)
 			self.wTk_force()
 			if not path: return
-		elif path == "-n": self.nNewnote(); return
 		elif not os.path.isfile(path): return
 		with open(str(path)) as nfile: text = nfile.read()
 		# Controls
@@ -749,22 +768,7 @@ f"/{frame.text.index('{}.end'.format(frame.text.index('current').split('.')[0]))
 		if tab.id[0] == "conf": nText = None
 		else: nText = tab.text
 		if self.mLblCheck == 0:
-			#if nText:
-			#	insLine, insCol = str.split(nText.index("insert"), ".")
-			#	endLine = str(int(str.split(nText.index("end"), ".")[0]) - 1)
-			#	endCol = str.split(nText.index(f"{insLine}.end"), ".")[1]
-			#else: insLine, insCol, endLine, endCol = [0 for i in " "*4]
 			self.mLbl["text"] = tab.api_on_hbar()
-			#else:
-			#	match tab.id[0]:
-			#		case "file": self.mLbl["text"] = f"0[File] Line: {insLine}/{endLine}  Col: {insCol}/{endCol}  Path: {tab.id[1]}"
-			#		case "note": self.mLbl["text"] = f"0[Note] Line: {insLine}/{endLine}  Col: {insCol}/{endCol}"
-			#		case "conf": self.mLbl["text"] = f"0[Config] Name: {tab.id[1]}"
-			#		case "term": 
-			#			mLblout = f"0[Terminal] Type: {tab.id[1]}"
-			#			mLblout += f", shell args: {tab.id[2:]}" if len(tab.id)>2 else ""
-			#			self.mLbl["text"] = mLblout
-			#		case _: self.mLbl["text"] = f"0[Err] undifined type"
 		elif self.mLblCheck > 0:
 			self.mLblCheck -= 1
 		if tab.id[0] in ["file", "note"]:
