@@ -7,14 +7,16 @@ from widgetlib import *
 # Source and widgets merged on new files
 """ - EXTernal notePAD (main file)
 
-TODO: sys.argv - open files by `extpad.bin '%f'` - params
-~TODO: ikill(), titlestr(), helpbarstr() - built-in of Frame (with `if X.__dict__.get(Y):`)~
-~TODO: pick-color tool (apiBar)~
-TODO: json/woof configuration
+ Options:
 
-You can build application: ``` 
-	nuitka3 --include-module={"deps","sourcelib","widgetlib","pyshell"} extpad.py 
-```
+-n, --note
+ Start with note page (default)
+
+-c <file>, --config=<file>
+ [Not implemented]
+
+-w, --nocsd
+ Start whitout window decorations (CSD)
 """
 gopt = "nc:w" #Global OPTion (eXternal)
 goptx = [
