@@ -13,18 +13,6 @@ __doc__ = """EXTernal notePAD (main file)
 or
     nuitka3 --include-module={deps,sourcelib,widgetlib,pyshell,ttkthemes} extpad.py #Full build
 
-TODO: sys.argv - open files by `extpad.bin '%f'` - params
-~TODO: ikill(), titlestr(), helpbarstr() - built-in of Frame (with `if X.__dict__.get(Y):`)~
-~TODO: pick-color tool (apiBar)~
-TODO: json/woof configuration
-TODO: Frame + getattr/setattr ikw <- IFrame(Frame+ikw), etc
-    #puref = lambda <lambda>
-    #f = getattr(tab, "api_on_Nbar", puref)
-  or
-    #f = tab_get(tab, "nbar", puref)
-    #if not isinstance(f, functype): return
-    # ...
-FIXME: [TMP] Cant not open file (terminal)
 """
 optargs = getopt.gnu_getopt(sys.argv[1:], OPT, OPTX)
 print(f"[extpad] Run {sys.argv[0]} with: {sys.argv[1:]}")
