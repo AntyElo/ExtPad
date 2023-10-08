@@ -13,9 +13,10 @@ import asyncio #main
 functype_custom = type(lambda: "Hello world!")
 functype_builtin = type(print)
 functype = functype_custom | functype_builtin
+VERBOSE=True
 OPT = "hnc:wd" #Global OPTion (eXternal)
 OPTX = [
-	"help"
+	"help-py", "help"
 	"note",
 	"config:",
 	"nocsd",
@@ -25,6 +26,7 @@ OPTX = [
 	"deftc",
 	"fquit", "fastquit"
 ]
+def name4argv(argv): return f"{argv[0]}.".split(".")[0]
 def deps_test(): print(\
 f"""[deps] Test begin: [<type> ->] <name> - <return> (<correct>)
 ├─┬──isinstance 

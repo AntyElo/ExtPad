@@ -1,7 +1,7 @@
 # EXTernal notePAD
 
 ## Install
-You can build application by [`./build.sh`](./build.sh "(nuitka3 requited)")
+You can build application by [`./build.sh full`](./build.sh "(nuitka3 requited)")
 
 ## TODO
 - [ ] sys.argv - open files by `extpad.bin '%f'` - params

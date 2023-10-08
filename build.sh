@@ -9,20 +9,28 @@ include_modules() {
 }
 case $1 in
 	h|he|hel|help)
-		cat << "===END OF HELP==="
+		case $2 in
+			realy?) echo "YEP";;
+			*) cat \
+<< "===END OF HELP==="
 $0 - Nuitka3-based build script
 
 Usage:
-help - read this note
+help <subject> - read this note, or <subject>
 full - compile full build (default command)
-rfull - as 'full', and run
+rfull, run - as 'full', and run
 minimal - compile without pyshell.py and ttkthemes
 rminimal - as 'minimal', and run
+deps <list> - compile with <list>
 ===END OF HELP===
+			;;
+		esac
 		exit 0;;
+	deps)
+		nuitka3 `include_modules sourcelib widgetlib $@` extpad.py;;
 	rmi|rmin|rmini|rminim|rminima|rminimal|run-minimal)
 		nuitka3 --run `include_modules deps sourcelib widgetlib` extpad.py;;
-	rf|rfu|rful|rfull|run-full)
+	r|ru|run|rf|rfu|rful|rfull|run-full)
 		nuitka3 --run `include_modules deps sourcelib widgetlib pyshell ttkthemes` extpad.py;;
 	m|mi|min|mini|minim|minima|minimal)
 		nuitka3 `include_modules deps sourcelib widgetlib` extpad.py;;

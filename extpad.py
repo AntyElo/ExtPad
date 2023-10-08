@@ -10,6 +10,9 @@ __doc__ = """EXTernal notePAD (main file)
 
  Options:
 
+-h, --help
+ Start with note page (default)
+
 -n, --note
  Start with note page (default)
 
@@ -19,11 +22,26 @@ __doc__ = """EXTernal notePAD (main file)
 -w, --nocsd
  Start whitout window decorations (CSD)
 
+--notth, --nottkthemes
+ Disable ttkthemes future
+
+--tth, --ttkthemes
+ Enable ttkthemes future
+
+--deftc
+ Enable deftc-theme fast run future
+
+--fquit, --fastquit
+ Enable fast quit shortcut
+
+-d
+ Enable debug mode - enable tth_future, quit_ffuture, and deps_test()
 """
+NAME=name4argv(sys.argv)
 optargs = getopt.gnu_getopt(sys.argv[1:], OPT, OPTX)
-print(f"[extpad] Run {sys.argv[0]} with: {sys.argv[1:]}")
-print(f"[extpad] [ ] Getopt/cmn: {getopt.getopt(sys.argv[1:], OPT, OPTX)}")
-print(f"[extpad] [x] Getopt/gnu: {optargs}")
+print(f"[{NAME}] Run {sys.argv[0]} with: {sys.argv[1:]}")
+print(f"[{NAME}] [ ] Getopt/cmn: {getopt.getopt(sys.argv[1:], OPT, OPTX)}")
+print(f"[{NAME}] [x] Getopt/gnu: {optargs}")
 class App():
 	# Sourse
 	IFrame = IFrame
@@ -40,8 +58,11 @@ class App():
 		sourcekw = {}
 		for key, word, *_ in ropt:
 			match key:
+				case "--help-py":
+					help(NAME)
+					exit()
 				case "-h" | "--help":
-					print(__doc__)
+					print(f"{NAME} - {__doc__}\n==Please, use pager==")
 					exit()
 				#case "-c" | "--config":
 				#	self.openConfig(word)
@@ -126,7 +147,7 @@ Use <Button-2> on TextLN to take goto-hover
 		self.tBar = tk.Frame(self.mWin, bg=self.clr_sb, highlightthickness=0, height=0)
 		self.wmBtn = ttk.Button(self.tBar, style="Title.TButton", image=self.img_win)
 		self.mMG = tk.Frame(self.tBar, bg=self.clr_sb, highlightthickness=0, height=0)
-		self.mMGL = tk.Label(self.mMG, text=f"ExtPad {self.version}", bg=self.clr_sb, fg=self.clr_gw, height=0, width=0)
+		self.mMGL = tk.Label(self.mMG, text=f"{NAME} {self.version}", bg=self.clr_sb, fg=self.clr_gw, height=0, width=0)
 		self.mMGL.pack(fill="y", expand=1)
 		for subelm in [self.mMG, self.mMGL]:
 			subelm.bind('<Button-1>', self.wTk_point)
@@ -342,6 +363,8 @@ Use <Button-2> on TextLN to take goto-hover
 		return w.winfo_width()*w.winfo_ismapped()
 	def mWin_min(self, i=None):
 		'mWin minimal [height, weight]'
+		if self.source.Tk in ("min", "min-pre") and VERBOSE:
+			print('[app][mWin_min:Error] self.source.Tk in ("min", "min-pre")')
 		tBarw = self.wmBtn.winfo_width()*4+self.mMGL.winfo_width()
 		max_littlew = self.wmBtn.winfo_width()*10
 		tBarcw = [max_littlew, tBarw][tBarw <= max_littlew]
@@ -417,7 +440,7 @@ Use <Button-2> on TextLN to take goto-hover
 		try:
 			from pyshell import TextConsole
 		except ImportError:
-			print("[extpad] pyshell unsupported")
+			print("[{NAME}] pyshell unsupported")
 			return
 		frame = self.IFrame(dict(fid=["term", "pyshell"], name="Pyshell"), master=self.mNB)
 		frame.text = TextConsole(frame, highlightthickness=0, bd=0)
@@ -555,11 +578,10 @@ f"/{frame.text.index('{}.end'.format(frame.text.index('current').split('.')[0]))
 	def withMin(self): 
 		"[Min]-button handler"
 		if   not self.isCSD.get():
-			self.mWin.state("icon")
-			return
+			self.mWin.state("icon"); return
 		if   self.source.Tk in ["min", "max"]:
-			self.withNormal()
-			return
+			self.withNormal(); return
+		self.source.Tk = "min-pre"
 		self.iGrid_raw(False, self.apiBar)
 		self.mNormalBtn.pack_forget()
 		self.mMaxBtn.pack_forget()
@@ -754,7 +776,9 @@ f"/{frame.text.index('{}.end'.format(frame.text.index('current').split('.')[0]))
 		# Etc
 	def altstream(self):
 		self.mWin.after(100, self.altstream)
-		self.mWin.minsize(*self.mWin_min())
+		if False: print("!!!")
+		if self.source.Tk not in ("min", "min-pre"):
+			self.mWin.minsize(*self.mWin_min())
 		if self.mNB.tabs() == (): 
 			self.retitle("")
 			return
