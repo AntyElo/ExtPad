@@ -8,18 +8,6 @@ include_modules() {
 	done
 }
 case $1 in
-	h|he|hel|help)
-		cat << "===END OF HELP==="
-$0 - Nuitka3-based build script
-
-Usage:
-help - read this note
-full - compile full build (default command)
-rfull - as 'full', and run
-minimal - compile without pyshell.py and ttkthemes
-rminimal - as 'minimal', and run
-===END OF HELP===
-		exit 0;;
 	rmi|rmin|rmini|rminim|rminima|rminimal|run-minimal)
 		nuitka3 --run `include_modules deps sourcelib widgetlib` extpad.py;;
 	rf|rfu|rful|rfull|run-full)
@@ -28,5 +16,18 @@ rminimal - as 'minimal', and run
 		nuitka3 `include_modules deps sourcelib widgetlib` extpad.py;;
 	f|fu|ful|full|*)
 		nuitka3 `include_modules deps sourcelib widgetlib pyshell ttkthemes` extpad.py;;
+	h|he|hel|help)
+#==HELP SOF===
+cat << "===HELP EOF==="
+$0 - Nuitka3-based build script
+
+Usage:
+help - read this note
+full - compile full build (default command)
+rfull - as 'full', and run
+minimal - compile without pyshell.py and ttkthemes
+rminimal - as 'minimal', and run
+===HELP EOF===
+		exit 0;;
 esac
 rm -r extpad.build
